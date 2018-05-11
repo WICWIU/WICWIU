@@ -17,7 +17,7 @@ $ make
 
 ---------------------------------------
 
-Excute Sudoku Solver:
+Excute CNN model:
 ```
 $ ./testing.exe
 ```
