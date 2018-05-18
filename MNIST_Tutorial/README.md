@@ -4,20 +4,22 @@ This tutorial code is served by wicwiu team and you can test CNN model easily
 
 ## Build status
 
-| Windows x64 |
-| ----------- |
- [![win64-badge](https://cz3.visualstudio.com/_apis/public/build/definitions/bf14bcc7-ebd4-4240-812c-5972fa59e0ad/7/badge)](https://cz3.visualstudio.com/Z3/_build/index?definitionId=7) |
+| System |
+| --- |
+| Linux CPU |
+| Linux GPU |
+| Windows CPU |
 
-## Run tutorial file with customed CNN model
+## Run tutorial file with customed SLP model (GNU/Linux 4.4.0-121-generic x86_64)
 
-64-bit builds, start with ‘git bash’ (if you can use makefile):
+start with ‘git bash’ (if you can use makefile):
 ```bash
 $ make
 ```
 
 ---------------------------------------
 
-Excute CNN model:
+Excute model:
 ```
-$ ./testing.exe
+$ ./testing
 ```
