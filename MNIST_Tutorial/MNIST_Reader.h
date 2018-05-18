@@ -28,8 +28,8 @@ enum OPTION {
     TRAINLABEL,
     DEFAULT
 };
-int random_generator(int i) {
-    return rand() % i;
+int random_generator(int upperbound) {
+    return rand() % upperbound;
 }
 
 template<typename DTYPE>
@@ -143,7 +143,8 @@ public:
     }
 
     void CreateTrainDataPair(int pBatchSize) {
-        if ((pBatchSize * m_RecallNumOfTrain % NUMOFTRAINDATA) == 0) ShuffleDataPair(TRAIN, pBatchSize);
+        if ((pBatchSize * m_RecallNumOfTrain % NUMOFTRAINDATA) == 0)
+			ShuffleDataPair(TRAIN, pBatchSize);
 
         int numOfTrainData = NUMOFTRAINDATA;
         int recallNum      = m_RecallNumOfTrain;

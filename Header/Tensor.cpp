@@ -52,12 +52,13 @@ template<typename DTYPE> int Tensor<DTYPE>::Alloc(Shape *pShape) {
             printf("Receive invalid rank value %d in %s (%s %d)\n", rank, __FUNCTION__, __FILE__, __LINE__);
             return FALSE;
         } else {
-            int capacity = 1;
+            int pTime = (*pShape)[0];
+            int pCapacityPerTime = 1;
 
             for (int i = 0; i < rank; i++) {
-                capacity *= (*pShape)[i];
+                pCapacityPerTime *= (*pShape)[i];
             }
-            m_aData = new Data<DTYPE>(capacity);
+            m_aData = new Data<DTYPE>(pTime, pCapacityPerTime);
         }
     }
 
@@ -120,8 +121,8 @@ template<typename DTYPE> int Tensor<DTYPE>::GetCapacity() {
     return m_aData->GetCapacity();
 }
 
-template<typename DTYPE> DTYPE& Tensor<DTYPE>::GetRawData() {
-    return m_aData->GetRawData();
+template<typename DTYPE> DTYPE* Tensor<DTYPE>::GetLowData(unsigned int pTime) {
+    return m_aData->GetLowData(pTime);
 }
 
 //////////////////////////////////////////////////////////////////

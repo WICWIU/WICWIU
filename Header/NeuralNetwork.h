@@ -3,6 +3,12 @@
 
 #include "Layer_utils.h"
 
+typedef struct {
+    void *m_NN;
+    int   m_time;
+    int   m_threadNum;
+} ThreadInfo;
+
 template<typename DTYPE> class NeuralNetwork {
 private:
 #if __CUDNN__
@@ -16,8 +22,11 @@ private:
     int m_OperatorDegree;
     int m_TensorholderDegree;
 
-    Objective<DTYPE> *m_aObjective;
+    LossFunction<DTYPE> *m_aLossFunction;
     Optimizer<DTYPE> *m_aOptimizer;
+
+    Device m_Device;
+    int m_numOfThread;
 
 public:
     NeuralNetwork();
@@ -34,18 +43,20 @@ public:
     Tensorholder<DTYPE>* AddParameter(Tensorholder<DTYPE> *pTensorholder);
     // Operator<DTYPE>    * AddLayer(Layer<DTYPE> *pLayer);
 
-    Objective<DTYPE>   * SetObjective(Objective<DTYPE> *pObjective);
+    LossFunction<DTYPE>   * SetLossFunction(LossFunction<DTYPE> *pLossFunction);
     Optimizer<DTYPE>   * SetOptimizer(Optimizer<DTYPE> *pOptimizer);
 
     // =======
 
     Operator<DTYPE>                 * GetResultOperator();
     Operator<DTYPE>                 * GetResult();
+    Container<Operator<DTYPE> *>    * GetOperatorContainer();
+
 
     Container<Tensorholder<DTYPE> *>* GetTensorholder();
     Container<Tensorholder<DTYPE> *>* GetParameter();
 
-    Objective<DTYPE>                * GetObjective();
+    LossFunction<DTYPE>                * GetLossFunction();
     Optimizer<DTYPE>                * GetOptimizer();
 
     // =======
@@ -55,13 +66,16 @@ public:
 
     // =======
     int                               ForwardPropagate();
-    int                               ForwardPropagate(Operator<DTYPE> *pEnd);
-    int                               ForwardPropagate(Operator<DTYPE> *pStart, Operator<DTYPE> *pEnd);
     int                               BackPropagate();
+    static void                     * ForwardPropagate_T(void *param);
+    static void                     * BackPropagate_T(void *param);
 
     // =======
     int                               Training();
     int                               Testing();
+
+    int                               _Training_MT();
+    int                               _Testing_MT();
 
     // ============
     void                              SetModeTraining();
@@ -73,17 +87,18 @@ public:
 #endif  // __CUDNN__
 
     void                              SetDeviceCPU();
+    void                              SetDeviceCPU(int pNumOfThread);
 
     // =======
     int                               CreateGraph();
-    int                               PrintGraphShape();
+    void                              PrintGraphInformation();
 
     // reset value
     int                               ResetOperatorResult();
     int                               ResetOperatorGradient();
 
-    int                               ResetObjectiveResult();
-    int                               ResetObjectiveGradient();
+    int                               ResetLossFunctionResult();
+    int                               ResetLossFunctionGradient();
 
     int                               ResetParameterGradient();
 

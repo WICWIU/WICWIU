@@ -1,7 +1,7 @@
 #ifndef OPTIMIZER_H_
 #define OPTIMIZER_H_    value
 
-#include "Objective_utils.h"
+#include "LossFunction_utils.h"
 
 enum OptimizeDirection {
     MAXIMIZE,

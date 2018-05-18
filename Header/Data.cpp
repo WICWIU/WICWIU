@@ -5,27 +5,24 @@ template class Data<float>;
 template class Data<double>;
 
 template<typename DTYPE> Data<DTYPE>::Data() {
-    m_Capacity = 0;
-    m_Cols     = 0;
-    m_Rows     = 0;
-    m_aData    = NULL;
+    m_timeSize        = 0;
+    m_capacityPerTime = 0;
+    m_aData           = NULL;
 }
 
-template<typename DTYPE> Data<DTYPE>::Data(unsigned int pCapacity) {
+template<typename DTYPE> Data<DTYPE>::Data(unsigned int pTimeSize, unsigned int pCapacity) {
     // std::cout << "Data<DTYPE>::Data(Shape *)" << '\n';
-    m_Capacity = 0;
-    m_Cols     = 0;
-    m_Rows     = 0;
-    m_aData    = NULL;
-    Alloc(pCapacity);
+    m_timeSize        = pTimeSize;
+    m_capacityPerTime = pCapacity;
+    m_aData           = NULL;
+    Alloc();
 }
 
 template<typename DTYPE> Data<DTYPE>::Data(Data *pData) {
     std::cout << "Data<DTYPE>::Data(Data *)" << '\n';
-    m_Capacity = 0;
-    m_Cols     = 0;
-    m_Rows     = 0;
-    m_aData    = NULL;
+    m_timeSize        = pData->GetTimeSize();
+    m_capacityPerTime = pData->GetCapacityPerTime();
+    m_aData           = NULL;
     Alloc(pData);
 }
 
@@ -34,41 +31,14 @@ template<typename DTYPE> Data<DTYPE>::~Data() {
     Delete();
 }
 
-template<typename DTYPE> int Data<DTYPE>::Alloc(unsigned int pCapacity) {
-    m_Capacity = pCapacity;
-    m_Cols     = SIZEOFCOLS;
+template<typename DTYPE> int Data<DTYPE>::Alloc() {
+    m_aData = new DTYPE *[m_timeSize];
 
-    if (m_Capacity % SIZEOFCOLS != 0) {
-        m_Rows  = m_Capacity / SIZEOFCOLS + 1;
-        m_aData = new DTYPE *[m_Rows];
+    for (int i = 0; i < m_timeSize; i++) {
+        m_aData[i] = new DTYPE[m_capacityPerTime];
 
-        for (int i = 0; i < m_Rows; i++) {
-            if (i != (m_Rows - 1)) {
-                m_aData[i] = new DTYPE[SIZEOFCOLS];
-
-                for (int j = 0; j < SIZEOFCOLS; j++) {
-                    m_aData[i][j] = 0.f;
-                }
-            } else {
-                int cols = m_Capacity % SIZEOFCOLS;
-
-                m_aData[i] = new DTYPE[cols];
-
-                for (int j = 0; j < cols; j++) {
-                    m_aData[i][j] = 0.f;
-                }
-            }
-        }
-    } else {
-        m_Rows  = m_Capacity / SIZEOFCOLS;
-        m_aData = new DTYPE *[m_Rows];
-
-        for (int i = 0; i < m_Rows; i++) {
-            m_aData[i] = new DTYPE[SIZEOFCOLS];
-
-            for (int j = 0; j < SIZEOFCOLS; j++) {
-                m_aData[i][j] = 0.f;
-            }
+        for (int j = 0; j < m_capacityPerTime; j++) {
+            m_aData[i][j] = 0.f;
         }
     }
 
@@ -76,40 +46,13 @@ template<typename DTYPE> int Data<DTYPE>::Alloc(unsigned int pCapacity) {
 }
 
 template<typename DTYPE> int Data<DTYPE>::Alloc(Data *pData) {
-    m_Capacity = pData->GetCapacity();
-    m_Cols     = SIZEOFCOLS;
+    m_aData = new DTYPE *[m_timeSize];
 
-    if (m_Capacity % SIZEOFCOLS != 0) {
-        m_Rows  = m_Capacity / SIZEOFCOLS + 1;
-        m_aData = new DTYPE *[m_Rows];
+    for (int i = 0; i < m_timeSize; i++) {
+        m_aData[i] = new DTYPE[m_capacityPerTime];
 
-        for (int i = 0; i < m_Rows; i++) {
-            if (i != (m_Rows - 1)) {
-                m_aData[i] = new DTYPE[SIZEOFCOLS];
-
-                for (int j = 0; j < SIZEOFCOLS; j++) {
-                    m_aData[i][j] = (*pData)[i * SIZEOFCOLS + j];
-                }
-            } else {
-                int cols = m_Capacity % SIZEOFCOLS;
-
-                m_aData[i] = new DTYPE[cols];
-
-                for (int j = 0; j < cols; j++) {
-                    m_aData[i][j] = (*pData)[i * SIZEOFCOLS + j];
-                }
-            }
-        }
-    } else {
-        m_Rows  = m_Capacity / SIZEOFCOLS;
-        m_aData = new DTYPE *[m_Rows];
-
-        for (int i = 0; i < m_Rows; i++) {
-            m_aData[i] = new DTYPE[SIZEOFCOLS];
-
-            for (int j = 0; j < SIZEOFCOLS; j++) {
-                m_aData[i][j] = (*pData)[i * SIZEOFCOLS + j];
-            }
+        for (int j = 0; j < m_capacityPerTime; j++) {
+            m_aData[i][j] = (*pData)[i * m_capacityPerTime + j];
         }
     }
 
@@ -118,7 +61,7 @@ template<typename DTYPE> int Data<DTYPE>::Alloc(Data *pData) {
 
 template<typename DTYPE> void Data<DTYPE>::Delete() {
     if (m_aData) {
-        for (int i = 0; i < m_Rows; i++) {
+        for (int i = 0; i < m_timeSize; i++) {
             if (m_aData[i]) {
                 delete[] m_aData[i];
                 m_aData[i] = NULL;
@@ -130,15 +73,23 @@ template<typename DTYPE> void Data<DTYPE>::Delete() {
 }
 
 template<typename DTYPE> int Data<DTYPE>::GetCapacity() {
-    return m_Capacity;
+    return m_timeSize * m_capacityPerTime;
+}
+
+template<typename DTYPE> int Data<DTYPE>::GetTimeSize() {
+    return m_timeSize;
+}
+
+template<typename DTYPE> int Data<DTYPE>::GetCapacityPerTime() {
+    return m_capacityPerTime;
 }
 
 template<typename DTYPE> DTYPE& Data<DTYPE>::operator[](unsigned int index) {
-    return m_aData[index / SIZEOFCOLS][index % SIZEOFCOLS];
+    return m_aData[index / m_capacityPerTime][index % m_capacityPerTime];
 }
 
-template<typename DTYPE> DTYPE& Data<DTYPE>::GetRawData() {
-    return **m_aData;
+template<typename DTYPE> DTYPE* Data<DTYPE>::GetLowData(unsigned int pTime) {
+    return m_aData[pTime];
 }
 
 //// example code

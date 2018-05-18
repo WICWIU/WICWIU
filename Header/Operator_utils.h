@@ -12,3 +12,4 @@
 #include "Operator/Avgpooling.h"
 
 #include "Operator/BatchNormalize.h"
+#include "Operator/CUDNNBatchNormalize.h"

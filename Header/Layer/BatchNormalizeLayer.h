@@ -1,5 +1,5 @@
 #ifndef __BATCH_NORMALIZE_LAYER__
-#define __BATCH_NORMALIZE_LAYER__    value
+#define __BATCH_NORMALIZE_LAYER__ value
 
 #include "../Layer.h"
 
@@ -17,6 +17,8 @@ public:
 
         Tensorholder<DTYPE> *pGamma = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumOfChannel, 1, 1, 1.0), "BatchNormalize_Gamma_" + pName));
         Tensorholder<DTYPE> *pBeta  = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, pNumOfChannel, 1, 1), "BatchNormalize_Beta_" + pName));
+            std::cout << pGamma->GetResult()->GetShape() << '\n';
+            std::cout << pBeta->GetResult()->GetShape() << '\n';
 
         out = this->AddOperator(new BatchNormalize<DTYPE>(out, pGamma, pBeta, TRUE, "BatchNormalize_BatchNormalize_" + pName));
 
@@ -43,16 +45,14 @@ public:
         if (pIsChannelwise) {
             int pNumInputChannel = (*pInputShape)[2];
             pGamma = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumInputChannel, 1, 1, 1.0), "BatchNormalize_Gamma_" + pName));
-            std::cout << pGamma->GetResult()->GetShape() << '\n';
             pBeta = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, pNumInputChannel, 1, 1), "BatchNormalize_Beta_" + pName));
-            std::cout << pBeta->GetResult()->GetShape() << '\n';
         } else {
-            int pNumInputChannel = (*pInputShape)[2];
-            int pNumInputRow     = (*pInputShape)[3];
             int pNumInputCol     = (*pInputShape)[4];
-            pGamma = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumInputChannel, pNumInputRow, pNumInputCol, 1.0), "BatchNormalize_Gamma_" + pName));
-            pBeta  = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, pNumInputChannel, pNumInputRow, pNumInputCol), "BatchNormalize_Beta_" + pName));
+            pGamma = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumInputCol, 1.0), "BatchNormalize_Gamma_" + pName));
+            pBeta  = (Tensorholder<DTYPE> *) this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, 1, 1, pNumInputCol), "BatchNormalize_Beta_" + pName));
         }
+            std::cout << pGamma->GetResult()->GetShape() << '\n';
+            std::cout << pBeta->GetResult()->GetShape() << '\n';
 
         out = this->AddOperator(new BatchNormalize<DTYPE>(out, pGamma, pBeta, pIsChannelwise, "BatchNormalize_BatchNormalize_" + pName));
 

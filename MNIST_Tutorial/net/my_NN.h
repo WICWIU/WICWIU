@@ -21,9 +21,9 @@ public:
         // ======================= layer 1======================
         out = AddOperator(new Linear<float>(out, 784, 10, TRUE, "1"));
 
-        // ======================= Select Objective Function ===================
-        SetObjective(new SoftmaxCrossEntropy<float>(out, label, 0.000001, "SCE"));
-        // SetObjective(new MSE<float>(out, label, "MSE"));
+        // ======================= Select LossFunction Function ===================
+        SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, 0.000001, "SCE"));
+        // SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
         SetOptimizer(new GradientDescentOptimizer<float>(GetTensorholder(), 0.001, 0.9, MINIMIZE));
@@ -42,9 +42,9 @@ public:
         // ======================= layer 2=======================
         out = AddOperator(new Linear<float>(out, 15, 10, TRUE, "2"));
 
-        // ======================= Select Objective Function ===================
-        // SetObjective(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
-        SetObjective(new MSE<float>(out, label, "MSE"));
+        // ======================= Select LossFunction Function ===================
+        // SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
+        SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
         SetOptimizer(new GradientDescentOptimizer<float>(GetTensorholder(), 0.001, 0.9, MINIMIZE));

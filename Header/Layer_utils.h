@@ -2,3 +2,4 @@
 #include "Layer/LinearLayer.h"
 #include "Layer/ConvoulutionLayer.h"
 #include "Layer/BatchNormalizeLayer.h"
+#include "Layer/CUDNNBatchNormalizeLayer.h"

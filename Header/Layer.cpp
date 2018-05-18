@@ -11,6 +11,9 @@ template<typename DTYPE> Layer<DTYPE>::Layer(std::string pName) : Operator<DTYPE
 
     m_numOfOperator  = 0;
     m_numOfParameter = 0;
+
+    m_Device      = CPU;
+    m_numOfThread = 1;
     Alloc();
 }
 
@@ -144,9 +147,23 @@ template<typename DTYPE> int Layer<DTYPE>::ForwardPropagate() {
     return TRUE;
 }
 
+template<typename DTYPE> int Layer<DTYPE>::ForwardPropagate(int pTime, int pThreadNum) {
+    for (int i = 0; i < m_numOfOperator; i++) {
+        (*m_aaOperator)[i]->ForwardPropagate(pTime, pThreadNum);
+    }
+    return TRUE;
+}
+
 template<typename DTYPE> int Layer<DTYPE>::BackPropagate() {
     for (int i = m_numOfOperator - 1; i >= 0; i--) {
         (*m_aaOperator)[i]->BackPropagate();
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Layer<DTYPE>::BackPropagate(int pTime, int pThreadNum) {
+    for (int i = m_numOfOperator - 1; i >= 0; i--) {
+        (*m_aaOperator)[i]->BackPropagate(pTime, pThreadNum);
     }
     return TRUE;
 }
@@ -160,6 +177,15 @@ template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU() {
 
     for (int i = 0; i < m_numOfOperator; i++) {
         (*m_aaOperator)[i]->SetDeviceCPU();
+    }
+}
+
+template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU(int pNumOfThread) {
+    m_Device = CPU;
+    m_numOfThread = pNumOfThread;
+
+    for (int i = 0; i < m_numOfOperator; i++) {
+        (*m_aaOperator)[i]->SetDeviceCPU(pNumOfThread);
     }
 }
 
@@ -192,4 +218,14 @@ template<typename DTYPE> int Layer<DTYPE>::ResetGradient() {
         (*m_aaOperator)[i]->ResetGradient();
     }
     return TRUE;
+}
+
+template<typename DTYPE> void Layer<DTYPE>::PrintInformation() {
+    std::cout << this->GetName() << " : ";
+    std::cout << this->GetResult()->GetShape() << '\n';
+
+    for (int i = 0; i < m_numOfOperator; i++) {
+        std::cout << "-- ";
+        (*m_aaOperator)[i]->PrintInformation();
+    }
 }

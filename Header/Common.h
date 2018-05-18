@@ -4,13 +4,14 @@
 #include <exception>
 #include <string>
 #include <cmath>
-#include <thread>
+// #include <thread>
 
 // C header
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#include <pthread.h>
 
 // define
 #ifndef TRUE

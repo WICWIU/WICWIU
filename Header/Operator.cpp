@@ -15,6 +15,10 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
     m_currentOutputDegree = 0;
     m_currentInputDegree  = 0;
     m_name                = pName;
+    m_Device              = CPU;
+    m_isTensorholder      = 0;
+    m_isTrainable         = 0;
+    m_numOfThread         = 1;
     Alloc();
 }
 
@@ -29,6 +33,10 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_currentOutputDegree = 0;
     m_currentInputDegree  = 0;
     m_name                = pName;
+    m_Device              = CPU;
+    m_isTensorholder      = 0;
+    m_isTrainable         = 0;
+    m_numOfThread         = 1;
     Alloc(1, pInput);
 }
 
@@ -43,6 +51,10 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_currentOutputDegree = 0;
     m_currentInputDegree  = 0;
     m_name                = pName;
+    m_Device              = CPU;
+    m_isTensorholder      = 0;
+    m_isTrainable         = 0;
+    m_numOfThread         = 1;
     Alloc(2, pInput0, pInput1);
 }
 
@@ -54,8 +66,8 @@ template<typename DTYPE> Operator<DTYPE>::~Operator() {
 template<typename DTYPE> int Operator<DTYPE>::Alloc() {
     m_aaResult   = new Container<Tensor<DTYPE> *>();
     m_aaGradient = new Container<Tensor<DTYPE> *>();
-    m_apOutput = new Container<Operator<DTYPE> *>();
-    m_apInput  = new Container<Operator<DTYPE> *>();
+    m_apOutput   = new Container<Operator<DTYPE> *>();
+    m_apInput    = new Container<Operator<DTYPE> *>();
 
     return TRUE;
 }
@@ -138,8 +150,11 @@ template<typename DTYPE> void Operator<DTYPE>::Delete() {
 }
 
 #if __CUDNN__
+template<typename DTYPE> void Operator<DTYPE>::InitializeAttributeForGPU() {}
+
 template<typename DTYPE> void Operator<DTYPE>::SetCudnnHandle(cudnnHandle_t& pCudnnHandle) {
     m_pCudnnHandle = pCudnnHandle;
+    this->InitializeAttributeForGPU();
 }
 
 void cudnnResize(int size, float *data) {
@@ -305,8 +320,26 @@ template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate() {
     return TRUE;
 }
 
+template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime, int pThreadNum) {
+    std::cout << this->GetName() << '\n';
+    std::cout << "time : " << pTime << '\n';
+    std::cout << "thread number : " << pThreadNum << '\n';
+    std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
+
+    return TRUE;
+}
+
 template<typename DTYPE> int Operator<DTYPE>::BackPropagate() {
     // std::cout << this->GetName() << '\n';
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::BackPropagate(int pTime, int pThreadNum) {
+    std::cout << this->GetName() << '\n';
+    std::cout << "time : " << pTime << '\n';
+    std::cout << "thread number : " << pThreadNum << '\n';
+    std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
+
     return TRUE;
 }
 
@@ -326,10 +359,19 @@ template<typename DTYPE> void Operator<DTYPE>::SetDeviceCPU() {
     m_Device = CPU;
 }
 
+template<typename DTYPE> void Operator<DTYPE>::SetDeviceCPU(int pNumOfThread) {
+    m_Device      = CPU;
+    m_numOfThread = pNumOfThread;
+}
+
 #if __CUDNN__
+
+
 template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU() {
     m_Device = GPU;
 }
+
+#endif  // __CUDNN__
 
 template<typename DTYPE> int Operator<DTYPE>::ResetResult() {
     int size = m_aaResult->GetSize();
@@ -351,8 +393,10 @@ template<typename DTYPE> int Operator<DTYPE>::ResetGradient() {
     return TRUE;
 }
 
-
-#endif  // __CUDNN__
+template<typename DTYPE> void Operator<DTYPE>::PrintInformation() {
+    std::cout << this->GetName() << " : ";
+    std::cout << this->GetResult()->GetShape() << '\n';
+}
 
 // int main(int argc, char const *argv[]) {
 // Operator<int> *temp1 = new Operator<int>("temp1");

@@ -194,6 +194,60 @@ public:
 
         return TRUE;
     }
+
+    int ForwardPropagate(int pTime, int pThreadNum) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
+        Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
+
+        int m_ti        = pTime;
+        int numOfThread = this->GetNumOfThread();
+
+        for (m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (m_co = 0; m_co < m_colsize; m_co++) {
+                        (*result)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                            = (*input)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                              + (*bias)[Index5D(m_pBiasTenShape, *m_ti_bias, *m_ba_bias, *m_ch_bias, *m_ro_bias, *m_co_bias)];
+                    }
+                }
+            }
+        }
+
+
+        return TRUE;
+    }
+
+    int BackPropagate(int pTime, int pThreadNum) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
+        Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
+        Tensor<DTYPE> *this_grad  = this->GetGradient();
+
+        int m_ti        = pTime;
+        int numOfThread = this->GetNumOfThread();
+
+        // every thread share this part, so in this time occur segmentation error
+        for (m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (m_co = 0; m_co < m_colsize; m_co++) {
+                        (*input_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                            += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+
+                        (*bias_grad)[Index5D(m_pBiasTenShape, *m_ti_bias, *m_ba_bias, *m_ch_bias, *m_ro_bias, *m_co_bias)]
+                            += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+                    }
+                }
+            }
+        }
+
+        return TRUE;
+    }
 };
 
 #endif  // ADD_H_
