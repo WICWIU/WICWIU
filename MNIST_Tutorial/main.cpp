@@ -1,4 +1,20 @@
-/*g++ -g -o testing -std=c++11 main.cpp ../Header/Shape.cpp ../Header/Data.cpp ../Header/Tensor.cpp ../Header/Operator.cpp ../Header/LossFunction_.cpp ../Header/Optimizer.cpp ../Header/NeuralNetwork_.cpp*/
+/*
+ * =====================================================================================
+ *
+ *       Filename:  main.cpp
+ *
+ *    Description:  For WICWIU model learning
+ *
+ *        Version:  0.0.3
+ *        Created:  2018.04.29
+ *       Revision:
+ *       Compiler:  g++
+ *
+ *         Author:  cmpark(WICWIU)
+ *   Organization:  WICWIU
+ *
+ * =====================================================================================
+ */
 
 #include "net/my_CNN.h"
 #include "net/my_NN.h"
@@ -17,7 +33,7 @@ int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
 
-    // create input, label data placeholder -> Tensorholder
+    // create input, label data wrapper Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
@@ -40,7 +56,6 @@ int main(int argc, char const *argv[]) {
 
     net->PrintGraphInformation();
 
-    // pytorch check하기
     for (int i = 0; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';
         // ======================= Training =======================
@@ -76,26 +91,26 @@ int main(int argc, char const *argv[]) {
         }
         std::cout << '\n';
 
-        float accum_accuracy = 0.f;
-        float accum_avg_loss = 0.f;
-
-        net->SetModeAccumulating();
-
-        for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-            dataset->CreateTrainDataPair(BATCH);
-            x->SetTensor(dataset->GetTrainFeedImage());
-            label->SetTensor(dataset->GetTrainFeedLabel());
-            net->Testing();
-            accum_accuracy += net->GetAccuracy();
-            accum_avg_loss += net->GetLoss();
-
-            printf("\rAccumulating complete percentage is %d / %d -> loss : %f, acc : %f",
-                   j + 1, LOOP_FOR_TRAIN,
-                   accum_avg_loss / (j + 1),
-                   accum_accuracy / (j + 1));
-            fflush(stdout);
-        }
-        std::cout << '\n';
+        // float accum_accuracy = 0.f;
+        // float accum_avg_loss = 0.f;
+        //
+        // net->SetModeAccumulating();
+        //
+        // for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
+        //     dataset->CreateTrainDataPair(BATCH);
+        //     x->SetTensor(dataset->GetTrainFeedImage());
+        //     label->SetTensor(dataset->GetTrainFeedLabel());
+        //     net->Testing();
+        //     accum_accuracy += net->GetAccuracy();
+        //     accum_avg_loss += net->GetLoss();
+        //
+        //     printf("\rAccumulating complete percentage is %d / %d -> loss : %f, acc : %f",
+        //            j + 1, LOOP_FOR_TRAIN,
+        //            accum_avg_loss / (j + 1),
+        //            accum_accuracy / (j + 1));
+        //     fflush(stdout);
+        // }
+        // std::cout << '\n';
 
         // Caution!
         // Actually, we need to split training set between two set for training set and validation set
