@@ -7,7 +7,12 @@ template<typename DTYPE> class Data {
 private:
     int m_timeSize;
     int m_capacityPerTime;  // max column size
-    DTYPE **m_aData;
+    DTYPE **m_aHostData;
+#if __CUDNN__
+    DTYPE **m_aDevData;
+#endif  // __CUDNN
+
+    Device m_Device;
 
 public:
     Data();
@@ -24,7 +29,15 @@ public:
     int    GetTimeSize();
     int    GetCapacityPerTime();
 
-    DTYPE* GetLowData(unsigned int pTime = 0);
+    DTYPE* GetHostData(unsigned int pTime = 0);
+
+#ifdef __CUDNN__
+    DTYPE* GetDeviceData(unsigned int pTime = 0);
+    void   MemcpyDeviceToHost();
+    void   MemcpyHostToDevice();
+
+#endif  // if __CUDNN__
+
     DTYPE& operator[](unsigned int index);
 };
 

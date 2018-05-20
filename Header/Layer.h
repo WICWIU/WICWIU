@@ -47,10 +47,13 @@ public:
     Tensor<DTYPE>                   * GetDelta() const;
     Container<Tensor<DTYPE> *>      * GetDeltaContainer();
 
-    int                               ForwardPropagate();
-    int                               ForwardPropagate(int pTime, int pThreadNum);
-    int                               BackPropagate();
-    int                               BackPropagate(int pTime, int pThreadNum);
+    int                               ForwardPropagate(int pTime = 0, int pThreadNum = 0);
+    int                               BackPropagate(int pTime = 0, int pThreadNum = 0);
+
+#if __CUDNN__
+    int                               ForwardPropagateOnGPU(int pTime = 0);
+    int                               BackPropagateOnGPU(int pTime = 0);
+#endif  // __CUDNN__
 
     Operator<DTYPE>                 * GetLastOperator();
 
@@ -61,7 +64,7 @@ public:
     void                              SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
 #endif  // if __CUDNN__
 
-    Device GetDevice() {
+    Device                            GetDevice() {
         return m_Device;
     }
 
@@ -69,8 +72,8 @@ public:
         return m_numOfThread;
     }
 
-    int ResetResult();
-    int ResetGradient();
+    int  ResetResult();
+    int  ResetGradient();
 
     void PrintInformation();
 };

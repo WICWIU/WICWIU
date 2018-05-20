@@ -1,20 +1,4 @@
-/*
- * =====================================================================================
- *
- *       Filename:  main.cpp
- *
- *    Description:  For WICWIU model learning
- *
- *        Version:  0.0.3
- *        Created:  2018.04.29
- *       Revision:
- *       Compiler:  g++
- *
- *         Author:  cmpark(WICWIU)
- *   Organization:  WICWIU
- *
- * =====================================================================================
- */
+/*g++ -g -o testing -std=c++11 main.cpp ../Header/Shape.cpp ../Header/Data.cpp ../Header/Tensor.cpp ../Header/Operator.cpp ../Header/LossFunction_.cpp ../Header/Optimizer.cpp ../Header/NeuralNetwork_.cpp*/
 
 #include "net/my_CNN.h"
 #include "net/my_NN.h"
@@ -22,24 +6,24 @@
 #include "MNIST_Reader.h"
 #include <time.h>
 
-#define BATCH             25
+#define BATCH             100
 #define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 // 10,000 is number of Test data
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define NUM_OF_THREAD     1
+#define NUM_OF_THREAD     10
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
 
-    // create input, label data wrapper Tensorholder
+    // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
     // ======================= Select net ===================
-    // NeuralNetwork<float> *net = new my_CNN(x, label);
-    NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
+    NeuralNetwork<float> *net = new my_CNN(x, label);
+    // NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
     // NeuralNetwork<float> *net = new my_NN(x, label, isMLP);
     // NeuralNetwork<float> *net = Resnet14<float>(x, label);
 
@@ -56,6 +40,7 @@ int main(int argc, char const *argv[]) {
 
     net->PrintGraphInformation();
 
+    // pytorch check하기
     for (int i = 0; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';
         // ======================= Training =======================
@@ -91,26 +76,26 @@ int main(int argc, char const *argv[]) {
         }
         std::cout << '\n';
 
-        // float accum_accuracy = 0.f;
-        // float accum_avg_loss = 0.f;
-        //
-        // net->SetModeAccumulating();
-        //
-        // for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-        //     dataset->CreateTrainDataPair(BATCH);
-        //     x->SetTensor(dataset->GetTrainFeedImage());
-        //     label->SetTensor(dataset->GetTrainFeedLabel());
-        //     net->Testing();
-        //     accum_accuracy += net->GetAccuracy();
-        //     accum_avg_loss += net->GetLoss();
-        //
-        //     printf("\rAccumulating complete percentage is %d / %d -> loss : %f, acc : %f",
-        //            j + 1, LOOP_FOR_TRAIN,
-        //            accum_avg_loss / (j + 1),
-        //            accum_accuracy / (j + 1));
-        //     fflush(stdout);
-        // }
-        // std::cout << '\n';
+        float accum_accuracy = 0.f;
+        float accum_avg_loss = 0.f;
+
+        net->SetModeAccumulating();
+
+        for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
+            dataset->CreateTrainDataPair(BATCH);
+            x->SetTensor(dataset->GetTrainFeedImage());
+            label->SetTensor(dataset->GetTrainFeedLabel());
+            net->Testing();
+            accum_accuracy += net->GetAccuracy();
+            accum_avg_loss += net->GetLoss();
+
+            printf("\rAccumulating complete percentage is %d / %d -> loss : %f, acc : %f",
+                   j + 1, LOOP_FOR_TRAIN,
+                   accum_avg_loss / (j + 1),
+                   accum_accuracy / (j + 1));
+            fflush(stdout);
+        }
+        std::cout << '\n';
 
         // Caution!
         // Actually, we need to split training set between two set for training set and validation set

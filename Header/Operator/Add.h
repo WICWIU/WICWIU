@@ -5,69 +5,222 @@
 
 template<typename DTYPE> class Addall : public Operator<DTYPE>{
 private:
-    int m_capacity;
+    Shape *m_pLeftTenShape;
+    Shape *m_pRightTenShape;
+
+    int m_timesize;
+    int m_batchsize;
+    int m_channelsize;
+    int m_rowsize;
+    int m_colsize;
+
+#if __CUDNN__
+    cudnnTensorDescriptor_t leftTensorDesc, rightTensorDesc, outputTensorDesc, leftDeltaDesc, rightDeltaDesc, deltaDesc;
+    DTYPE *m_pDevLeft, *m_pDevRight, *m_pDevOutput, *m_pDevLeftDelta, *m_pDevRightDelta, *m_pDevDelta;
+
+    DTYPE m_alpha;
+    DTYPE m_beta;
+
+#endif  // __CUDNN__
 
 public:
     Addall(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput, std::string pName) : Operator<DTYPE>(pLeftInput, pRightInput, pName) {
+        #if __DEBUG__
         std::cout << "Addall::Addall(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
+        #endif  // __DEBUG__
         this->Alloc(pLeftInput, pRightInput);
     }
 
     ~Addall() {
+        #if __DEBUG__
         std::cout << "Addall::~Addall()" << '\n';
+        #endif  // __DEBUG__
     }
 
     int Alloc(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput) {
+        #if __DEBUG__
         std::cout << "Addall::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        #endif  // __DEBUG__
 
-        Shape *pInputTenShape = pLeftInput->GetResult()->GetShape();
+        m_pLeftTenShape  = pLeftInput->GetResult()->GetShape();
+        m_pRightTenShape = pRightInput->GetResult()->GetShape();
 
-        int timesize    = (*pInputTenShape)[0];
-        int batchsize   = (*pInputTenShape)[1];
-        int channelsize = (*pInputTenShape)[2];
-        int rowsize     = (*pInputTenShape)[3];
-        int colsize     = (*pInputTenShape)[4];
+        m_timesize    = (*m_pLeftTenShape)[0];
+        m_batchsize   = (*m_pLeftTenShape)[1];
+        m_channelsize = (*m_pLeftTenShape)[2];
+        m_rowsize     = (*m_pLeftTenShape)[3];
+        m_colsize     = (*m_pLeftTenShape)[4];
 
-        m_capacity = pLeftInput->GetResult()->GetCapacity();
+        this->SetResult(new Tensor<DTYPE>(m_timesize, m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
-        this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
-
-        this->SetGradient(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
+        this->SetGradient(new Tensor<DTYPE>(m_timesize, m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
         return TRUE;
     }
 
-    int ForwardPropagate() {
+#if __CUDNN__
+    void InitializeAttributeForGPU() {
+        m_alpha = 1;
+        m_beta  = 0;
+
+        checkCUDNN(cudnnCreateTensorDescriptor(&leftTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&rightTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&outputTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&leftDeltaDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&rightDeltaDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&deltaDesc));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(leftTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(rightTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(outputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(leftDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(rightDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(deltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCudaErrors(cudaDeviceSynchronize());
+    }
+
+#endif  // if __CUDNN__
+
+    void Delete() {
+#if __CUDNN__
+
+        if (leftTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(leftTensorDesc));
+        leftTensorDesc = NULL;
+
+        if (rightTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(rightTensorDesc));
+        rightTensorDesc = NULL;
+
+        if (outputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(outputTensorDesc));
+        outputTensorDesc = NULL;
+
+        if (leftDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(leftDeltaDesc));
+        leftDeltaDesc = NULL;
+
+        if (rightDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(rightDeltaDesc));
+        rightDeltaDesc = NULL;
+
+        if (deltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
+        deltaDesc = NULL;
+
+        checkCudaErrors(cudaThreadSynchronize());
+#endif  // if __CUDNN__
+    }
+
+    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
-        Tensor<DTYPE> *left_input  = (*input_contatiner)[0]->GetResult();
-        Tensor<DTYPE> *right_input = (*input_contatiner)[1]->GetResult();
-        Tensor<DTYPE> *result      = this->GetResult();
+        Tensor<DTYPE> *left   = (*input_contatiner)[0]->GetResult();
+        Tensor<DTYPE> *right  = (*input_contatiner)[1]->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
 
-        for (int i = 0; i < m_capacity; i++) {
-            (*result)[i] = (*left_input)[i] + (*right_input)[i];
+        int m_ti        = pTime;
+        int numOfThread = this->GetNumOfThread();
+
+        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (int m_co = 0; m_co < m_colsize; m_co++) {
+                        (*result)[Index5D(m_pLeftTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                            = (*left)[Index5D(m_pLeftTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                              + (*right)[Index5D(m_pRightTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+                    }
+                }
+            }
         }
 
         return TRUE;
     }
 
-    int BackPropagate() {
+    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
-        Tensor<DTYPE> *left_input_grad  = (*input_contatiner)[0]->GetGradient();
-        Tensor<DTYPE> *right_input_grad = (*input_contatiner)[1]->GetGradient();
-        Tensor<DTYPE> *this_grad        = this->GetGradient();
+        Tensor<DTYPE> *left_grad  = (*input_contatiner)[0]->GetGradient();
+        Tensor<DTYPE> *right_grad = (*input_contatiner)[1]->GetGradient();
+        Tensor<DTYPE> *this_grad  = this->GetGradient();
 
-        for (int i = 0; i < m_capacity; i++) {
-            (*left_input_grad)[i]  += (*this_grad)[i];
-            (*right_input_grad)[i] += (*this_grad)[i];
+        int m_ti        = pTime;
+        int numOfThread = this->GetNumOfThread();
+
+        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (int m_co = 0; m_co < m_colsize; m_co++) {
+                        (*left_grad)[Index5D(m_pLeftTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                            += (*this_grad)[Index5D(m_pLeftTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+
+                        (*right_grad)[Index5D(m_pRightTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                            += (*this_grad)[Index5D(m_pLeftTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+                    }
+                }
+            }
         }
 
         return TRUE;
     }
+
+#if __CUDNN__
+    int ForwardPropagateOnGPU(int pTime) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *left   = (*input_contatiner)[0]->GetResult();
+        Tensor<DTYPE> *right  = (*input_contatiner)[1]->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
+
+        m_pDevLeft   = left->GetDeviceData(pTime);
+        m_pDevRight  = right->GetDeviceData(pTime);
+        m_pDevOutput = result->GetDeviceData(pTime);
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, leftTensorDesc, m_pDevLeft,
+                                  &m_beta, outputTensorDesc, m_pDevOutput));
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, rightTensorDesc, m_pDevRight,
+                                  &m_alpha, outputTensorDesc, m_pDevOutput));
+
+        return TRUE;
+    }
+
+    int BackPropagateOnGPU(int pTime) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *left_grad  = (*input_contatiner)[0]->GetGradient();
+        Tensor<DTYPE> *right_grad = (*input_contatiner)[1]->GetGradient();
+        Tensor<DTYPE> *this_grad  = this->GetGradient();
+
+        m_pDevLeftDelta  = left_grad->GetDeviceData(pTime);
+        m_pDevRightDelta = right_grad->GetDeviceData(pTime);
+        m_pDevDelta      = this_grad->GetDeviceData(pTime);
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, deltaDesc, m_pDevDelta,
+                                  &m_beta, leftDeltaDesc, m_pDevLeftDelta));
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, deltaDesc, m_pDevDelta,
+                                  &m_beta, rightDeltaDesc, m_pDevRightDelta));
+
+
+        return TRUE;
+    }
+
+#endif  // __CUDNN__
 };
 
-template<typename DTYPE> class Add : public Operator<DTYPE>{
+
+template<typename DTYPE> class AddColWise : public Operator<DTYPE>{
 private:
     Shape *m_pInputTenShape;
     Shape *m_pBiasTenShape;
@@ -78,32 +231,33 @@ private:
     int m_rowsize;
     int m_colsize;
 
-    int m_ti;
-    int m_ba;
-    int m_ch;
-    int m_ro;
-    int m_co;
+#if __CUDNN__
+    cudnnTensorDescriptor_t inputTensorDesc, biasTensorDesc, outputTensorDesc, inputDeltaDesc, biasDeltaDesc, deltaDesc;
+    DTYPE *m_pDevInput, *m_pDevBias, *m_pDevOutput, *m_pDevInputDelta, *m_pDevBiasDelta, *m_pDevDelta;
 
-    int *m_ti_bias;
-    int *m_ba_bias;
-    int *m_ch_bias;
-    int *m_ro_bias;
-    int *m_co_bias;
+    DTYPE m_alpha;
+    DTYPE m_beta;
 
-    int m_zero;
+#endif  // __CUDNN__
 
 public:
-    Add(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName) : Operator<DTYPE>(pInput, pBias, pName) {
-        std::cout << "Add::Add(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
+    AddColWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName) : Operator<DTYPE>(pInput, pBias, pName) {
+        #if __DEBUG__
+        std::cout << "AddColWise::AddColWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
+        #endif  // __DEBUG__
         this->Alloc(pInput, pBias);
     }
 
-    ~Add() {
-        std::cout << "Add::~Add()" << '\n';
+    ~AddColWise() {
+        #if __DEBUG__
+        std::cout << "AddColWise::~AddColWise()" << '\n';
+        #endif  // __DEBUG__
     }
 
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias) {
-        std::cout << "Add::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        #if __DEBUG__
+        std::cout << "AddColWise::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        #endif  // __DEBUG__
 
         m_pInputTenShape = pInput->GetResult()->GetShape();
         m_pBiasTenShape  = pBias->GetResult()->GetShape();
@@ -114,29 +268,16 @@ public:
         m_rowsize     = (*m_pInputTenShape)[3];
         m_colsize     = (*m_pInputTenShape)[4];
 
-        m_ti = 0;
-        m_ba = 0;
-        m_ch = 0;
-        m_ro = 0;
-        m_co = 0;
+        #if __DEBUG__
 
-        m_ti_bias = &m_ti;
-        m_ba_bias = &m_ba;
-        m_ch_bias = &m_ch;
-        m_ro_bias = &m_ro;
-        m_co_bias = &m_co;
+        if ((*m_pBiasTenShape)[0] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
 
-        m_zero = 0;
+        if ((*m_pBiasTenShape)[1] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
 
-        if ((*m_pBiasTenShape)[0] == 1) m_ti_bias = &m_zero;
+        if ((*m_pBiasTenShape)[2] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
 
-        if ((*m_pBiasTenShape)[1] == 1) m_ba_bias = &m_zero;
-
-        if ((*m_pBiasTenShape)[2] == 1) m_ch_bias = &m_zero;
-
-        if ((*m_pBiasTenShape)[3] == 1) m_ro_bias = &m_zero;
-
-        if ((*m_pBiasTenShape)[4] == 1) m_co_bias = &m_zero;
+        if ((*m_pBiasTenShape)[3] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
+        #endif  // __DEBUG__
 
         this->SetResult(new Tensor<DTYPE>(m_timesize, m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
@@ -145,57 +286,67 @@ public:
         return TRUE;
     }
 
-    int ForwardPropagate() {
-        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+#if __CUDNN__
+    void InitializeAttributeForGPU() {
+        m_alpha = 1;
+        m_beta  = 0;
 
-        Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
-        Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
+        checkCUDNN(cudnnCreateTensorDescriptor(&inputTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&biasTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&outputTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&inputDeltaDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&biasDeltaDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&deltaDesc));
 
-        for (m_ti = 0; m_ti < m_timesize; m_ti++) {
-            for (m_ba = 0; m_ba < m_batchsize; m_ba++) {
-                for (m_ch = 0; m_ch < m_channelsize; m_ch++) {
-                    for (m_ro = 0; m_ro < m_rowsize; m_ro++) {
-                        for (m_co = 0; m_co < m_colsize; m_co++) {
-                            (*result)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
-                                = (*input)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
-                                  + (*bias)[Index5D(m_pBiasTenShape, *m_ti_bias, *m_ba_bias, *m_ch_bias, *m_ro_bias, *m_co_bias)];
-                        }
-                    }
-                }
-            }
-        }
+        checkCUDNN(cudnnSetTensor4dDescriptor(inputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_colsize, 1, 1));
 
-        return TRUE;
+        checkCUDNN(cudnnSetTensor4dDescriptor(biasTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              1, m_colsize, 1, 1));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(outputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_colsize, 1, 1));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(inputDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_colsize, 1, 1));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(biasDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              1, m_colsize, 1, 1));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(deltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_colsize, 1, 1));
+
+        checkCudaErrors(cudaDeviceSynchronize());
     }
 
-    int BackPropagate() {
-        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+#endif  // if __CUDNN__
 
-        Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
-        Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
-        Tensor<DTYPE> *this_grad  = this->GetGradient();
+    void Delete() {
+#if __CUDNN__
 
-        for (m_ti = 0; m_ti < m_timesize; m_ti++) {
-            for (m_ba = 0; m_ba < m_batchsize; m_ba++) {
-                for (m_ch = 0; m_ch < m_channelsize; m_ch++) {
-                    for (m_ro = 0; m_ro < m_rowsize; m_ro++) {
-                        for (m_co = 0; m_co < m_colsize; m_co++) {
-                            (*input_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
-                                += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+        if (inputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputTensorDesc));
+        inputTensorDesc = NULL;
 
-                            (*bias_grad)[Index5D(m_pBiasTenShape, *m_ti_bias, *m_ba_bias, *m_ch_bias, *m_ro_bias, *m_co_bias)]
-                                += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
-                        }
-                    }
-                }
-            }
-        }
+        if (biasTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(biasTensorDesc));
+        biasTensorDesc = NULL;
 
-        return TRUE;
+        if (outputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(outputTensorDesc));
+        outputTensorDesc = NULL;
+
+        if (inputDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputDeltaDesc));
+        inputDeltaDesc = NULL;
+
+        if (biasDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(biasDeltaDesc));
+        biasDeltaDesc = NULL;
+
+        if (deltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
+        deltaDesc = NULL;
+
+        checkCudaErrors(cudaThreadSynchronize());
+#endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime, int pThreadNum) {
+    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
@@ -205,13 +356,13 @@ public:
         int m_ti        = pTime;
         int numOfThread = this->GetNumOfThread();
 
-        for (m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
-            for (m_ch = 0; m_ch < m_channelsize; m_ch++) {
-                for (m_ro = 0; m_ro < m_rowsize; m_ro++) {
-                    for (m_co = 0; m_co < m_colsize; m_co++) {
+        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (int m_co = 0; m_co < m_colsize; m_co++) {
                         (*result)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
                             = (*input)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
-                              + (*bias)[Index5D(m_pBiasTenShape, *m_ti_bias, *m_ba_bias, *m_ch_bias, *m_ro_bias, *m_co_bias)];
+                              + (*bias)[m_co];
                     }
                 }
             }
@@ -221,7 +372,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime, int pThreadNum) {
+    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
@@ -231,15 +382,243 @@ public:
         int m_ti        = pTime;
         int numOfThread = this->GetNumOfThread();
 
-        // every thread share this part, so in this time occur segmentation error
-        for (m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
-            for (m_ch = 0; m_ch < m_channelsize; m_ch++) {
-                for (m_ro = 0; m_ro < m_rowsize; m_ro++) {
-                    for (m_co = 0; m_co < m_colsize; m_co++) {
+        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (int m_co = 0; m_co < m_colsize; m_co++) {
                         (*input_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
                             += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
 
-                        (*bias_grad)[Index5D(m_pBiasTenShape, *m_ti_bias, *m_ba_bias, *m_ch_bias, *m_ro_bias, *m_co_bias)]
+                        (*bias_grad)[m_co]
+                            += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+                    }
+                }
+            }
+        }
+
+
+        return TRUE;
+    }
+
+#if __CUDNN__
+    int ForwardPropagateOnGPU(int pTime) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
+        Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
+
+        m_pDevInput  = input->GetDeviceData(pTime);
+        m_pDevBias   = bias->GetDeviceData(0);
+        m_pDevOutput = result->GetDeviceData(pTime);
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, inputTensorDesc, m_pDevInput,
+                                  &m_beta, outputTensorDesc, m_pDevOutput));
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, biasTensorDesc, m_pDevBias,
+                                  &m_alpha, outputTensorDesc, m_pDevOutput));
+
+        return TRUE;
+    }
+
+    int BackPropagateOnGPU(int pTime) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
+        Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
+        Tensor<DTYPE> *this_grad  = this->GetGradient();
+
+        m_pDevInputDelta = input_grad->GetDeviceData(pTime);
+        m_pDevBiasDelta  = bias_grad->GetDeviceData(0);
+        m_pDevDelta      = this_grad->GetDeviceData(pTime);
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, deltaDesc, m_pDevDelta,
+                                  &m_beta, inputDeltaDesc, m_pDevInputDelta));
+
+        checkCUDNN(cudnnConvolutionBackwardBias(this->GetCudnnHandle(),
+                                                &m_alpha, deltaDesc, m_pDevDelta,
+                                                &m_beta, biasDeltaDesc, m_pDevBiasDelta))
+
+
+        return TRUE;
+    }
+
+#endif  // __CUDNN__
+};
+
+template<typename DTYPE> class AddChannelWise : public Operator<DTYPE>{
+private:
+    Shape *m_pInputTenShape;
+    Shape *m_pBiasTenShape;
+
+    int m_timesize;
+    int m_batchsize;
+    int m_channelsize;
+    int m_rowsize;
+    int m_colsize;
+
+#if __CUDNN__
+    cudnnTensorDescriptor_t inputTensorDesc, biasTensorDesc, outputTensorDesc, inputDeltaDesc, biasDeltaDesc, deltaDesc;
+    DTYPE *m_pDevInput, *m_pDevBias, *m_pDevOutput, *m_pDevInputDelta, *m_pDevBiasDelta, *m_pDevDelta;
+
+    DTYPE m_alpha;
+    DTYPE m_beta;
+
+#endif  // __CUDNN__
+
+public:
+    AddChannelWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName) : Operator<DTYPE>(pInput, pBias, pName) {
+        #if __DEBUG__
+        std::cout << "AddChannelWise::AddChannelWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
+        #endif  // __DEBUG__
+        this->Alloc(pInput, pBias);
+    }
+
+    ~AddChannelWise() {
+        #if __DEBUG__
+        std::cout << "AddChannelWise::~AddChannelWise()" << '\n';
+        #endif  // __DEBUG__
+    }
+
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias) {
+        #if __DEBUG__
+        std::cout << "AddColWise::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        #endif  // __DEBUG__
+
+        m_pInputTenShape = pInput->GetResult()->GetShape();
+        m_pBiasTenShape  = pBias->GetResult()->GetShape();
+
+        m_timesize    = (*m_pInputTenShape)[0];
+        m_batchsize   = (*m_pInputTenShape)[1];
+        m_channelsize = (*m_pInputTenShape)[2];
+        m_rowsize     = (*m_pInputTenShape)[3];
+        m_colsize     = (*m_pInputTenShape)[4];
+
+        #if __DEBUG__
+
+        if ((*m_pBiasTenShape)[0] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
+
+        if ((*m_pBiasTenShape)[1] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
+
+        if ((*m_pBiasTenShape)[3] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
+
+        if ((*m_pBiasTenShape)[4] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
+        #endif  // __DEBUG__
+
+        this->SetResult(new Tensor<DTYPE>(m_timesize, m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        this->SetGradient(new Tensor<DTYPE>(m_timesize, m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        return TRUE;
+    }
+
+    #if __CUDNN__
+    void InitializeAttributeForGPU() {
+        m_alpha = 1;
+        m_beta  = 0;
+
+        checkCUDNN(cudnnCreateTensorDescriptor(&inputTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&biasTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&outputTensorDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&inputDeltaDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&biasDeltaDesc));
+        checkCUDNN(cudnnCreateTensorDescriptor(&deltaDesc));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(inputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(biasTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              1, m_channelsize, 1, 1));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(outputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(inputDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(biasDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              1, m_channelsize, 1, 1));
+
+        checkCUDNN(cudnnSetTensor4dDescriptor(deltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        checkCudaErrors(cudaDeviceSynchronize());
+    }
+
+    #endif  // if __CUDNN__
+
+    void Delete() {
+    #if __CUDNN__
+
+        if (inputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputTensorDesc));
+        inputTensorDesc = NULL;
+
+        if (biasTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(biasTensorDesc));
+        biasTensorDesc = NULL;
+
+        if (outputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(outputTensorDesc));
+        outputTensorDesc = NULL;
+
+        if (inputDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputDeltaDesc));
+        inputDeltaDesc = NULL;
+
+        if (biasDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(biasDeltaDesc));
+        biasDeltaDesc = NULL;
+
+        if (deltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
+        deltaDesc = NULL;
+
+        checkCudaErrors(cudaThreadSynchronize());
+    #endif  // if __CUDNN__
+    }
+
+    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
+        Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
+
+        int m_ti        = pTime;
+        int numOfThread = this->GetNumOfThread();
+
+        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (int m_co = 0; m_co < m_colsize; m_co++) {
+                        (*result)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                            = (*input)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                              + (*bias)[m_ch];
+                    }
+                }
+            }
+        }
+
+
+        return TRUE;
+    }
+
+    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
+        Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
+        Tensor<DTYPE> *this_grad  = this->GetGradient();
+
+        int m_ti        = pTime;
+        int numOfThread = this->GetNumOfThread();
+
+        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+            for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
+                for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
+                    for (int m_co = 0; m_co < m_colsize; m_co++) {
+                        (*input_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)]
+                            += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
+
+                        (*bias_grad)[m_ch]
                             += (*this_grad)[Index5D(m_pInputTenShape, m_ti, m_ba, m_ch, m_ro, m_co)];
                     }
                 }
@@ -248,6 +627,57 @@ public:
 
         return TRUE;
     }
+
+#if __CUDNN__
+    int ForwardPropagateOnGPU(int pTime) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
+        Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
+
+        m_pDevInput  = input->GetDeviceData(pTime);
+        m_pDevBias   = bias->GetDeviceData(0);
+        m_pDevOutput = result->GetDeviceData(pTime);
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, inputTensorDesc, m_pDevInput,
+                                  &m_beta, outputTensorDesc, m_pDevOutput));
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, biasTensorDesc, m_pDevBias,
+                                  &m_alpha, outputTensorDesc, m_pDevOutput));
+
+        // this->ForwardPropagate();
+        return TRUE;
+    }
+
+    int BackPropagateOnGPU(int pTime) {
+        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
+
+        Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
+        Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
+        Tensor<DTYPE> *this_grad  = this->GetGradient();
+
+        m_pDevInputDelta = input_grad->GetDeviceData(pTime);
+        m_pDevBiasDelta  = bias_grad->GetDeviceData(0);
+        m_pDevDelta      = this_grad->GetDeviceData(pTime);
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, deltaDesc, m_pDevDelta,
+                                  &m_beta, inputDeltaDesc, m_pDevInputDelta));
+
+        checkCUDNN(cudnnConvolutionBackwardBias(this->GetCudnnHandle(),
+                                                &m_alpha, deltaDesc, m_pDevDelta,
+                                                &m_beta, biasDeltaDesc, m_pDevBiasDelta))
+
+        // this->BackPropagate();
+
+        return TRUE;
+    }
+
+#endif  // __CUDNN__
 };
+
 
 #endif  // ADD_H_

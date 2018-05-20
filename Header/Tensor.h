@@ -13,11 +13,8 @@ template<typename DTYPE> class Tensor {
 private:
     Shape *m_aShape;
     Data<DTYPE> *m_aData;
-    // #ifdef __DATA_CLASS__
-    // Data<DTYPE> *m_aData;
-    // #else // ifdef __DATA_CLASS__
-    // DTYPE *m_aData;
-    // #endif  // __DATA_CLASS__
+
+    Device m_Device;
 
 public:
     Tensor();
@@ -27,32 +24,44 @@ public:
 
     virtual ~Tensor();
 
-    int          Alloc(Shape *pShape);
-    int          Alloc(Tensor *pTensor);
-    void         Delete();
+    int                      Alloc(Shape *pShape);
+    int                      Alloc(Tensor *pTensor);
+    void                     Delete();
 
-    Shape      * GetShape();
-    Data<DTYPE>* GetData();
+    Shape                  * GetShape();
+    Data<DTYPE>            * GetData();
 
-    int          GetTimeSize();
-    int          GetBatchSize();
-    int          GetChannelSize();
-    int          GetRowSize();
-    int          GetColSize();
+    int                      GetTimeSize();
+    int                      GetBatchSize();
+    int                      GetChannelSize();
+    int                      GetRowSize();
+    int                      GetColSize();
 
-    int          GetCapacity();
+    int                      GetCapacity();
 
-    DTYPE      * GetLowData(unsigned int pTime = 0);
+    DTYPE                  * GetHostData(unsigned int pTime = 0);
+
+#ifdef __CUDNN__
+    DTYPE                  * GetDeviceData(unsigned int pTime = 0);
+    void                     MemcpyDeviceToHost();
+    void                     MemcpyHostToDevice();
+
+    cudnnTensorDescriptor_t& GetDescriptor();
+#endif  // if __CUDNN__
 
     ///////////////////////////////////////////////////////////////////
 
     int  Reshape(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize);
+
     void Reset();
+#ifdef __CUDNN__
+    void Reset(cudnnHandle_t& pCudnnHandle);
+#endif  // ifdef __CUDNN__
+
 
     ///////////////////////////////////////////////////////////////////
 
     DTYPE& operator[](unsigned int index);
-    // DTYPE& GetDatum(int ti, int ba, int ch, int ro, int co);
 
     ///////////////////////////////////////////////////////////////////
 
@@ -61,18 +70,6 @@ public:
     static Tensor<DTYPE>* Zeros(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize);
 
     static Tensor<DTYPE>* Constants(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, DTYPE constant);
-
-    ///////////////////////////////////////////////////////////////////
-
-    static Tensor<DTYPE>* Add(Tensor<DTYPE> *pRightTensor, Tensor<DTYPE> *pLeftTensor, Tensor<DTYPE> *pDestTensor = NULL);
-
-    static Tensor<DTYPE>* BroadcastAdd(Tensor<DTYPE> *pLeftTensor, Tensor<DTYPE> *pRightTensor, Tensor<DTYPE> *pDestTensor = NULL, int is_inverse = FALSE);
-
-    static Tensor<DTYPE>* Multiply(Tensor<DTYPE> *pLeftTensor, float pMultiplier, Tensor<DTYPE> *pDestTensor = NULL);
-
-    // static Tensor<DTYPE>* Matmul(Tensor<DTYPE> *pRightTensor, Tensor<DTYPE> *pLeftTensor, Tensor<DTYPE> *pDestTensor=NULL);
-    //
-    // static Tensor<DTYPE>* BroadcastMatmul(Tensor<DTYPE> *pLeftTensor, Tensor<DTYPE> *pRightTensor, Tensor<DTYPE> *pDestTensor=NULL);
 };
 
 ///////////////////////////////////////////////////////////////////

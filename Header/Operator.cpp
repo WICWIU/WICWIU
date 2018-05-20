@@ -5,7 +5,9 @@ template class Operator<float>;
 template class Operator<double>;
 
 template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
+    #if __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
+    #endif  // __DEBUG__
     m_aaResult            = NULL;
     m_aaGradient          = NULL;
     m_apOutput            = NULL;
@@ -23,7 +25,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
 }
 
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std::string pName) {
+    #if __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
+    #endif  // __DEBUG__
     m_aaResult            = NULL;
     m_aaGradient          = NULL;
     m_apOutput            = NULL;
@@ -41,7 +45,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
 }
 
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName) {
+    #if __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
+    #endif  // __DEBUG__
     m_aaResult            = NULL;
     m_aaGradient          = NULL;
     m_apOutput            = NULL;
@@ -59,7 +65,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
 }
 
 template<typename DTYPE> Operator<DTYPE>::~Operator() {
+    #if __DEBUG__
     std::cout << "Operator<DTYPE>::~Operator()" << '\n';
+    #endif  // __DEBUG__
     this->Delete();
 }
 
@@ -73,7 +81,9 @@ template<typename DTYPE> int Operator<DTYPE>::Alloc() {
 }
 
 template<typename DTYPE> int Operator<DTYPE>::Alloc(int numInput, ...) {
+    #if __DEBUG__
     std::cout << "Operator<DTYPE>::Alloc(Tensor<DTYPE> *)" << '\n';
+    #endif  // __DEBUG__
     Operator<DTYPE> *temp = NULL;
 
     m_aaResult   = new Container<Tensor<DTYPE> *>();
@@ -107,7 +117,9 @@ template<typename DTYPE> int Operator<DTYPE>::Alloc(int numInput, ...) {
 }
 
 template<typename DTYPE> void Operator<DTYPE>::Delete() {
+    #if __DEBUG__
     std::cout << "Operator<DTYPE>::Delete()" << '\n';
+    #endif  // __DEBUG__
     int size = 0;
 
     if (m_aaResult) {
@@ -315,33 +327,40 @@ template<typename DTYPE> void Operator<DTYPE>::AddEdgebetweenOperators(Operator<
     pInput->_AddOutputEdge(this);
 }
 
-template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate() {
-    // std::cout << this->GetName() << '\n';
-    return TRUE;
-}
-
 template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime, int pThreadNum) {
-    std::cout << this->GetName() << '\n';
-    std::cout << "time : " << pTime << '\n';
+    #if __DEBUG__
     std::cout << "thread number : " << pThreadNum << '\n';
     std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
-
-    return TRUE;
-}
-
-template<typename DTYPE> int Operator<DTYPE>::BackPropagate() {
-    // std::cout << this->GetName() << '\n';
+    #endif  // __DEBUG__
     return TRUE;
 }
 
 template<typename DTYPE> int Operator<DTYPE>::BackPropagate(int pTime, int pThreadNum) {
-    std::cout << this->GetName() << '\n';
-    std::cout << "time : " << pTime << '\n';
+    #if __DEBUG__
     std::cout << "thread number : " << pThreadNum << '\n';
     std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
-
+    #endif  // __DEBUG__
     return TRUE;
 }
+
+#if __CUDNN__
+template<typename DTYPE> int Operator<DTYPE>::ForwardPropagateOnGPU(int pTime) {
+    # if __DEBUG__
+    std::cout << "Operator<DTYPE>::ForwardPropagateOnGPU(int)" << '\n';
+    std::cout << this->GetName() << '\n';
+    # endif // __DEBUG__
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::BackPropagateOnGPU(int pTime) {
+    # if __DEBUG__
+    std::cout << "Operator<DTYPE>::BackPropagateOnGPU(int)" << '\n';
+    std::cout << this->GetName() << '\n';
+    # endif // __DEBUG__
+    return TRUE;
+}
+
+#endif  // __CUDNN__
 
 template<typename DTYPE> void Operator<DTYPE>::SetModeTraining() {
     // std::cout << "Operator<DTYPE>::SetModeTraining()" << '\n';
@@ -357,28 +376,93 @@ template<typename DTYPE> void Operator<DTYPE>::SetModeInferencing() {
 
 template<typename DTYPE> void Operator<DTYPE>::SetDeviceCPU() {
     m_Device = CPU;
+
+#if __CUDNN__
+    this->SetResultCPU();
+    this->SetGradientCPU();
+#endif  // __CUDNN__
 }
 
 template<typename DTYPE> void Operator<DTYPE>::SetDeviceCPU(int pNumOfThread) {
     m_Device      = CPU;
     m_numOfThread = pNumOfThread;
+
+#if __CUDNN__
+    this->SetResultCPU();
+    this->SetGradientCPU();
+#endif  // __CUDNN__
 }
 
 #if __CUDNN__
+template<typename DTYPE> int Operator<DTYPE>::SetResultCPU() {
+    // Tensorholder의 경우는 하면 안된다.
+    int size = m_aaResult->GetSize();
 
+    for (int i = 0; i < size; i++) {
+        (*m_aaResult)[i]->MemcpyDeviceToHost();
+    }
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::SetGradientCPU() {
+    int size = m_aaGradient->GetSize();
+
+    for (int i = 0; i < size; i++) {
+        (*m_aaGradient)[i]->MemcpyDeviceToHost();
+    }
+
+    return TRUE;
+}
 
 template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU() {
     m_Device = GPU;
+    this->SetResultGPU();
+    this->SetGradientGPU();
+}
+
+template<typename DTYPE> int Operator<DTYPE>::SetResultGPU() {
+    // Tensorholder의 경우는 하면 안된다.
+    int size = m_aaResult->GetSize();
+
+    for (int i = 0; i < size; i++) {
+        (*m_aaResult)[i]->MemcpyHostToDevice();
+    }
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::SetGradientGPU() {
+    int size = m_aaGradient->GetSize();
+
+    for (int i = 0; i < size; i++) {
+        (*m_aaGradient)[i]->MemcpyHostToDevice();
+    }
+
+    return TRUE;
 }
 
 #endif  // __CUDNN__
 
 template<typename DTYPE> int Operator<DTYPE>::ResetResult() {
+    // Tensorholder의 경우는 하면 안된다.
     int size = m_aaResult->GetSize();
 
-    for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->Reset();
+    if (m_Device == CPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaResult)[i]->Reset();
+        }
     }
+
+#if __CUDNN__
+    else if (m_Device == GPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaResult)[i]->Reset(this->GetCudnnHandle());
+        }
+    }
+#endif // if __CUDNN__
+
+    else return FALSE;
 
     return TRUE;
 }
@@ -386,9 +470,21 @@ template<typename DTYPE> int Operator<DTYPE>::ResetResult() {
 template<typename DTYPE> int Operator<DTYPE>::ResetGradient() {
     int size = m_aaGradient->GetSize();
 
-    for (int i = 0; i < size; i++) {
-        (*m_aaGradient)[i]->Reset();
+    if (m_Device == CPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaGradient)[i]->Reset();
+        }
     }
+
+#if __CUDNN__
+    else if (m_Device == GPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaGradient)[i]->Reset(this->GetCudnnHandle());
+        }
+    }
+#endif // if __CUDNN__
+
+    else return FALSE;
 
     return TRUE;
 }

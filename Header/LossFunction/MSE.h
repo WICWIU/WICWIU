@@ -7,16 +7,22 @@ template<typename DTYPE>
 class MSE : public LossFunction<DTYPE>{
 public:
     MSE(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName) {
+        #if __DEBUG__
         std::cout << "MSE::MSE(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
+        #endif  // __DEBUG__
         this->Alloc(pOperator);
     }
 
     virtual ~MSE() {
+        #if __DEBUG__
         std::cout << "MSE::~MSE()" << '\n';
+        #endif  // __DEBUG__
     }
 
     virtual int Alloc(Operator<DTYPE> *pOperator) {
+        #if __DEBUG__
         std::cout << "MSE::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        #endif  // __DEBUG__
 
         Operator<DTYPE> *pInput = pOperator;
 
@@ -30,175 +36,77 @@ public:
             new Tensor<DTYPE>(timesize, batchsize, 1, 1, 1)
             );
 
-        this->SetGradient(
-            new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize)
-            );
-
         return TRUE;
     }
 
-    virtual Tensor<DTYPE>* ForwardPropagate() {
+    Tensor<DTYPE>* ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
         Tensor<DTYPE> *input    = this->GetTensor();
         Tensor<DTYPE> *label    = this->GetLabel()->GetResult();
         Tensor<DTYPE> *result   = this->GetResult();
-        Tensor<DTYPE> *gradient = this->GetGradient();
-        // result->Reset();
-        // gradient->Reset();
 
-        int timesize  = input->GetTimeSize();
         int batchsize = input->GetBatchSize();
-        int count     = timesize * batchsize;
 
         int channelsize = input->GetChannelSize();
         int rowsize     = input->GetRowSize();
         int colsize     = input->GetColSize();
         int capacity    = channelsize * rowsize * colsize;
-
-        int index = 0;
-
-        int i = 0;
-
-        for (int ti = 0; ti < timesize; ti++) {
-            for (int ba = 0; ba < batchsize; ba++) {
-                i = ti * batchsize + ba;
-
-                for (int j = 0; j < capacity; j++) {
-                    index              = i * capacity + j;
-                    (*result)[i]      += Error((*input)[index], (*label)[index]);
-                    (*gradient)[index] = ((*input)[index] - (*label)[index]);
-                }
-            }
-        }
-
-        // for (int i = 0; i < count; i++) {
-        // for (int j = 0; j < capacity; j++) {
-        // index              = i * capacity + j;
-        // (*result)[i]      += Error((*input)[index], (*label)[index]);
-        // (*gradient)[index] = ((*input)[index] - (*label)[index]);
-        // }
-        // }
-
-        return result;
-    }
-
-    virtual Tensor<DTYPE>* BackPropagate() {
-        Tensor<DTYPE> *gradient    = this->GetGradient();
-        Tensor<DTYPE> *input_delta = this->GetOperator()->GetDelta();
-
-        int timesize  = gradient->GetTimeSize();
-        int batchsize = gradient->GetBatchSize();
-        int count     = timesize * batchsize;
-
-        int channelsize = gradient->GetChannelSize();
-        int rowsize     = gradient->GetRowSize();
-        int colsize     = gradient->GetColSize();
-        int capacity    = channelsize * rowsize * colsize;
-
-        int index = 0;
-        int i     = 0;
-
-        for (int ti = 0; ti < timesize; ti++) {
-            for (int ba = 0; ba < batchsize; ba++) {
-                i = ti * batchsize + ba;
-
-                for (int j = 0; j < capacity; j++) {
-                    index                  = i * capacity + j;
-                    (*input_delta)[index] += (*gradient)[index] / batchsize;
-                }
-            }
-        }
-        // int batchsize = gradient->GetBatchSize();
-        //
-        // int capacity = input_delta->GetCapacity();
-
-        // for (int i = 0; i < capacity; i++) {
-        // (*input_delta)[i] += (*gradient)[i] / batchsize;
-        // }
-
-        return NULL;
-    }
-
-    virtual Tensor<DTYPE>* ForwardPropagate(int pTime, int pThreadNum) {
-        Tensor<DTYPE> *input    = this->GetTensor();
-        Tensor<DTYPE> *label    = this->GetLabel()->GetResult();
-        Tensor<DTYPE> *result   = this->GetResult();
-        Tensor<DTYPE> *gradient = this->GetGradient();
-
-        int timesize  = input->GetTimeSize();
-        int batchsize = input->GetBatchSize();
-        int count     = timesize * batchsize;
-
-        int channelsize = input->GetChannelSize();
-        int rowsize     = input->GetRowSize();
-        int colsize     = input->GetColSize();
-        int capacity    = channelsize * rowsize * colsize;
-
-        int index = 0;
-
-        int i = 0;
 
         int ti          = pTime;
         int numOfThread = this->GetNumOfThread();
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
             i = ti * batchsize + ba;
 
-            for (int j = 0; j < capacity; j++) {
+            for (int j = 0, index = 0; j < capacity; j++) {
                 index              = i * capacity + j;
                 (*result)[i]      += Error((*input)[index], (*label)[index]);
-                (*gradient)[index] = ((*input)[index] - (*label)[index]);
             }
         }
-
-        // for (int i = 0; i < count; i++) {
-        // for (int j = 0; j < capacity; j++) {
-        // index              = i * capacity + j;
-        // (*result)[i]      += Error((*input)[index], (*label)[index]);
-        // (*gradient)[index] = ((*input)[index] - (*label)[index]);
-        // }
-        // }
 
         return result;
     }
 
-    virtual Tensor<DTYPE>* BackPropagate(int pTime, int pThreadNum) {
-        Tensor<DTYPE> *gradient    = this->GetGradient();
+    Tensor<DTYPE>* BackPropagate(int pTime = 0, int pThreadNum = 0) {
+        Tensor<DTYPE> *input    = this->GetTensor();
+        Tensor<DTYPE> *label    = this->GetLabel()->GetResult();
         Tensor<DTYPE> *input_delta = this->GetOperator()->GetDelta();
 
-        int timesize  = gradient->GetTimeSize();
-        int batchsize = gradient->GetBatchSize();
-        int count     = timesize * batchsize;
+        int batchsize = input->GetBatchSize();
 
-        int channelsize = gradient->GetChannelSize();
-        int rowsize     = gradient->GetRowSize();
-        int colsize     = gradient->GetColSize();
+        int channelsize = input->GetChannelSize();
+        int rowsize     = input->GetRowSize();
+        int colsize     = input->GetColSize();
         int capacity    = channelsize * rowsize * colsize;
-
-        int index = 0;
-        int i     = 0;
 
         int ti          = pTime;
         int numOfThread = this->GetNumOfThread();
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
             i = ti * batchsize + ba;
 
-            for (int j = 0; j < capacity; j++) {
+            for (int j = 0, index = 0; j < capacity; j++) {
                 index                  = i * capacity + j;
-                (*input_delta)[index] += (*gradient)[index] / batchsize;
+                (*input_delta)[index] += ((*input)[index] - (*label)[index]) / batchsize;
             }
         }
 
-        // int batchsize = gradient->GetBatchSize();
-        //
-        // int capacity = input_delta->GetCapacity();
-
-        // for (int i = 0; i < capacity; i++) {
-        // (*input_delta)[i] += (*gradient)[i] / batchsize;
-        // }
-
         return NULL;
     }
+
+#if __CUDNN__
+
+    Tensor<DTYPE>* ForwardPropagateOnGPU(int pTime = 0) {
+        this->ForwardPropagate();
+        return NULL;
+    }
+
+    Tensor<DTYPE>* BackPropagateOnGPU(int pTime = 0) {
+        this->BackPropagate();
+        return NULL;
+    }
+
+#endif  // __CUDNN__
+
 
     inline DTYPE Error(DTYPE pred, DTYPE ans) {
         return (pred - ans) * (pred - ans) / 2;

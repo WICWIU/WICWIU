@@ -20,7 +20,7 @@ public:
 
         if(use_bias){
             Tensorholder<DTYPE> *pBias = (Tensorholder<DTYPE> *)this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumOutputChannel, 1, 1, 0), "Convolution2D_Bias_" + pName));
-            out = this->AddOperator(new Add<DTYPE>(out, pBias, "Convolution2D_Add_" + pName));
+            out = this->AddOperator(new AddChannelWise<DTYPE>(out, pBias, "Convolution2D_Add_" + pName));
         }
 
         return TRUE;

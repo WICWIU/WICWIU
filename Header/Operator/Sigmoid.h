@@ -7,7 +7,9 @@ template<typename DTYPE>
 class Sigmoid : public Operator<DTYPE>{
 public:
     Sigmoid(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
+        #if __DEBUG__
         std::cout << "Sigmoid::Sigmoid(Operator *)" << '\n';
+        #endif  // __DEBUG__
         this->Alloc(pInput);
     }
 
@@ -16,7 +18,9 @@ public:
     }
 
     int Alloc(Operator<DTYPE> *pInput) {
+        #if __DEBUG__
         std::cout << "Sigmoid::Alloc(Operator *, Operator *)" << '\n';
+        #endif  // __DEBUG__
 
         int timesize    = pInput->GetResult()->GetTimeSize();
         int batchsize   = pInput->GetResult()->GetBatchSize();
@@ -31,7 +35,7 @@ public:
         return TRUE;
     }
 
-    int ForwardPropagate() {
+    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
@@ -43,65 +47,7 @@ public:
 
         Shape *resultTenShape = result->GetShape();
 
-        for (int ti = 0; ti < timesize; ti++) {
-            for (int ba = 0; ba < batchsize; ba++) {
-                for (int ch = 0; ch < channelsize; ch++) {
-                    for (int ro = 0; ro < rowsize; ro++) {
-                        for (int co = 0; co < colsize; co++) {
-                            (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                                = this->SIGMOID((*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)]);
-                        }
-                    }
-                }
-            }
-        }
-
-        return TRUE;
-    }
-
-    int BackPropagate() {
-        Tensor<DTYPE> *result      = this->GetResult();
-        Tensor<DTYPE> *this_delta  = this->GetDelta();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
-
-        int timesize    = result->GetTimeSize();
-        int batchsize   = result->GetBatchSize();
-        int channelsize = result->GetChannelSize();
-        int rowsize     = result->GetRowSize();
-        int colsize     = result->GetColSize();
-
-        Shape *resultTenShape = result->GetShape();
-
-        for (int ti = 0; ti < timesize; ti++) {
-            for (int ba = 0; ba < batchsize; ba++) {
-                for (int ch = 0; ch < channelsize; ch++) {
-                    for (int ro = 0; ro < rowsize; ro++) {
-                        for (int co = 0; co < colsize; co++) {
-                            (*input_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                                += (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                                   * (1 - (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)])
-                                   * (*this_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)];
-                        }
-                    }
-                }
-            }
-        }
-        return TRUE;
-    }
-
-    int ForwardPropagate(int pTime, int pThreadNum) {
-        Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
-
-        int timesize    = result->GetTimeSize();
-        int batchsize   = result->GetBatchSize();
-        int channelsize = result->GetChannelSize();
-        int rowsize     = result->GetRowSize();
-        int colsize     = result->GetColSize();
-
-        Shape *resultTenShape = result->GetShape();
-
-        int ti          = pTime;
+        int ti = pTime;
         int numOfThread = this->GetNumOfThread();
 
         for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
@@ -119,7 +65,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime, int pThreadNum) {
+    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
         Tensor<DTYPE> *result      = this->GetResult();
         Tensor<DTYPE> *this_delta  = this->GetDelta();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
@@ -132,7 +78,7 @@ public:
 
         Shape *resultTenShape = result->GetShape();
 
-        int ti          = pTime;
+        int ti = pTime;
         int numOfThread = this->GetNumOfThread();
 
         for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
@@ -150,6 +96,20 @@ public:
 
         return TRUE;
     }
+
+#if __CUDNN__
+    int ForwardPropagateOnGPU(int pTime) {
+        this->ForwardPropagate(pTime);
+        return TRUE;
+    }
+
+    int BackPropagateOnGPU(int pTime) {
+        this->BackPropagate(pTime);
+
+        return TRUE;
+    }
+
+#endif  // __CUDNN__
 
     inline DTYPE SIGMOID(DTYPE data) {
         return 1.F / (1.F + (DTYPE)exp(-data));

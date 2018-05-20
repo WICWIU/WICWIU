@@ -8,6 +8,10 @@ private:
     int m_Rank;
     int *m_aDim;
 
+#if __CUDNN__
+    cudnnTensorDescriptor_t m_desc;
+#endif  // if __CUDNN__
+
 public:
     Shape();
     Shape(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4);
@@ -22,8 +26,15 @@ public:
     void SetRank(int pRank);
     int  GetRank();
 
-    int& operator[](int pRanknum);
 
+#if __CUDNN__
+    cudnnTensorDescriptor_t& GetDescriptor();
+#endif  // __CUDNN__
+
+
+    int  ReShape(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4);
+
+    int& operator[](int pRanknum);
 };
 /////////////////////////////////////////////////////////////
 

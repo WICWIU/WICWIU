@@ -10,11 +10,6 @@ enum Mode {
     INFERENCING,
 };
 
-enum Device {
-    CPU,
-    GPU,
-};
-
 template<typename DTYPE> class Operator {
 private:
     Container<Tensor<DTYPE> *> *m_aaResult;
@@ -99,13 +94,13 @@ public:
 
     // Operator<DTYPE>             * Concatenate(Operator<DTYPE> *src, Operator<DTYPE> *dst, int axis = 0);
 
-    // For Propagate
-    virtual int  ForwardPropagate();
-    virtual int  ForwardPropagate(int pTime, int pThreadNum);
+    virtual int ForwardPropagate(int pTime = 0, int pThreadNum = 0);
+    virtual int BackPropagate(int pTime = 0, int pThreadNum = 0);
 
-    // For BackPropagate
-    virtual int  BackPropagate();
-    virtual int  BackPropagate(int pTime, int pThreadNum);
+#if __CUDNN__
+    virtual int ForwardPropagateOnGPU(int pTime = 0);
+    virtual int BackPropagateOnGPU(int pTime = 0);
+#endif  // __CUDNN__
 
     // reset value
     virtual int  ResetResult();
@@ -115,11 +110,19 @@ public:
     virtual void SetModeAccumulating();
     virtual void SetModeInferencing();
 
-
     virtual void SetDeviceCPU();
     virtual void SetDeviceCPU(int pNumOfThread);
 #ifdef __CUDNN__
+
+    // Setting Supporter
+    virtual int  SetResultCPU();
+    virtual int  SetGradientCPU();
+
     virtual void SetDeviceGPU();
+
+    // Setting Supporter
+    virtual int  SetResultGPU();
+    virtual int  SetGradientGPU();
 
 #endif  // if __CUDNN__
 

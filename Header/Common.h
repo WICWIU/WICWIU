@@ -1,3 +1,7 @@
+#ifndef COMMON_H_
+#define COMMON_H_    value
+
+
 // C++ header
 #include <iostream>
 #include <stdexcept>
@@ -24,3 +28,11 @@
     # include "cudnn.h"
     # include "error_util.h"
 #endif  // ifndef __CUDNN__
+
+enum Device {
+    CPU,
+    GPU,
+};
+
+
+#endif  // COMMON_H_

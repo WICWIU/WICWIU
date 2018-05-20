@@ -16,6 +16,10 @@ private:
     Container<Tensorholder<DTYPE> *> *m_ppTrainableTensors;
     int m_TrainableTensorDegree;
 
+#if __CUDNN__
+    cudnnHandle_t m_pCudnnHandle;
+#endif  // if __CUDNN__
+
 public:
     Optimizer(Operator<DTYPE> **pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection);
     Optimizer(Container<Tensorholder<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection);
@@ -35,10 +39,19 @@ public:
     // ===============
     virtual int UpdateVariable();
 
-    // virtual int UpdateVariable(Tensor<DTYPE> *Trainable, Tensor<DTYPE> *Gradient) = 0;
+    virtual int UpdateVariable(Tensorholder<DTYPE> *pTrainableTensor) = 0;
 
-    virtual int UpdateVariable(Tensorholder<DTYPE> * pTrainableTensor) = 0;
+#if __CUDNN__
 
+    virtual void   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
+
+    cudnnHandle_t& GetCudnnHandle();
+
+    virtual int    UpdateVariableOnGPU();
+
+    virtual int    UpdateVariableOnGPU(Tensorholder<DTYPE> *pTrainableTensor) = 0;
+
+#endif  // if __CUDNN__
     // ===============
 
     void                              SetLearningRate(float pLearningRate);

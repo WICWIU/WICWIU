@@ -20,7 +20,7 @@ public:
 
         if (use_bias) {
             Tensorholder<DTYPE> *pBias = (Tensorholder<DTYPE> *)this->AddParameter(new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumOutputCol, 0.f), "Add_Bias_" + pName));
-            out = this->AddOperator(new Add<DTYPE>(out, pBias, "Layer_Add_" + pName));
+            out = this->AddOperator(new AddColWise<DTYPE>(out, pBias, "Layer_Add_" + pName));
         }
 
         return TRUE;

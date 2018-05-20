@@ -114,6 +114,10 @@ public:
     }
 
     void CreateTestDataPair(int pBatchSize) {
+        if (pBatchSize * (m_RecallNumOfTest + 1) > NUMOFTESTDATA){
+            m_RecallNumOfTest = 0;
+        }
+
         int numOfTestData = NUMOFTESTDATA;
         int recallNum     = m_RecallNumOfTest;
         int startPoint    = 0;
@@ -143,8 +147,10 @@ public:
     }
 
     void CreateTrainDataPair(int pBatchSize) {
-        if ((pBatchSize * m_RecallNumOfTrain % NUMOFTRAINDATA) == 0)
+        if (pBatchSize * (m_RecallNumOfTrain + 1) > NUMOFTRAINDATA){
+            m_RecallNumOfTrain = 0;
 			ShuffleDataPair(TRAIN, pBatchSize);
+        }
 
         int numOfTrainData = NUMOFTRAINDATA;
         int recallNum      = m_RecallNumOfTrain;

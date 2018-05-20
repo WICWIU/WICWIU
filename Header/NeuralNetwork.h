@@ -5,7 +5,6 @@
 
 typedef struct {
     void *m_NN;
-    int   m_time;
     int   m_threadNum;
 } ThreadInfo;
 
@@ -22,6 +21,7 @@ private:
     int m_OperatorDegree;
     int m_TensorholderDegree;
 
+    // 중간에 Loss Function이나 Optimizer가 바뀌는 상황 생각해두기
     LossFunction<DTYPE> *m_aLossFunction;
     Optimizer<DTYPE> *m_aOptimizer;
 
@@ -43,7 +43,7 @@ public:
     Tensorholder<DTYPE>* AddParameter(Tensorholder<DTYPE> *pTensorholder);
     // Operator<DTYPE>    * AddLayer(Layer<DTYPE> *pLayer);
 
-    LossFunction<DTYPE>   * SetLossFunction(LossFunction<DTYPE> *pLossFunction);
+    LossFunction<DTYPE>* SetLossFunction(LossFunction<DTYPE> *pLossFunction);
     Optimizer<DTYPE>   * SetOptimizer(Optimizer<DTYPE> *pOptimizer);
 
     // =======
@@ -56,7 +56,7 @@ public:
     Container<Tensorholder<DTYPE> *>* GetTensorholder();
     Container<Tensorholder<DTYPE> *>* GetParameter();
 
-    LossFunction<DTYPE>                * GetLossFunction();
+    LossFunction<DTYPE>             * GetLossFunction();
     Optimizer<DTYPE>                * GetOptimizer();
 
     // =======
@@ -65,45 +65,63 @@ public:
     float                             GetLoss();
 
     // =======
-    int                               ForwardPropagate();
-    int                               BackPropagate();
-    static void                     * ForwardPropagate_T(void *param);
-    static void                     * BackPropagate_T(void *param);
+    int                               ForwardPropagate(int pTime = 0);
+    int                               BackPropagate(int pTime = 0);
 
-    // =======
-    int                               Training();
-    int                               Testing();
-
-    int                               _Training_MT();
-    int                               _Testing_MT();
-
-    // ============
-    void                              SetModeTraining();
-    void                              SetModeAccumulating();
-    void                              SetModeInferencing();
+    static void                     * ForwardPropagateForThread(void *param);
+    static void                     * BackPropagateForThread(void *param);
 
 #if __CUDNN__
-    void                              SetDeviceGPU();
+    int                               ForwardPropagateOnGPU(int pTime = 0);
+    int                               BackPropagateOnGPU(int pTime = 0);
 #endif  // __CUDNN__
 
-    void                              SetDeviceCPU();
-    void                              SetDeviceCPU(int pNumOfThread);
+    // =======
+    int Training();
+    int Testing();
+
+    int TrainingOnCPU();
+    int TestingOnCPU();
+
+    int TrainingOnMultiThread();  // Multi Threading
+    int TestingOnMultiThread();  // Multi Threading
+
+    int TrainingOnGPU();
+    int TestingOnGPU();
+
+    // int                               TrainingOnMultiProcess(); // Multi Processing
+    // int                               TestingOnMultiProcess(); // Multi Processing
+
+    // int                               TrainingOnMultiGPU();
+    // int                               TestingOnMultiGPU();
+
+    // ============
+    void             SetModeTraining();
+    void             SetModeAccumulating();
+    void             SetModeInferencing();
+
+#if __CUDNN__
+    void             SetDeviceGPU();
+#endif  // __CUDNN__
+
+    void             SetDeviceCPU();
+    void             SetDeviceCPU(int pNumOfThread);
 
     // =======
-    int                               CreateGraph();
-    void                              PrintGraphInformation();
+    int              CreateGraph();
+    void             PrintGraphInformation();
 
     // reset value
-    int                               ResetOperatorResult();
-    int                               ResetOperatorGradient();
+    int              ResetOperatorResult();
+    int              ResetOperatorGradient();
 
-    int                               ResetLossFunctionResult();
-    int                               ResetLossFunctionGradient();
+    int              ResetLossFunctionResult();
+    int              ResetLossFunctionGradient();
 
-    int                               ResetParameterGradient();
+    int              ResetParameterGradient();
 
     // debug
-    Operator<DTYPE>                 * SerchOperator(std::string pName);
+    Operator<DTYPE>* SerchOperator(std::string pName);
 };
 
 #endif  // NEURALNETWORK_H_

@@ -11,7 +11,9 @@ private:
 
 public:
     Container() {
+        #if __DEBUG__
         std::cout << "Container<DTYPE>::Container()" << '\n';
+        #endif  // __DEBUG__
         m_aElement = NULL;
         m_size     = 0;
     }

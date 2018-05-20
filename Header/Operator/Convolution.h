@@ -14,7 +14,6 @@ private:
     cudnnConvolutionDescriptor_t convDesc;
     cudnnFilterDescriptor_t filterDesc, filterDeltaDesc;
     DTYPE *m_pDevInput, *m_pDevOutput, *m_pDevFilter, *m_pDevInputDelta, *m_pDevDelta, *m_pDevFilterDelta;
-    DTYPE *m_pHostInput, *m_pHostOutput, *m_pHostFilter, *m_pHostInputDelta, *m_pHostDelta, *m_pHostFilterDelta;
 
     cudnnConvolutionFwdAlgo_t m_algo;
     cudnnConvolutionBwdFilterAlgo_t m_filterAlgo;
@@ -46,7 +45,9 @@ public:
     }
 
     virtual ~Convolution2D() {
+        #if __DEBUG__
         std::cout << "Convolution2D::~Convolution2D()" << '\n';
+        #endif  // __DEBUG__
         Delete();
     }
 
@@ -101,10 +102,6 @@ public:
         int rowsizeOfInput     = (*shapeOfInput)[3];
         int colsizeOfInput     = (*shapeOfInput)[4];
 
-        int inputCapacity  = pInput->GetResult()->GetCapacity();
-        int outputCapacity = this->GetResult()->GetCapacity();
-        int filterCapacity = pWeight->GetResult()->GetCapacity();
-
         m_sizeInBytes       = 0;
         m_dataSizeInBytes   = 0;
         m_filterSizeInBytes = 0;
@@ -123,13 +120,6 @@ public:
         checkCUDNN(cudnnCreateConvolutionDescriptor(&convDesc));
         checkCUDNN(cudnnCreateFilterDescriptor(&filterDesc));
         checkCUDNN(cudnnCreateFilterDescriptor(&filterDeltaDesc));
-
-        checkCudaErrors(cudaMalloc((void **)&m_pDevInput, (inputCapacity * sizeof(DTYPE))));
-        checkCudaErrors(cudaMalloc((void **)&m_pDevOutput, (outputCapacity * sizeof(DTYPE))));
-        checkCudaErrors(cudaMalloc((void **)&m_pDevFilter, (filterCapacity * sizeof(DTYPE))));
-        checkCudaErrors(cudaMalloc((void **)&m_pDevInputDelta, (inputCapacity * sizeof(DTYPE))));
-        checkCudaErrors(cudaMalloc((void **)&m_pDevDelta, (outputCapacity * sizeof(DTYPE))));
-        checkCudaErrors(cudaMalloc((void **)&m_pDevFilterDelta, (filterCapacity * sizeof(DTYPE))));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(inputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
                                               batchsizeOfInput, channelsizeOfInput, rowsizeOfInput, colsizeOfInput));
@@ -168,6 +158,33 @@ public:
 
         checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), inputTensorDesc, deltaDesc, convDesc, filterDesc, m_filterAlgo, &m_filterSizeInBytes));
 
+        if (m_sizeInBytes != 0) {
+            checkCudaErrors(cudaMalloc(&m_devWorkSpace, m_sizeInBytes));
+
+            if (m_devWorkSpace == NULL) {
+                printf("Failed to DEVICE allocation in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+                exit(-1);
+            }
+        }
+
+        if (m_dataSizeInBytes != 0) {
+            checkCudaErrors(cudaMalloc(&m_dataDevWorkSpace, m_dataSizeInBytes));
+
+            if (m_dataDevWorkSpace == NULL) {
+                printf("Failed to DEVICE allocation in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+                exit(-1);
+            }
+        }
+
+        if (m_filterSizeInBytes != 0) {
+            checkCudaErrors(cudaMalloc(&m_filterDevWorkSpace, m_filterSizeInBytes));
+
+            if (m_filterDevWorkSpace == NULL) {
+                printf("Failed to DEVICE allocation in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+                exit(-1);
+            }
+        }
+
         checkCudaErrors(cudaDeviceSynchronize());
     }
 
@@ -175,147 +192,45 @@ public:
 
     void Delete() {
 #if __CUDNN__
-        checkCUDNN(cudnnDestroyTensorDescriptor(inputTensorDesc));
-        checkCUDNN(cudnnDestroyTensorDescriptor(outputTensorDesc));
-        checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
-        checkCUDNN(cudnnDestroyTensorDescriptor(inputDeltaDesc));
-        checkCUDNN(cudnnDestroyConvolutionDescriptor(convDesc));
-        checkCUDNN(cudnnDestroyFilterDescriptor(filterDesc));
-        checkCUDNN(cudnnDestroyFilterDescriptor(filterDeltaDesc));
 
-        checkCudaErrors(cudaFree(m_pDevInput));
-        checkCudaErrors(cudaFree(m_pDevOutput));
-        checkCudaErrors(cudaFree(m_pDevFilter));
-        checkCudaErrors(cudaFree(m_pDevInputDelta));
-        checkCudaErrors(cudaFree(m_pDevDelta));
-        checkCudaErrors(cudaFree(m_pDevFilterDelta));
+        if (inputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputTensorDesc));
+        inputTensorDesc = NULL;
 
-        checkCudaErrors(cudaFree(m_devWorkSpace));
-        checkCudaErrors(cudaFree(m_dataDevWorkSpace));
-        checkCudaErrors(cudaFree(m_filterDevWorkSpace));
+        if (outputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(outputTensorDesc));
+        outputTensorDesc = NULL;
 
-#endif  // if __CUDNN__
-    }
+        if (deltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
+        deltaDesc = NULL;
 
-    int ForwardPropagate() {
-        if (this->GetDevice() == CPU) ComputeForwardPropagateOnCPU();
-        // if (this->GetDevice() == CPU) ComputeForwardPropagateOnCPU_MT();
-#ifdef __CUDNN__
-        else if (this->GetDevice() == GPU) ComputeForwardPropagateOnGPU();
-#endif  // if __CUDNN__
-        else return FALSE;
-        return TRUE;
-    }
+        if (inputDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputDeltaDesc));
+        inputDeltaDesc = NULL;
 
-    int BackPropagate() {
-        if (this->GetDevice() == CPU) ComputeBackPropagateOnCPU();
-        // if (this->GetDevice() == CPU) ComputeBackPropagateOnCPU_MT();
-#ifdef __CUDNN__
-        else if (this->GetDevice() == GPU) ComputeBackPropagateOnGPU();
-#endif  // if __CUDNN__
-        else return FALSE;
-        return TRUE;
-    }
+        if (convDesc) checkCUDNN(cudnnDestroyConvolutionDescriptor(convDesc));
+        convDesc = NULL;
 
-    int ComputeForwardPropagateOnCPU() {
-        Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
-        Shape *shapeOfInput  = input->GetShape();
+        if (filterDesc) checkCUDNN(cudnnDestroyFilterDescriptor(filterDesc));
+        filterDesc = NULL;
 
-        Tensor<DTYPE> *weight = this->GetInput()[1]->GetResult();
-        Shape *shapeOfWeight  = weight->GetShape();
+        if (filterDeltaDesc) checkCUDNN(cudnnDestroyFilterDescriptor(filterDeltaDesc));
+        filterDeltaDesc = NULL;
 
-        Tensor<DTYPE> *result = this->GetResult();
-        Shape *shapeOfResult  = result->GetShape();
-
-        int batchsize   = (*shapeOfResult)[1];
-        int channelsize = (*shapeOfResult)[2];  // == shapeOfWeight[1]
-        int rowsize     = (*shapeOfResult)[3];
-        int colsize     = (*shapeOfResult)[4];
-
-        int channelsizeOfWeight = (*shapeOfWeight)[2];
-        int rowsizeOfWeight     = (*shapeOfWeight)[3];
-        int colsizeOfWeight     = (*shapeOfWeight)[4];
-
-        int rowsizeOfInput = (*shapeOfInput)[3];
-        int colsizeOfInput = (*shapeOfInput)[4];
-
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
-                        for (int wch = 0; wch < channelsizeOfWeight; wch++) {  // == (*shapeOfInput)[2];
-                            for (int wro = 0; wro < rowsizeOfWeight; wro++) {
-                                for (int wco = 0; wco < colsizeOfWeight; wco++) {
-                                    (*result)[Index4D(shapeOfResult, ba, ch, ro, co)]
-                                        += ((*input)[Index4D(shapeOfInput, ba, wch, m_stride[0] * ro + wro, m_stride[1] * co + wco)]
-                                            * (*weight)[Index4D(shapeOfWeight, ch, wch, wro, wco)]);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if (m_sizeInBytes != 0) {
+            checkCudaErrors(cudaFree(m_devWorkSpace));
         }
 
-        return TRUE;
-    }
-
-    int ComputeBackPropagateOnCPU() {
-        Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
-        Shape *shapeOfInput        = input->GetShape();
-
-        Tensor<DTYPE> *weight          = this->GetInput()[1]->GetResult();
-        Tensor<DTYPE> *weight_gradient = this->GetInput()[1]->GetGradient();
-        Shape *shapeOfWeight           = weight->GetShape();
-
-        Tensor<DTYPE> *this_delta = this->GetDelta();
-        Shape *shapeOfResult      = this_delta->GetShape();
-
-        int batchsize   = (*shapeOfResult)[1];
-        int channelsize = (*shapeOfResult)[2];  // == shapeOfWeight[1]
-        int rowsize     = (*shapeOfResult)[3];
-        int colsize     = (*shapeOfResult)[4];
-
-        int channelsizeOfWeight = (*shapeOfWeight)[2];
-        int rowsizeOfWeight     = (*shapeOfWeight)[3];
-        int colsizeOfWeight     = (*shapeOfWeight)[4];
-
-        int rowsizeOfInput = (*shapeOfInput)[3];
-        int colsizeOfInput = (*shapeOfInput)[4];
-
-        int input_index  = 0;
-        int weight_index = 0;
-        int result_index = 0;
-
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
-                        for (int wch = 0; wch < channelsizeOfWeight; wch++) {  // == (*shapeOfInput)[2];
-                            for (int wro = 0; wro < rowsizeOfWeight; wro++) {
-                                for (int wco = 0; wco < colsizeOfWeight; wco++) {
-                                    input_index  = Index4D(shapeOfInput, ba, wch, m_stride[0] * ro + wro, m_stride[1] * co + wco);
-                                    weight_index = Index4D(shapeOfWeight, ch, wch, wro, wco);
-                                    result_index = Index4D(shapeOfResult, ba, ch, ro, co);
-
-                                    (*input_delta)[input_index]
-                                        += ((*weight)[weight_index] * (*this_delta)[result_index]);
-
-                                    (*weight_gradient)[weight_index]
-                                        += ((*input)[input_index] * (*this_delta)[result_index]);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if (m_dataSizeInBytes != 0) {
+            checkCudaErrors(cudaFree(m_dataDevWorkSpace));
         }
 
-        return TRUE;
+        if (m_filterSizeInBytes != 0) {
+            checkCudaErrors(cudaFree(m_filterDevWorkSpace));
+        }
+
+        checkCudaErrors(cudaThreadSynchronize());
+#endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime, int pThreadNum) {
+    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
         Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
         Shape *shapeOfInput  = input->GetShape();
 
@@ -347,9 +262,9 @@ public:
                         for (int wch = 0; wch < channelsizeOfWeight; wch++) {  // == (*shapeOfInput)[2];
                             for (int wro = 0; wro < rowsizeOfWeight; wro++) {
                                 for (int wco = 0; wco < colsizeOfWeight; wco++) {
-                                    (*result)[Index4D(shapeOfResult, ba, ch, ro, co)]
-                                        += ((*input)[Index4D(shapeOfInput, ba, wch, m_stride[0] * ro + wro, m_stride[1] * co + wco)]
-                                            * (*weight)[Index4D(shapeOfWeight, ch, wch, wro, wco)]);
+                                    (*result)[Index5D(shapeOfResult, ti, ba, ch, ro, co)]
+                                        += ((*input)[Index5D(shapeOfInput, ti, ba, wch, m_stride[0] * ro + wro, m_stride[1] * co + wco)]
+                                            * (*weight)[Index5D(shapeOfWeight, 0, ch, wch, wro, wco)]);
                                 }
                             }
                         }
@@ -361,7 +276,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime, int pThreadNum) {
+    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
         Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
         Shape *shapeOfInput        = input->GetShape();
@@ -399,9 +314,9 @@ public:
                         for (int wch = 0; wch < channelsizeOfWeight; wch++) {  // == (*shapeOfInput)[2];
                             for (int wro = 0; wro < rowsizeOfWeight; wro++) {
                                 for (int wco = 0; wco < colsizeOfWeight; wco++) {
-                                    input_index  = Index4D(shapeOfInput, ba, wch, m_stride[0] * ro + wro, m_stride[1] * co + wco);
-                                    weight_index = Index4D(shapeOfWeight, ch, wch, wro, wco);
-                                    result_index = Index4D(shapeOfResult, ba, ch, ro, co);
+                                    input_index  = Index5D(shapeOfInput, ti, ba, wch, m_stride[0] * ro + wro, m_stride[1] * co + wco);
+                                    weight_index = Index5D(shapeOfWeight, 0, ch, wch, wro, wco);
+                                    result_index = Index5D(shapeOfResult, ti, ba, ch, ro, co);
 
                                     (*input_delta)[input_index]
                                         += ((*weight)[weight_index] * (*this_delta)[result_index]);
@@ -420,57 +335,36 @@ public:
     }
 
 #if __CUDNN__
-    int ComputeForwardPropagateOnGPU() {
+    int ForwardPropagateOnGPU(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        int inputCapacity  = input->GetCapacity();
-        int outputCapacity = result->GetCapacity();
-        int filterCapacity = weight->GetCapacity();
-
-        m_pHostInput  = input->GetLowData();
-        m_pHostFilter = weight->GetLowData();
-        m_pHostOutput = result->GetLowData();
-
-        checkCudaErrors(cudaMemcpy(m_pDevInput, m_pHostInput, (inputCapacity * sizeof(DTYPE)), cudaMemcpyHostToDevice));
-        checkCudaErrors(cudaMemcpy(m_pDevFilter, m_pHostFilter, (filterCapacity * sizeof(DTYPE)), cudaMemcpyHostToDevice));
+        m_pDevInput  = input->GetDeviceData(pTime);
+        m_pDevFilter = weight->GetDeviceData(0);
+        m_pDevOutput = result->GetDeviceData(pTime);
 
         checkCUDNN(cudnnConvolutionForward(this->GetCudnnHandle(), &m_alpha, inputTensorDesc, m_pDevInput, filterDesc, m_pDevFilter, convDesc,
                                            m_algo, m_devWorkSpace, m_sizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));
 
-        checkCudaErrors(cudaMemcpy(m_pHostOutput, m_pDevOutput, (outputCapacity * sizeof(DTYPE)), cudaMemcpyDeviceToHost));
 
-
-
+        checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }
 
-    int ComputeBackPropagateOnGPU() {
-        Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
-
+    int BackPropagateOnGPU(int pTime = 0) {
+        Tensor<DTYPE> *input           = this->GetInput()[0]->GetResult();
+        Tensor<DTYPE> *input_delta     = this->GetInput()[0]->GetDelta();
         Tensor<DTYPE> *weight          = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *weight_gradient = this->GetInput()[1]->GetGradient();
+        Tensor<DTYPE> *this_delta      = this->GetDelta();
 
-        Tensor<DTYPE> *this_delta = this->GetDelta();
-
-        int inputCapacity       = input->GetCapacity();
-        int filterCapacity      = weight->GetCapacity();
-        int inputDeltaCapacity  = input->GetCapacity();
-        int deltaCapacity       = this_delta->GetCapacity();
-        int filterDeltaCapacity = weight_gradient->GetCapacity();
-
-        m_pHostInput       = input->GetLowData();
-        m_pHostFilter      = weight->GetLowData();
-        m_pHostDelta       = this_delta->GetLowData();
-        m_pHostInputDelta  = input_delta->GetLowData();
-        m_pHostFilterDelta = weight_gradient->GetLowData();
-
-        checkCudaErrors(cudaMemcpy(m_pDevInput, m_pHostInput, (inputCapacity) * sizeof(DTYPE), cudaMemcpyHostToDevice));
-        checkCudaErrors(cudaMemcpy(m_pDevFilter, m_pHostFilter, (filterCapacity) * sizeof(DTYPE), cudaMemcpyHostToDevice));
-        checkCudaErrors(cudaMemcpy(m_pDevDelta, m_pHostDelta, (deltaCapacity) * sizeof(DTYPE), cudaMemcpyHostToDevice));
+        m_pDevInput       = input->GetDeviceData(pTime);
+        m_pDevFilter      = weight->GetDeviceData(0);
+        m_pDevDelta       = this_delta->GetDeviceData(pTime);
+        m_pDevInputDelta  = input_delta->GetDeviceData(pTime);
+        m_pDevFilterDelta = weight_gradient->GetDeviceData(0);
 
         checkCUDNN(cudnnConvolutionBackwardData(this->GetCudnnHandle(), &m_alpha, filterDesc, m_pDevFilter, deltaDesc, m_pDevDelta, convDesc,
                                                 m_dataAlgo, m_dataDevWorkSpace, m_dataSizeInBytes, &m_beta, inputDeltaDesc, m_pDevInputDelta));
@@ -478,8 +372,7 @@ public:
         checkCUDNN(cudnnConvolutionBackwardFilter(this->GetCudnnHandle(), &m_alpha, inputTensorDesc, m_pDevInput, deltaDesc, m_pDevDelta, convDesc,
                                                   m_filterAlgo, m_filterDevWorkSpace, m_filterSizeInBytes, &m_beta, filterDesc, m_pDevFilterDelta));
 
-        checkCudaErrors(cudaMemcpy(m_pHostInputDelta, m_pDevInputDelta, (inputDeltaCapacity) * sizeof(DTYPE), cudaMemcpyDeviceToHost));
-        checkCudaErrors(cudaMemcpy(m_pHostFilterDelta, m_pDevFilterDelta, (filterDeltaCapacity) * sizeof(DTYPE), cudaMemcpyDeviceToHost));
+        checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }

@@ -15,7 +15,9 @@ private:
 
 public:
     GlobalAvaragePooling2D(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
+        #if __DEBUG__
         std::cout << "GlobalAvaragePooling2D::GlobalAvaragePooling2D(Operator<DTYPE> *, std::string)" << '\n';
+        #endif  // __DEBUG__
         Alloc(pInput);
     }
 
@@ -38,7 +40,7 @@ public:
         return TRUE;
     }
 
-    int ForwardPropagate() {
+    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
@@ -47,61 +49,7 @@ public:
         Shape *inputTenShape  = input->GetShape();
         Shape *resultTenShape = result->GetShape();
 
-        for (int ti = 0; ti < m_timesize; ti++) {
-            for (int ba = 0; ba < m_batchsize; ba++) {
-                for (int ch = 0; ch < m_channelsize; ch++) {
-                    for (int ro = 0; ro < m_rowsize; ro++) {
-                        for (int co = 0; co < m_colsize; co++) {
-                            (*result)[Index5D(resultTenShape, ti, ba, ch, 0, 0)]
-                                += (*input)[Index5D(inputTenShape, ti, ba, ch, ro, co)];
-                        }
-                    }
-                    (*result)[Index5D(resultTenShape, ti, ba, ch, 0, 0)] /= m_divisor;
-                }
-            }
-        }
-
-        return TRUE;
-    }
-
-    int BackPropagate() {
-        // Tensor<DTYPE> *this_grad = Tensor<DTYPE>::Constants(1, 2, 3, 1, 1, 2.0);
-        Container<Operator<DTYPE> *> *input_contatiner         = this->GetInputContainer();
-        Container<Tensor<DTYPE> *>   *input_gradient_container = (*input_contatiner)[0]->GetGradientContainer();
-        Container<Tensor<DTYPE> *>   *this_gradient_container  = this->GetGradientContainer();
-
-        Tensor<DTYPE> *this_grad  = (*this_gradient_container)[0];
-        Tensor<DTYPE> *input_grad = (*input_gradient_container)[0];
-
-        Shape *resultTenShape = this_grad->GetShape();
-        Shape *inputTenShape  = input_grad->GetShape();
-
-        for (int ti = 0; ti < m_timesize; ti++) {
-            for (int ba = 0; ba < m_batchsize; ba++) {
-                for (int ch = 0; ch < m_channelsize; ch++) {
-                    for (int ro = 0; ro < m_rowsize; ro++) {
-                        for (int co = 0; co < m_colsize; co++) {
-                            (*input_grad)[Index5D(inputTenShape, ti, ba, ch, ro, co)]
-                                += (*this_grad)[Index5D(resultTenShape, ti, ba, ch, 0, 0)] / m_divisor;
-                        }
-                    }
-                }
-            }
-        }
-
-        return TRUE;
-    }
-
-    int ForwardPropagate(int pTime, int pThreadNum) {
-        Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
-
-        Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
-
-        Shape *inputTenShape  = input->GetShape();
-        Shape *resultTenShape = result->GetShape();
-
-        int ti          = pTime;
+        int ti = pTime;
         int numOfThread = this->GetNumOfThread();
 
         for (int ba = pThreadNum; ba < m_batchsize; ba += numOfThread) {
@@ -120,8 +68,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime, int pThreadNum) {
-        // Tensor<DTYPE> *this_grad = Tensor<DTYPE>::Constants(1, 2, 3, 1, 1, 2.0);
+    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
         Container<Operator<DTYPE> *> *input_contatiner         = this->GetInputContainer();
         Container<Tensor<DTYPE> *>   *input_gradient_container = (*input_contatiner)[0]->GetGradientContainer();
         Container<Tensor<DTYPE> *>   *this_gradient_container  = this->GetGradientContainer();
@@ -132,7 +79,7 @@ public:
         Shape *resultTenShape = this_grad->GetShape();
         Shape *inputTenShape  = input_grad->GetShape();
 
-        int ti          = pTime;
+        int ti = pTime;
         int numOfThread = this->GetNumOfThread();
 
         for (int ba = pThreadNum; ba < m_batchsize; ba += numOfThread) {
@@ -149,6 +96,20 @@ public:
 
         return TRUE;
     }
+
+#if __CUDNN__
+    int ForwardPropagateOnGPU(int pTime) {
+        this->ForwardPropagate(pTime);
+        return TRUE;
+    }
+
+    int BackPropagateOnGPU(int pTime) {
+        this->BackPropagate(pTime);
+
+        return TRUE;
+    }
+
+#endif  // __CUDNN__
 };
 //
 #endif  // __AVGPOOLING__

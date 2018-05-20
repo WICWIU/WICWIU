@@ -35,7 +35,7 @@ public:
         }
 
         // Add (for skip Connection)
-        out = this->AddOperator(new Add<DTYPE>(remember, out, "ResNet_Skip_Add" + pName));
+        out = this->AddOperator(new Addall<DTYPE>(remember, out, "ResNet_Skip_Add" + pName));
         // out = this->AddOperator(new Addall<DTYPE>(remember, out, "ResNet_Skip_Add"));
 
         // Last Relu
@@ -84,7 +84,7 @@ public:
             remember = this->AddOperator(new BatchNormalizeLayer2D<DTYPE>(remember, m_expansion * pNumOfChannel, "BasicBlock_BN1"));
         }
 
-        out = this->AddOperator(new Add<DTYPE>(remember, out, "ResNet_Skip_Add"));
+        out = this->AddOperator(new Addall<DTYPE>(remember, out, "ResNet_Skip_Add"));
         // out = this->AddOperator(new Addall<DTYPE>(remember, "ResNet_Skip_Add"));
 
         out = this->AddOperator(new Relu<DTYPE>(out, "BasicBlock_Relu1"));

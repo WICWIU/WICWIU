@@ -13,7 +13,9 @@ private:
 
 public:
     GradientDescentOptimizer(Container<Tensorholder<DTYPE> *> *pParameterContainer, float pLearningRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
+        #if __DEBUG__
         std::cout << "GradientDescentOptimizer::GradientDescentOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
+        #endif  // __DEBUG__
         m_ppParameter    = NULL;
         m_aaVelocity     = NULL;
         m_numOfParameter = 0;
@@ -23,7 +25,9 @@ public:
     }
 
     GradientDescentOptimizer(Container<Tensorholder<DTYPE> *> *pParameterContainer, float pLearningRate, float momentum, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
+        #if __DEBUG__
         std::cout << "GradientDescentOptimizer::GradientDescentOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
+        #endif  // __DEBUG__
         m_ppParameter    = NULL;
         m_aaVelocity     = NULL;
         m_numOfParameter = 0;
@@ -33,7 +37,9 @@ public:
     }
 
     ~GradientDescentOptimizer() {
+        #if __DEBUG__
         std::cout << "GradientDescentOptimizer::~GradientDescentOptimizer()" << '\n';
+        #endif  // __DEBUG__
     }
 
     int Alloc() {
@@ -82,14 +88,12 @@ public:
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
-        int batchsize = gradient->GetBatchSize();
-
         float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
 
         int capacity = trainable_data->GetCapacity();
 
         for (int i = 0; i < capacity; i++) {
-            (*trainable_data)[i] += learning_rate * (*gradient)[i] / batchsize;
+            (*trainable_data)[i] += learning_rate * (*gradient)[i];
         }
 
         return TRUE;
@@ -110,6 +114,75 @@ public:
 
         return TRUE;
     }
+
+#if __CUDNN__
+
+
+    virtual int UpdateVariableOnGPU() {
+        if (m_momentum == 0.f) {
+            for (int i = 0; i < m_numOfParameter; i++) {
+                UpdateVariableOnGPU((*m_ppParameter)[i]);
+            }
+        } else {
+            for (int i = 0; i < m_numOfParameter; i++) {
+                UpdateVariableOnGPU((*m_ppParameter)[i], (*m_aaVelocity)[i]);
+            }
+        }
+
+        return TRUE;
+    }
+
+    int UpdateVariableOnGPU(Tensorholder<DTYPE> *pParameter) {
+        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
+        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+
+        cudnnTensorDescriptor_t dataDesc = trainable_data->GetDescriptor();
+        cudnnTensorDescriptor_t gradDesc = gradient->GetDescriptor();
+
+        DTYPE *m_pDevData = trainable_data->GetDeviceData();
+        DTYPE *m_pDevGrad = gradient->GetDeviceData();
+
+        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+
+        float alpha = 1.f;
+        float beta  = learning_rate;
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &beta, gradDesc, m_pDevGrad,
+                                  &alpha, dataDesc, m_pDevData));
+
+        return TRUE;
+    }
+
+    int UpdateVariableOnGPU(Tensorholder<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
+        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
+        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+
+        cudnnTensorDescriptor_t dataDesc = trainable_data->GetDescriptor();
+        cudnnTensorDescriptor_t gradDesc = gradient->GetDescriptor();
+        cudnnTensorDescriptor_t veloDesc = pVelocity->GetDescriptor();
+
+        DTYPE *m_pDevData = trainable_data->GetDeviceData();
+        DTYPE *m_pDevGrad = gradient->GetDeviceData();
+        DTYPE *m_pDevVelo = pVelocity->GetDeviceData();
+
+        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+
+        float alpha = 1.f;
+        float beta  = learning_rate;
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &beta, gradDesc, m_pDevGrad,
+                                  &m_momentum, veloDesc, m_pDevVelo));
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &alpha, veloDesc, m_pDevVelo,
+                                  &alpha, dataDesc, m_pDevData));
+
+        return TRUE;
+    }
+
+#endif  // if __CUDNN__
 };
 
 
