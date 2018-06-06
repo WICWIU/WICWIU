@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "../../Header/NeuralNetwork.h"
+#include "../../WICWIU_src/NeuralNetwork.h"
 
 class my_CNN : public NeuralNetwork<float>{
 private:
