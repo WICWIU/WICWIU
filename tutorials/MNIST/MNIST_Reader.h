@@ -4,7 +4,7 @@
 #include <ctime>
 #include <cstdlib>
 
-#include "../WICWIU_src/Tensor.h"
+#include "../../WICWIU_src/Tensor.h"
 
 #define DIMOFMNISTIMAGE     784
 #define DIMOFMNISTLABEL     10

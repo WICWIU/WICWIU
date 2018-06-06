@@ -1,4 +1,4 @@
-/*g++ -g -o testing -std=c++11 main.cpp ../WICWIU_src/Shape.cpp ../WICWIU_src/Data.cpp ../WICWIU_src/Tensor.cpp ../WICWIU_src/Operator.cpp ../WICWIU_src/LossFunction_.cpp ../WICWIU_src/Optimizer.cpp ../WICWIU_src/NeuralNetwork_.cpp*/
+/*g++ -g -o testing -std=c++11 main.cpp ../../WICWIU_src/Shape.cpp ../../WICWIU_src/Data.cpp ../../WICWIU_src/Tensor.cpp ../../WICWIU_src/Operator.cpp ../../WICWIU_src/LossFunction_.cpp ../../WICWIU_src/Optimizer.cpp ../../WICWIU_src/NeuralNetwork_.cpp*/
 
 #include "net/my_CNN.h"
 #include "net/my_NN.h"
