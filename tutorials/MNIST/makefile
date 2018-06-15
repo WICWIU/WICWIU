@@ -1,8 +1,9 @@
 .SUFFIXES = .cpp .o
 
-CFLAGS = -std=c++11
+CFLAGS = -O2 -std=c++11
 ENABLE_CUDNN = -D__CUDNN__
-DFLAGS = -g -D__DEBUG__
+#DFLAGS = -g -D__DEBUG__
+
 LFLAGS = -lcudart -lcudnn -lpthread
 
 INCLUDE_PATH = -I../../JpegLib -I/usr/local/cuda/include
