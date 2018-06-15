@@ -53,6 +53,11 @@
 </table>
 
 
+## WICWIU를 사용하기 위해서는 다음 패키지들이 설치되어 있어야 합니다.
+* NVIDIA driver
+* cuda toolkit
+* cuDNN
+
 ## WICWIU는 다음과 같은 방법으로 설치하실 수 있습니다.
 
 ```bash
