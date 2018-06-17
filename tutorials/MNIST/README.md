@@ -20,5 +20,5 @@ $ make
 
 Excute model:
 ```
-$ ./main.o
+$ ./main
 ```
