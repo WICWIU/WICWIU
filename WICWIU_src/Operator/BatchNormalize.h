@@ -9,7 +9,7 @@ public:
     // enum class Mode;
 
     BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, std::string pName) : Operator<DTYPE>(pName) {
-                #if __DEBUG__
+                #ifdef __DEBUG__
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
             #endif  // __DEBUG__
 
@@ -17,7 +17,7 @@ public:
     }
 
     BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, float pEpsilon, std::string pName) : Operator<DTYPE>(pName) {
-                #if __DEBUG__
+                #ifdef __DEBUG__
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, float, std:: string)" << '\n';
             #endif  // __DEBUG__
 
@@ -25,7 +25,7 @@ public:
     }
 
     ~BatchNormalize() {
-                #if __DEBUG__
+                #ifdef __DEBUG__
         std::cout << "BatchNormalize:: ~ BatchNormalize()" << '\n';
             #endif  // __DEBUG__
 
@@ -87,7 +87,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime) {
         this->ForwardPropagate();
         return TRUE;

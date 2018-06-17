@@ -11,7 +11,7 @@ private:
 
 public:
     Container() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Container<DTYPE>::Container()" << '\n';
         #endif  // __DEBUG__
         m_aElement = NULL;
@@ -66,6 +66,57 @@ public:
         return element;
     }
 
+    DTYPE Pop(DTYPE pElement) {
+        int index = -1;
+
+        for (int i = 0; i < m_size; i++) {
+            if (m_aElement[i] == pElement) index = i;
+        }
+
+        if (index == -1) {
+            std::cout << "There is no element!" << '\n';
+            return NULL;
+        }
+
+        // DTYPE  element = m_aElement[index];
+        DTYPE *temp = new DTYPE[m_size - 1];
+
+        for (int i = 0, j = 0; i < m_size - 1;) {
+            if (index != j) {
+                temp[i] = m_aElement[j];
+                i++;
+            }
+
+            j++;
+        }
+
+        if (m_aElement) {
+            delete[] m_aElement;
+            m_aElement = NULL;
+        }
+
+        m_aElement = temp;
+
+        m_size--;
+
+        return pElement;
+    }
+
+    int Reverse() {
+        DTYPE *temp = new DTYPE[m_size];
+
+        for (int i = 0; i < m_size; i++) temp[m_size - i - 1] = m_aElement[i];
+
+        if (m_aElement) {
+            delete[] m_aElement;
+            m_aElement = NULL;
+        }
+
+        m_aElement = temp;
+
+        return TRUE;
+    }
+
     int SetElement(DTYPE pElement, unsigned int index) {
         m_aElement[index] = pElement;
         return TRUE;
@@ -89,7 +140,7 @@ public:
         return m_aElement[index];
     }
 
-    DTYPE operator[](unsigned int index) {
+    DTYPE& operator[](unsigned int index) {
         return m_aElement[index];
     }
 };

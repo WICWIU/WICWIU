@@ -1,4 +1,4 @@
-#if __CUDNN__
+#ifdef __CUDNN__
 
 #ifndef __CUDNN_BATCH_NORMALIZE_LAYER__
 #define __CUDNN_BATCH_NORMALIZE_LAYER__ value

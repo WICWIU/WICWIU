@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#include <time.h>
 #include <pthread.h>
 
 // define
@@ -33,6 +34,5 @@ enum Device {
     CPU,
     GPU,
 };
-
 
 #endif  // COMMON_H_

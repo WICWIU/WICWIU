@@ -5,15 +5,15 @@
 
 template<typename DTYPE> class GradientDescentOptimizer : public Optimizer<DTYPE>{
 private:
-    Container<Tensorholder<DTYPE> *> *m_ppParameter;
+    Container<Operator<DTYPE> *> *m_ppParameter;
     Container<Tensor<DTYPE> *> *m_aaVelocity;
 
     int m_numOfParameter;
     float m_momentum;
 
 public:
-    GradientDescentOptimizer(Container<Tensorholder<DTYPE> *> *pParameterContainer, float pLearningRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
-        #if __DEBUG__
+    GradientDescentOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
+        #ifdef __DEBUG__
         std::cout << "GradientDescentOptimizer::GradientDescentOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
         #endif  // __DEBUG__
         m_ppParameter    = NULL;
@@ -24,8 +24,8 @@ public:
         Alloc();
     }
 
-    GradientDescentOptimizer(Container<Tensorholder<DTYPE> *> *pParameterContainer, float pLearningRate, float momentum, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
-        #if __DEBUG__
+    GradientDescentOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float momentum, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
+        #ifdef __DEBUG__
         std::cout << "GradientDescentOptimizer::GradientDescentOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
         #endif  // __DEBUG__
         m_ppParameter    = NULL;
@@ -37,7 +37,7 @@ public:
     }
 
     ~GradientDescentOptimizer() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "GradientDescentOptimizer::~GradientDescentOptimizer()" << '\n';
         #endif  // __DEBUG__
     }
@@ -84,7 +84,7 @@ public:
         return TRUE;
     }
 
-    int UpdateVariable(Tensorholder<DTYPE> *pParameter) {
+    int UpdateVariable(Operator<DTYPE> *pParameter) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -99,7 +99,7 @@ public:
         return TRUE;
     }
 
-    int UpdateVariable(Tensorholder<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
+    int UpdateVariable(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -115,7 +115,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
 
 
     virtual int UpdateVariableOnGPU() {
@@ -132,15 +132,15 @@ public:
         return TRUE;
     }
 
-    int UpdateVariableOnGPU(Tensorholder<DTYPE> *pParameter) {
+    int UpdateVariableOnGPU(Operator<DTYPE> *pParameter) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
         cudnnTensorDescriptor_t dataDesc = trainable_data->GetDescriptor();
         cudnnTensorDescriptor_t gradDesc = gradient->GetDescriptor();
 
-        DTYPE *m_pDevData = trainable_data->GetDeviceData();
-        DTYPE *m_pDevGrad = gradient->GetDeviceData();
+        DTYPE *m_pDevData = trainable_data->GetGPUData();
+        DTYPE *m_pDevGrad = gradient->GetGPUData();
 
         float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
 
@@ -154,7 +154,7 @@ public:
         return TRUE;
     }
 
-    int UpdateVariableOnGPU(Tensorholder<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
+    int UpdateVariableOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -162,9 +162,9 @@ public:
         cudnnTensorDescriptor_t gradDesc = gradient->GetDescriptor();
         cudnnTensorDescriptor_t veloDesc = pVelocity->GetDescriptor();
 
-        DTYPE *m_pDevData = trainable_data->GetDeviceData();
-        DTYPE *m_pDevGrad = gradient->GetDeviceData();
-        DTYPE *m_pDevVelo = pVelocity->GetDeviceData();
+        DTYPE *m_pDevData = trainable_data->GetGPUData();
+        DTYPE *m_pDevGrad = gradient->GetGPUData();
+        DTYPE *m_pDevVelo = pVelocity->GetGPUData();
 
         float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
 

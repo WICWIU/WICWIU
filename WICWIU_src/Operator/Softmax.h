@@ -12,28 +12,28 @@ public:
     // 상속을 받는 Operator(Parent class)의 Alloc()을 실행하고, (Operator::Alloc())
     // 나머지 MetaParameter에 대한 Alloc()을 진행한다. (Softmax::Alloc())
     Softmax(Operator<DTYPE> *pInput, DTYPE epsilon = 1e-20) : Operator<DTYPE>(pInput) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
         Alloc(pInput, epsilon);
     }
 
     Softmax(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
         Alloc(pInput);
     }
 
     Softmax(Operator<DTYPE> *pInput, DTYPE epsilon, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
         Alloc(pInput, epsilon);
     }
 
     ~Softmax() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Softmax::~Softmax()" << '\n';
         #endif  // __DEBUG__
     }

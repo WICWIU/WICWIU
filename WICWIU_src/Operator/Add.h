@@ -14,7 +14,7 @@ private:
     int m_rowsize;
     int m_colsize;
 
-#if __CUDNN__
+#ifdef __CUDNN__
     cudnnTensorDescriptor_t leftTensorDesc, rightTensorDesc, outputTensorDesc, leftDeltaDesc, rightDeltaDesc, deltaDesc;
     DTYPE *m_pDevLeft, *m_pDevRight, *m_pDevOutput, *m_pDevLeftDelta, *m_pDevRightDelta, *m_pDevDelta;
 
@@ -25,20 +25,20 @@ private:
 
 public:
     Addall(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput, std::string pName) : Operator<DTYPE>(pLeftInput, pRightInput, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Addall::Addall(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pLeftInput, pRightInput);
     }
 
     ~Addall() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Addall::~Addall()" << '\n';
         #endif  // __DEBUG__
     }
 
     int Alloc(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Addall::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
@@ -58,7 +58,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     void InitializeAttributeForGPU() {
         m_alpha = 1;
         m_beta  = 0;
@@ -94,7 +94,7 @@ public:
 #endif  // if __CUDNN__
 
     void Delete() {
-#if __CUDNN__
+#ifdef __CUDNN__
 
         if (leftTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(leftTensorDesc));
         leftTensorDesc = NULL;
@@ -170,7 +170,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
@@ -178,9 +178,9 @@ public:
         Tensor<DTYPE> *right  = (*input_contatiner)[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        m_pDevLeft   = left->GetDeviceData(pTime);
-        m_pDevRight  = right->GetDeviceData(pTime);
-        m_pDevOutput = result->GetDeviceData(pTime);
+        m_pDevLeft   = left->GetGPUData(pTime);
+        m_pDevRight  = right->GetGPUData(pTime);
+        m_pDevOutput = result->GetGPUData(pTime);
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, leftTensorDesc, m_pDevLeft,
@@ -200,9 +200,9 @@ public:
         Tensor<DTYPE> *right_grad = (*input_contatiner)[1]->GetGradient();
         Tensor<DTYPE> *this_grad  = this->GetGradient();
 
-        m_pDevLeftDelta  = left_grad->GetDeviceData(pTime);
-        m_pDevRightDelta = right_grad->GetDeviceData(pTime);
-        m_pDevDelta      = this_grad->GetDeviceData(pTime);
+        m_pDevLeftDelta  = left_grad->GetGPUData(pTime);
+        m_pDevRightDelta = right_grad->GetGPUData(pTime);
+        m_pDevDelta      = this_grad->GetGPUData(pTime);
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
@@ -231,7 +231,7 @@ private:
     int m_rowsize;
     int m_colsize;
 
-#if __CUDNN__
+#ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, biasTensorDesc, outputTensorDesc, inputDeltaDesc, biasDeltaDesc, deltaDesc;
     DTYPE *m_pDevInput, *m_pDevBias, *m_pDevOutput, *m_pDevInputDelta, *m_pDevBiasDelta, *m_pDevDelta;
 
@@ -242,20 +242,20 @@ private:
 
 public:
     AddColWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName) : Operator<DTYPE>(pInput, pBias, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "AddColWise::AddColWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, pBias);
     }
 
     ~AddColWise() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "AddColWise::~AddColWise()" << '\n';
         #endif  // __DEBUG__
     }
 
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "AddColWise::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
@@ -268,7 +268,7 @@ public:
         m_rowsize     = (*m_pInputTenShape)[3];
         m_colsize     = (*m_pInputTenShape)[4];
 
-        #if __DEBUG__
+        #ifdef __DEBUG__
 
         if ((*m_pBiasTenShape)[0] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
 
@@ -286,7 +286,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     void InitializeAttributeForGPU() {
         m_alpha = 1;
         m_beta  = 0;
@@ -322,7 +322,7 @@ public:
 #endif  // if __CUDNN__
 
     void Delete() {
-#if __CUDNN__
+#ifdef __CUDNN__
 
         if (inputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputTensorDesc));
         inputTensorDesc = NULL;
@@ -400,7 +400,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
@@ -408,9 +408,9 @@ public:
         Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        m_pDevInput  = input->GetDeviceData(pTime);
-        m_pDevBias   = bias->GetDeviceData(0);
-        m_pDevOutput = result->GetDeviceData(pTime);
+        m_pDevInput  = input->GetGPUData(pTime);
+        m_pDevBias   = bias->GetGPUData(0);
+        m_pDevOutput = result->GetGPUData(pTime);
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, inputTensorDesc, m_pDevInput,
@@ -430,9 +430,9 @@ public:
         Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
         Tensor<DTYPE> *this_grad  = this->GetGradient();
 
-        m_pDevInputDelta = input_grad->GetDeviceData(pTime);
-        m_pDevBiasDelta  = bias_grad->GetDeviceData(0);
-        m_pDevDelta      = this_grad->GetDeviceData(pTime);
+        m_pDevInputDelta = input_grad->GetGPUData(pTime);
+        m_pDevBiasDelta  = bias_grad->GetGPUData(0);
+        m_pDevDelta      = this_grad->GetGPUData(pTime);
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
@@ -460,7 +460,7 @@ private:
     int m_rowsize;
     int m_colsize;
 
-#if __CUDNN__
+#ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, biasTensorDesc, outputTensorDesc, inputDeltaDesc, biasDeltaDesc, deltaDesc;
     DTYPE *m_pDevInput, *m_pDevBias, *m_pDevOutput, *m_pDevInputDelta, *m_pDevBiasDelta, *m_pDevDelta;
 
@@ -471,20 +471,20 @@ private:
 
 public:
     AddChannelWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName) : Operator<DTYPE>(pInput, pBias, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "AddChannelWise::AddChannelWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, pBias);
     }
 
     ~AddChannelWise() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "AddChannelWise::~AddChannelWise()" << '\n';
         #endif  // __DEBUG__
     }
 
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "AddColWise::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
@@ -497,7 +497,7 @@ public:
         m_rowsize     = (*m_pInputTenShape)[3];
         m_colsize     = (*m_pInputTenShape)[4];
 
-        #if __DEBUG__
+        #ifdef __DEBUG__
 
         if ((*m_pBiasTenShape)[0] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
 
@@ -515,7 +515,7 @@ public:
         return TRUE;
     }
 
-    #if __CUDNN__
+    #ifdef __CUDNN__
     void InitializeAttributeForGPU() {
         m_alpha = 1;
         m_beta  = 0;
@@ -551,7 +551,7 @@ public:
     #endif  // if __CUDNN__
 
     void Delete() {
-    #if __CUDNN__
+    #ifdef __CUDNN__
 
         if (inputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputTensorDesc));
         inputTensorDesc = NULL;
@@ -628,7 +628,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
@@ -636,9 +636,9 @@ public:
         Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        m_pDevInput  = input->GetDeviceData(pTime);
-        m_pDevBias   = bias->GetDeviceData(0);
-        m_pDevOutput = result->GetDeviceData(pTime);
+        m_pDevInput  = input->GetGPUData(pTime);
+        m_pDevBias   = bias->GetGPUData(0);
+        m_pDevOutput = result->GetGPUData(pTime);
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, inputTensorDesc, m_pDevInput,
@@ -659,9 +659,9 @@ public:
         Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
         Tensor<DTYPE> *this_grad  = this->GetGradient();
 
-        m_pDevInputDelta = input_grad->GetDeviceData(pTime);
-        m_pDevBiasDelta  = bias_grad->GetDeviceData(0);
-        m_pDevDelta      = this_grad->GetDeviceData(pTime);
+        m_pDevInputDelta = input_grad->GetGPUData(pTime);
+        m_pDevBiasDelta  = bias_grad->GetGPUData(0);
+        m_pDevDelta      = this_grad->GetGPUData(pTime);
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,

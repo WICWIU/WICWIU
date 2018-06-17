@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <vector>
@@ -239,7 +240,11 @@ int ReverseInt(int i) {
 template<typename DTYPE> void IMAGE_Reader(string DATAPATH, DTYPE **pImage) {
     ifstream fin;
 
-    fin.open(DATAPATH, ios::binary);
+    if (DATAPATH == TEST_IMAGE_FILE){
+        fin.open(TEST_IMAGE_FILE, ios_base::binary);
+    } else if(DATAPATH == TRAIN_IMAGE_FILE){
+        fin.open(TRAIN_IMAGE_FILE, ios_base::binary);
+    }
 
     if (fin.is_open()) {
         int magicNumber = 0;
@@ -278,7 +283,11 @@ template<typename DTYPE>
 void LABEL_Reader(string DATAPATH, DTYPE **pLabel) {
     ifstream fin;
 
-    fin.open(DATAPATH, ios::binary);
+    if (DATAPATH == TEST_LABEL_FILE){
+        fin.open(TEST_LABEL_FILE, ios_base::binary);
+    } else if(DATAPATH == TRAIN_LABEL_FILE){
+        fin.open(TRAIN_LABEL_FILE, ios_base::binary);
+    }
 
     if (fin.is_open()) {
         int magicNumber = 0;
@@ -301,7 +310,7 @@ void LABEL_Reader(string DATAPATH, DTYPE **pLabel) {
 }
 
 template<typename DTYPE>
-DTYPE** ReshapeData(OPTION pOption) {
+DTYPE** ReShapeData(OPTION pOption) {
     if (pOption == TESTIMAGE) {
         DTYPE **TestImage = new DTYPE *[NUMOFTESTDATA];
         IMAGE_Reader(TEST_IMAGE_FILE, TestImage);
@@ -329,10 +338,10 @@ template<typename DTYPE>
 MNISTDataSet<DTYPE>* CreateMNISTDataSet() {
     MNISTDataSet<DTYPE> *dataset = new MNISTDataSet<DTYPE>();
 
-    dataset->SetTestImage(ReshapeData<DTYPE>(TESTIMAGE));
-    dataset->SetTestLabel(ReshapeData<DTYPE>(TESTLABEL));
-    dataset->SetTrainImage(ReshapeData<DTYPE>(TRAINIMAGE));
-    dataset->SetTrainLabel(ReshapeData<DTYPE>(TRAINLABEL));
+    dataset->SetTestImage(ReShapeData<DTYPE>(TESTIMAGE));
+    dataset->SetTestLabel(ReShapeData<DTYPE>(TESTLABEL));
+    dataset->SetTrainImage(ReShapeData<DTYPE>(TRAINIMAGE));
+    dataset->SetTrainLabel(ReShapeData<DTYPE>(TRAINLABEL));
 
     return dataset;
 }

@@ -12,141 +12,106 @@ enum Mode {
 
 template<typename DTYPE> class Operator {
 private:
-    Container<Tensor<DTYPE> *> *m_aaResult;
-    Container<Tensor<DTYPE> *> *m_aaGradient;
-
     Container<Operator<DTYPE> *> *m_apOutput;
     Container<Operator<DTYPE> *> *m_apInput;
-
-    int m_OutputDegree;
-    int m_InputDegree;
-
-    int m_currentOutputDegree;
-    int m_currentInputDegree;
-
-    int m_numOfParameter;
-
+    Container<Tensor<DTYPE> *> *m_aaResult;
+    Container<Tensor<DTYPE> *> *m_aaGradient;
     std::string m_name;
-
     Device m_Device;
-
-    int m_isTensorholder;
+    Mode m_Mode;
+    int m_numOfThread;
+    int m_isParameter;
     int m_isTrainable;
 
-    int m_numOfThread;
+#ifdef __CUDNN__
+    cudnnHandle_t m_pCudnnHandle;
+#endif  // __CUDNN__
+
+private:
+    int  Alloc();
+    int  Alloc(int numInput, ...);
+    void Delete();
+
+    int  AddInputEdge(Operator<DTYPE> *pInput);
+    int  AddOutputEdge(Operator<DTYPE> *pOutput);
+
+
+#ifdef __CUDNN__
+
+#endif  // __CUDNN__
 
 public:
-#if __CUDNN__
-    cudnnHandle_t m_pCudnnHandle;
-    cudnnHandle_t& GetCudnnHandle();
-    virtual void   InitializeAttributeForGPU();
-    virtual void   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
-    void           cudnnResize(int size, float *data);
-#endif  // if __CUDNN__
-
     Operator(std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME");
     virtual ~Operator();
 
-    virtual int                         Alloc();
-    virtual int                         Alloc(int numInput, ...);
-    virtual void                        Delete();
+    int                                   AddEdgebetweenOperators(Operator<DTYPE> *pInput);
+    int                                   AddEdgebetweenOperators(int numInput, ...);
+    int                                   AddResult(Tensor<DTYPE> *pTensor);
+    int                                   AddGradient(Tensor<DTYPE> *pTensor);
+    int                                   AddDelta(Tensor<DTYPE> *pTensor);
+    int                                   SetResult(Tensor<DTYPE> *pTensor);     // 0 or 1 일 때만 진행 가능
+    int                                   SetGradient(Tensor<DTYPE> *pTensor);
+    int                                   SetDelta(Tensor<DTYPE> *pTensor);
 
-    void                                SetResult(Tensor<DTYPE> *pTensor);
-    void                                AddResult(Tensor<DTYPE> *pTensor);
+    int                                   SetDevice(Device pDevice);
+    int                                   SetNumOfThread(int pNumOfThread);
 
-    void                                SetGradient(Tensor<DTYPE> *pTensor);
-    void                                AddGradient(Tensor<DTYPE> *pTensor);
+    int                                   SetIsTensorholder(int pIsParameter);
+    int                                   SetIsTrainable(int pIsTrainable);
 
-    void                                SetDelta(Tensor<DTYPE> *pTensor);
-    void                                AddDelta(Tensor<DTYPE> *pTensor);
+    virtual int                           SetModeTraining();
+    virtual int                           SetModeAccumulating();
+    virtual int                           SetModeInferencing();
 
-    void                                IncreaseCurrentOutputDegree();
-    void                                IncreaseCurrentInputDegree();
+    virtual Operator<DTYPE>            ** GetOutput();
+    virtual Container<Operator<DTYPE> *>* GetOutputContainer();
+    virtual Operator<DTYPE>            ** GetInput();
+    virtual Container<Operator<DTYPE> *>* GetInputContainer();
+    virtual Tensor<DTYPE>               * GetResult() const;
+    virtual Container<Tensor<DTYPE> *>  * GetResultContainer();
+    virtual Tensor<DTYPE>               * GetGradient() const;
+    virtual Container<Tensor<DTYPE> *>  * GetGradientContainer();
+    virtual Tensor<DTYPE>               * GetDelta() const;
+    virtual Container<Tensor<DTYPE> *>  * GetDeltaContainer();
 
-    int                                 _AddInputEdge(Operator<DTYPE> *pInput);
-    int                                 _AddOutputEdge(Operator<DTYPE> *pOutput);
-    void                                AddEdgebetweenOperators(Operator<DTYPE> *pInput);
+    std::string                           GetName() const;
+    virtual Device                        GetDevice();
+    int                                   GetNumOfThread();
+    int                                   GetIsTensorholder();
+    int                                   GetIsTrainable();
 
-    virtual Tensor<DTYPE>             * GetResult() const;
-    virtual Container<Tensor<DTYPE> *>* GetResultContainer();
-
-    virtual Tensor<DTYPE>             * GetGradient() const;
-    virtual Container<Tensor<DTYPE> *>* GetGradientContainer();
-
-    virtual Tensor<DTYPE>             * GetDelta() const;
-    virtual Container<Tensor<DTYPE> *>* GetDeltaContainer();
-
-    Operator<DTYPE>                  ** GetOutput();
-    Container<Operator<DTYPE> *>      * GetOutputContainer();
-
-    Operator<DTYPE>                  ** GetInput();
-    Container<Operator<DTYPE> *>      * GetInputContainer();
-
-    int                                 GetOutputDegree() const;
-    int                                 GetInputDegree() const;
-
-    int                                 GetCurrentOutputDegree() const;
-    int                                 GetCurrentInputDegree() const;
-
-    std::string                         GetName() const;
-
-    // Operator<DTYPE>             * Concatenate(Operator<DTYPE> *src, Operator<DTYPE> *dst, int axis = 0);
-
-    virtual int ForwardPropagate(int pTime = 0, int pThreadNum = 0);
-    virtual int BackPropagate(int pTime = 0, int pThreadNum = 0);
-
-#if __CUDNN__
-    virtual int ForwardPropagateOnGPU(int pTime = 0);
-    virtual int BackPropagateOnGPU(int pTime = 0);
-#endif  // __CUDNN__
+    virtual int                           ForwardPropagate(int pTime = 0, int pThreadNum = 0);
+    virtual int                           BackPropagate(int pTime = 0, int pThreadNum = 0);
 
     // reset value
-    virtual int  ResetResult();
-    virtual int  ResetGradient();
+    virtual int                           ResetResult();
+    virtual int                           ResetGradient();
 
-    virtual void SetModeTraining();
-    virtual void SetModeAccumulating();
-    virtual void SetModeInferencing();
+    virtual void                          PrintInformation();
 
-    virtual void SetDeviceCPU();
-    virtual void SetDeviceCPU(int pNumOfThread);
+    virtual void                          SetDeviceCPU();
+    virtual void                          SetDeviceCPU(int pNumOfThread);
+
+    virtual int                           SetResultOnCPU();
+    virtual int                           SetGradientOnCPU();
 #ifdef __CUDNN__
+    int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
+    virtual int                           SetResultOnGPU();
+    virtual int                           SetGradientOnGPU();
 
-    // Setting Supporter
-    virtual int  SetResultCPU();
-    virtual int  SetGradientCPU();
+    virtual void                          SetDeviceGPU();
+    virtual void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle);
+    virtual void                          InitializeAttributeForGPU();
 
-    virtual void SetDeviceGPU();
+    cudnnHandle_t& GetCudnnHandle();
 
-    // Setting Supporter
-    virtual int  SetResultGPU();
-    virtual int  SetGradientGPU();
+    virtual int    ForwardPropagateOnGPU(int pTime = 0);
+    virtual int    BackPropagateOnGPU(int pTime = 0);
+
 
 #endif  // if __CUDNN__
-
-    virtual Device GetDevice() {
-        return m_Device;
-    }
-
-    int GetNumOfThread() {
-        return m_numOfThread;
-    }
-
-    virtual int GetNumOfParameter() {
-        return 0;
-    }
-
-    virtual Container<Tensorholder<DTYPE> *>* GetParameterContainer() {
-        return NULL;
-    }
-
-    virtual Tensorholder<DTYPE>* PopParameter() {
-        return NULL;
-    }
-
-    virtual void PrintInformation();
 };
 
 #endif  // OPERATOR_H_

@@ -1,7 +1,7 @@
 #ifndef LossFunction_H_
 #define LossFunction_H_
 
-#include "Operator_utils.h"
+#include "Layer_utils.h"
 
 template<typename DTYPE> class LossFunction {
 private:
@@ -19,7 +19,7 @@ private:
 
     int m_numOfThread;
 
-#if __CUDNN__
+#ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
 #endif  // if __CUDNN__
 
@@ -58,17 +58,18 @@ public:
 #ifdef __CUDNN__
 
     // Setting Supporter
-    virtual int    SetResultCPU();
-    virtual int    SetGradientCPU();
+    virtual int    SetResultOnCPU();
+    virtual int    SetGradientOnCPU();
 
     virtual void   SetDeviceGPU();
+    virtual void   SetDeviceGPU(cudnnHandle_t& pCudnnHandle);
+    virtual void   InitializeAttributeForGPU();
 
-    virtual void   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     cudnnHandle_t& GetCudnnHandle();
 
     // Setting Supporter
-    virtual int    SetResultGPU();
-    virtual int    SetGradientGPU();
+    virtual int    SetResultOnGPU();
+    virtual int    SetGradientOnGPU();
 
 #endif  // if __CUDNN__
 

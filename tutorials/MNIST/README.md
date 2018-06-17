@@ -14,18 +14,11 @@ This tutorial code is served by wicwiu team and you can test CNN model easily
 
 start with ‘git bash’ (if you can use makefile):
 ```bash
-$ make main_gpu
+$ make
 ```
-
-or
-
-```bash
-$ make main_cpu
-```
-
 ---------------------------------------
 
 Excute model:
 ```
-$ ./testing
+$ ./main.o
 ```

@@ -5,7 +5,7 @@
 
 template<typename DTYPE> class Relu : public Operator<DTYPE>{
 private:
-#if __CUDNN__
+#ifdef __CUDNN__
     cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
     cudnnActivationDescriptor_t actDesc;
     DTYPE *m_pDevInput, *m_pDevOutput, *m_pDevInputDelta, *m_pDevDelta;
@@ -18,21 +18,21 @@ private:
 
 public:
     Relu(Operator<DTYPE> *pInput) : Operator<DTYPE>(pInput) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput);
     }
 
     Relu(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput);
     }
 
     ~Relu() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Relu::~Relu()" << '\n';
         #endif  // __DEBUG__
 
@@ -40,7 +40,7 @@ public:
     }
 
     int Alloc(Operator<DTYPE> *pInput) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Relu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
@@ -57,7 +57,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     void InitializeAttributeForGPU() {
         Operator<DTYPE> *pInput = this->GetInput()[0];
 
@@ -97,7 +97,7 @@ public:
 #endif  // if __CUDNN__
 
     void Delete() {
-#if __CUDNN__
+#ifdef __CUDNN__
 
         if (m_aInputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aInputTensorDesc));
         m_aInputTensorDesc = NULL;
@@ -188,13 +188,13 @@ public:
         else return data2;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        m_pDevInput  = input->GetDeviceData(pTime);
-        m_pDevOutput = result->GetDeviceData(pTime);
+        m_pDevInput  = input->GetGPUData(pTime);
+        m_pDevOutput = result->GetGPUData(pTime);
 
         checkCUDNN(cudnnActivationForward(this->GetCudnnHandle(), actDesc, &m_alpha,
                                           m_aInputTensorDesc, m_pDevInput, &m_beta,
@@ -210,10 +210,10 @@ public:
         Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
 
-        m_pDevInput      = input->GetDeviceData(pTime);
-        m_pDevOutput     = result->GetDeviceData(pTime);
-        m_pDevDelta      = this_delta->GetDeviceData(pTime);
-        m_pDevInputDelta = input_delta->GetDeviceData(pTime);
+        m_pDevInput      = input->GetGPUData(pTime);
+        m_pDevOutput     = result->GetGPUData(pTime);
+        m_pDevDelta      = this_delta->GetGPUData(pTime);
+        m_pDevInputDelta = input_delta->GetGPUData(pTime);
 
         checkCUDNN(cudnnActivationBackward(this->GetCudnnHandle(), actDesc, &m_alpha,
                                            m_aOutputTensorDesc, m_pDevOutput,

@@ -4,8 +4,8 @@ template class Optimizer<int>;
 template class Optimizer<float>;
 template class Optimizer<double>;
 
-template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Tensorholder<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection) {
-    #if __DEBUG__
+template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection) {
+    #ifdef __DEBUG__
     std::cout << "Optimizer::Optimizer(Operator<DTYPE> *, float, OptimizeDirection)" << '\n';
     #endif  // __DEBUG__
     m_LearningRate          = 0.f;
@@ -17,16 +17,16 @@ template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Tensorholder<DTYP
 }
 
 template<typename DTYPE> Optimizer<DTYPE>::~Optimizer() {
-    #if __DEBUG__
+    #ifdef __DEBUG__
     std::cout << "Optimizer::~Optimizer()" << '\n';
     #endif  // __DEBUG__
 
     this->Delete();
 }
 
-template<typename DTYPE> int Optimizer<DTYPE>::Alloc(Container<Tensorholder<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection) {
-    #if __DEBUG__
-    std::cout << "Optimizer::Alloc(Container<Tensorholder<DTYPE> *> *, float , OptimizeDirection )" << '\n';
+template<typename DTYPE> int Optimizer<DTYPE>::Alloc(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection) {
+    #ifdef __DEBUG__
+    std::cout << "Optimizer::Alloc(Container<Operator<DTYPE> *> *, float , OptimizeDirection )" << '\n';
     #endif  // __DEBUG__
     m_ppTrainableTensors    = pTrainableTensors;
     m_TrainableTensorDegree = pTrainableTensors->GetSize();
@@ -50,7 +50,7 @@ template<typename DTYPE> int Optimizer<DTYPE>::UpdateVariable() {
     return TRUE;
 }
 
-#if __CUDNN__
+#ifdef __CUDNN__
 
 template<typename DTYPE> void Optimizer<DTYPE>::SetCudnnHandle(cudnnHandle_t& pCudnnHandle) {
     m_pCudnnHandle = pCudnnHandle;
@@ -85,7 +85,7 @@ template<typename DTYPE> int Optimizer<DTYPE>::GetOptimizeDirection() const {
     return m_OptimizeDirection;
 }
 
-template<typename DTYPE> Container<Tensorholder<DTYPE> *> *Optimizer<DTYPE>::GetTrainableTensor() {
+template<typename DTYPE> Container<Operator<DTYPE> *> *Optimizer<DTYPE>::GetTrainableTensor() {
     return m_ppTrainableTensors;
 }
 

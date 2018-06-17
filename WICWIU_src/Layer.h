@@ -1,81 +1,67 @@
 #ifndef __LAYER__
 #define __LAYER__    value
 
-#include "Optimizer_utils.h"
+#include "Operator_utils.h"
 
 template<typename DTYPE> class Layer : public Operator<DTYPE>{
 private:
-    Container<Operator<DTYPE> *> *m_aaOperator;
-    Container<Tensorholder<DTYPE> *> *m_aaParameter;
+    Container<Operator<DTYPE> *> *m_aaExcutableOperator;
+    int m_numOfExcutableOperator;
 
-    int m_numOfOperator;
-    int m_numOfParameter;
+    Operator<DTYPE> *m_pLastOperator;
 
-    Device m_Device;
-
-    int m_numOfThread;
+private:
+    int  Alloc();
+    void Delete();
 
 public:
     Layer(std::string pName = "No Name");
     virtual ~Layer();
 
-    int  Alloc();
-    void Delete();
+    Operator<DTYPE>                   * SetInput(Operator<DTYPE> *pInput);
+    int                                 SetInput(int pNumOfInput, ...);
+    int                                 IsInput(Operator<DTYPE> *pOperator);
 
-    // =======
+    int                                 IsValid(Operator<DTYPE> *pOperator); // Graph 분석 시 node에 추가할 것인지 확인한다.
 
-    // Operator<DTYPE>    * AddLayer(Layer<DTYPE> *pLayer);
-    Operator<DTYPE>    * AddOperator(Operator<DTYPE> *pOperator);
-    Tensorholder<DTYPE>* AddParameter(Tensorholder<DTYPE> *pParameter);
+    Operator<DTYPE>                   * AnalyseGraph(Operator<DTYPE> *pResultOperator);
 
-    // =======
+    Container<Operator<DTYPE> *>      * GetExcutableOperatorContainer();
+    int                                 GetNumOfExcutableOperator();
 
-    Container<Operator<DTYPE> *>    * GetOperatorContainer();
-    Container<Tensorholder<DTYPE> *>* GetParameterContainer();
-    int                               GetNumOfOperator();
-    int                               GetNumOfParameter();
+    virtual Tensor<DTYPE>             * GetResult() const;
+    virtual Container<Tensor<DTYPE> *>* GetResultContainer();
 
-    Operator<DTYPE>                 * PopOperator();
-    Tensorholder<DTYPE>             * PopParameter();
+    virtual Tensor<DTYPE>             * GetGradient() const;
+    virtual Container<Tensor<DTYPE> *>* GetGradientContainer();
 
-    Tensor<DTYPE>                   * GetResult() const;
-    Container<Tensor<DTYPE> *>      * GetResultContainer();
+    virtual Tensor<DTYPE>             * GetDelta() const;
+    virtual Container<Tensor<DTYPE> *>* GetDeltaContainer();
 
-    Tensor<DTYPE>                   * GetGradient() const;
-    Container<Tensor<DTYPE> *>      * GetGradientContainer();
+    int                                 ForwardPropagate(int pTime = 0, int pThreadNum = 0);
+    int                                 BackPropagate(int pTime = 0, int pThreadNum = 0);
 
-    Tensor<DTYPE>                   * GetDelta() const;
-    Container<Tensor<DTYPE> *>      * GetDeltaContainer();
+    int                                 ResetResult();
+    int                                 ResetGradient();
 
-    int                               ForwardPropagate(int pTime = 0, int pThreadNum = 0);
-    int                               BackPropagate(int pTime = 0, int pThreadNum = 0);
+    void                                PrintInformation();
 
-#if __CUDNN__
-    int                               ForwardPropagateOnGPU(int pTime = 0);
-    int                               BackPropagateOnGPU(int pTime = 0);
-#endif  // __CUDNN__
+    void                                SetDeviceCPU();
+    void                                SetDeviceCPU(int pnumOfThread);
 
-    Operator<DTYPE>                 * GetLastOperator();
+    // int                                 SetResultOnCPU();
+    // int                                 SetGradientOnCPU();
+#ifdef __CUDNN__
+    // int                                 SetResultOnGPU();
+    // int                                 SetGradientOnGPU();
 
-    void                              SetDeviceCPU();
-    void                              SetDeviceCPU(int pnumOfThread);
-#if __CUDNN__
-    void                              SetDeviceGPU();
-    void                              SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
+    void SetDeviceGPU();
+    void SetDeviceGPU(cudnnHandle_t& pCudnnHandle);
+    void InitializeAttributeForGPU();
+
+    int  ForwardPropagateOnGPU(int pTime = 0);
+    int  BackPropagateOnGPU(int pTime = 0);
 #endif  // if __CUDNN__
-
-    Device                            GetDevice() {
-        return m_Device;
-    }
-
-    int GetNumOfThread() {
-        return m_numOfThread;
-    }
-
-    int  ResetResult();
-    int  ResetGradient();
-
-    void PrintInformation();
 };
 
 #endif  // ifndef __LAYER__

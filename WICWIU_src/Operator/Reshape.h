@@ -4,48 +4,48 @@
 #include "..//Operator.h"
 
 template<typename DTYPE>
-class Reshape : public Operator<DTYPE>{
+class ReShape : public Operator<DTYPE>{
 private:
 public:
-    Reshape(Operator<DTYPE> *pInput, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
-        std::cout << "Reshape::Reshape(Operator *)" << '\n';
+    ReShape(Operator<DTYPE> *pInput, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+        #ifdef __DEBUG__
+        std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, 0, 0, 0, pRowSize, pColSize);
     }
 
-    Reshape(Operator<DTYPE> *pInput, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
-        std::cout << "Reshape::Reshape(Operator *)" << '\n';
+    ReShape(Operator<DTYPE> *pInput, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+        #ifdef __DEBUG__
+        std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, 0, 0, pChannelSize, pRowSize, pColSize);
     }
 
-    Reshape(Operator<DTYPE> *pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
-        std::cout << "Reshape::Reshape(Operator *)" << '\n';
+    ReShape(Operator<DTYPE> *pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+        #ifdef __DEBUG__
+        std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, 0, pBatchSize, pChannelSize, pRowSize, pColSize);
     }
 
-    Reshape(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
-        std::cout << "Reshape::Reshape(Operator *)" << '\n';
+    ReShape(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+        #ifdef __DEBUG__
+        std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize);
     }
 
-    ~Reshape() {
-        #if __DEBUG__
-        std::cout << "Reshape::~Reshape()" << '\n';
+    ~ReShape() {
+        #ifdef __DEBUG__
+        std::cout << "ReShape::~ReShape()" << '\n';
         #endif  // __DEBUG__
 
         Delete();
     }
 
     int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize) {
-        #if __DEBUG__
-        std::cout << "Reshape::Alloc(Operator *, Operator *)" << '\n';
+        #ifdef __DEBUG__
+        std::cout << "ReShape::Alloc(Operator *, Operator *)" << '\n';
         #endif  // __DEBUG__
 
         Shape *pInputShape = pInput->GetResult()->GetShape();
@@ -58,7 +58,7 @@ public:
 
 
         Tensor<DTYPE> *result = new Tensor<DTYPE>(pInput->GetResult());
-        result->Reshape(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize);
+        result->ReShape(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize);
 
         this->SetResult(result);  // copy data
 
@@ -127,13 +127,13 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        DTYPE *pDevInput  = input->GetDeviceData();
-        DTYPE *pDevResult = result->GetDeviceData();
+        DTYPE *pDevInput  = input->GetGPUData();
+        DTYPE *pDevResult = result->GetGPUData();
 
         cudnnTensorDescriptor_t pDesc = input->GetDescriptor();
 
@@ -152,8 +152,8 @@ public:
         Tensor<DTYPE> *this_delta  = this->GetDelta();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
 
-        DTYPE *pDevDelta  = this_delta->GetDeviceData();
-        DTYPE *pDevInputDelta = input_delta->GetDeviceData();
+        DTYPE *pDevDelta  = this_delta->GetGPUData();
+        DTYPE *pDevInputDelta = input_delta->GetGPUData();
 
         cudnnTensorDescriptor_t pDesc = this_delta->GetDescriptor();
 

@@ -4,213 +4,231 @@ template class Layer<int>;
 template class Layer<float>;
 template class Layer<double>;
 
+//////////////////////////////////////////////////////////////////////////////// for private method
+
+template<typename DTYPE> int Layer<DTYPE>::Alloc() {
+    m_aaExcutableOperator = new Container<Operator<DTYPE> *>();
+    return TRUE;
+}
+
+template<typename DTYPE> void Layer<DTYPE>::Delete() {
+    #ifdef __DEBUG__
+    std::cout << "Layer<DTYPE>::Delete()" << '\n';
+    #endif  // __DEBUG__
+
+    if (m_aaExcutableOperator) {
+        Operator<DTYPE> **OperatorContainer = m_aaExcutableOperator->GetRawData();
+
+        for (int i = 0; i < m_numOfExcutableOperator; i++) {
+            delete OperatorContainer[i];
+            OperatorContainer[i] = NULL;
+        }
+        delete m_aaExcutableOperator;
+        m_aaExcutableOperator = NULL;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////// for public method
+
 template<typename DTYPE> Layer<DTYPE>::Layer(std::string pName) : Operator<DTYPE>(pName) {
-    #if __DEBUG__
+    #ifdef __DEBUG__
     std::cout << "Layer<DTYPE>::Layer()" << '\n';
     #endif  // __DEBUG__
-    m_aaOperator  = NULL;
-    m_aaParameter = NULL;
+    m_aaExcutableOperator    = NULL;
+    m_numOfExcutableOperator = 0;
+    m_pLastOperator          = NULL;
 
-    m_numOfOperator  = 0;
-    m_numOfParameter = 0;
-
-    m_Device      = CPU;
-    m_numOfThread = 1;
     Alloc();
 }
 
 template<typename DTYPE> Layer<DTYPE>::~Layer() {
-    #if __DEBUG__
+    #ifdef __DEBUG__
     std::cout << "Layer<DTYPE>::~Layer()" << '\n';
     #endif  // __DEBUG__
 
     this->Delete();
 }
 
-template<typename DTYPE> int Layer<DTYPE>::Alloc() {
-    m_aaOperator  = new Container<Operator<DTYPE> *>();
-    m_aaParameter = new Container<Tensorholder<DTYPE> *>();
+template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::SetInput(Operator<DTYPE> *pInput) {
+    this->AddEdgebetweenOperators(pInput);
+
+    return pInput;
+}
+
+template<typename DTYPE> int Layer<DTYPE>::SetInput(int pNumOfInput, ...) {
+    Operator<DTYPE> *temp = NULL;
+
+    va_list ap;
+    va_start(ap, pNumOfInput);
+
+    for (int i = 0; i < pNumOfInput; i++) {
+        temp = va_arg(ap, Operator<DTYPE> *);
+        this->SetInput(temp);
+    }
+
+    va_end(ap);
     return TRUE;
 }
 
-template<typename DTYPE> void Layer<DTYPE>::Delete() {
-    #if __DEBUG__
-    std::cout << "Layer<DTYPE>::Delete()" << '\n';
-    #endif  // __DEBUG__
+template<typename DTYPE> int Layer<DTYPE>::IsInput(Operator<DTYPE> *pOperator) {
+    Container<Operator<DTYPE> *> *m_apInput = this->GetInputContainer();
+    int m_InputDegree                       = m_apInput->GetSize();
 
-    if (m_aaOperator) {
-        Operator<DTYPE> **OperatorContainer = m_aaOperator->GetRawData();
+    for (int i = 0; i < m_InputDegree; i++) {
+        if ((*m_apInput)[i] == pOperator) return TRUE;
+    }
 
-        for (int i = 0; i < m_numOfOperator; i++) {
-            delete OperatorContainer[i];
-            OperatorContainer[i] = NULL;
+    return FALSE;
+}
+
+template<typename DTYPE> int Layer<DTYPE>::IsValid(Operator<DTYPE> *pOperator) {
+    Container<Operator<DTYPE> *> *prevOp = pOperator->GetOutputContainer();
+    int numOfOutputEdge                  = prevOp->GetSize();
+    int check                            = 0;
+
+    // every Output node is already in Excutable Operator
+    for (int i = 0; i < numOfOutputEdge; i++) {
+        for (int j = 0; j < m_numOfExcutableOperator; j++) {
+            if ((*m_aaExcutableOperator)[j] == (*prevOp)[i]) {
+                check++;
+                break;
+            }
         }
-        delete m_aaOperator;
-        m_aaOperator = NULL;
+
+        if (check != (i + 1)) return FALSE;
     }
 
-    if (m_aaParameter) {
-        Tensorholder<DTYPE> **ParameterContainer = m_aaParameter->GetRawData();
+    return TRUE;
+}
 
-        for (int i = 0; i < m_numOfParameter; i++) {
-            delete ParameterContainer[i];
-            ParameterContainer[i] = NULL;
-        }
-        delete m_aaParameter;
-        m_aaParameter = NULL;
+template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::AnalyseGraph(Operator<DTYPE> *pResultOperator) {
+    // BFS
+    Container<Operator<DTYPE> *> queue;
+
+    queue.Push(pResultOperator);
+    m_pLastOperator = pResultOperator;
+
+    Container<Operator<DTYPE> *> *nextOp = NULL;
+    Container<Operator<DTYPE> *> *prevOp = NULL;
+    int numOfInputEdge                   = 0;
+
+    Operator<DTYPE> *out = NULL;
+
+    while (queue.GetSize() > 0) {
+        out = queue.Pop();
+
+        if (!(this->IsInput(out))) {
+            if (this->IsValid(out)) {
+                // std::cout << out->GetName() << '\n';
+
+                if (out->GetIsTensorholder()) {
+                    this->AddEdgebetweenOperators(out);
+                } else {
+                    m_aaExcutableOperator->Push(out);
+                    m_numOfExcutableOperator++;
+                }
+
+                nextOp         = out->GetInputContainer();
+                numOfInputEdge = nextOp->GetSize();
+
+                for (int i = 0; i < numOfInputEdge; i++) {
+                    prevOp = (*nextOp)[i]->GetOutputContainer();
+                    prevOp->Pop(out);
+
+                    queue.Push((*nextOp)[i]);
+                }
+            } else continue;
+        } else continue;
     }
+    // std::cout << '\n';
+
+    m_aaExcutableOperator->Reverse();
+
+    // cut output edge of input operator
+    // Container<Operator<DTYPE> *> *m_apInput = this->GetInputContainer();
+    // int m_InputDegree                       = m_apInput->GetSize();
+
+    // for (int i = 0; i < m_InputDegree; i++) {
+    // Operator<DTYPE> *pInput = (*m_apInput)[i];
+    // Container<Operator<DTYPE> *> *prevOp = pInput->GetOutputContainer();
+    // int numOfOutputEdge                  = prevOp->GetSize();
+    //
+    // for (int j = 0; j < numOfOutputEdge; j++) {
+    // for (int k = 0; k < m_numOfExcutableOperator; k++) {
+    // if ((*m_aaExcutableOperator)[j] == (*prevOp)[i]) {
+    // (*prevOp)[i] = NULL;
+    // }
+    // }
+    // }
+    // }
+
+    // std::cout << "m_aaExcutableOperator : " << '\n';
+    //
+    // for (int i = 0; i < m_numOfExcutableOperator; i++) {
+    // std::cout << (*m_aaExcutableOperator)[i]->GetName() << '\n';
+    // }
+    // std::cout << '\n';
+    //
+
+    return pResultOperator;
 }
 
-template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::AddOperator(Operator<DTYPE> *pOperator) {
-    int pNumOfParameter = pOperator->GetNumOfParameter();
-
-    m_aaOperator->Push(pOperator);
-    m_numOfOperator++;
-
-    for (int i = 0; i < pNumOfParameter; i++) {
-        m_aaParameter->Push(pOperator->PopParameter());
-        m_numOfParameter++;
-    }
-
-    return pOperator;
+template<typename DTYPE> Container<Operator<DTYPE> *> *Layer<DTYPE>::GetExcutableOperatorContainer() {
+    return m_aaExcutableOperator;
 }
 
-template<typename DTYPE> Tensorholder<DTYPE> *Layer<DTYPE>::AddParameter(Tensorholder<DTYPE> *pParameter) {
-    m_aaParameter->Push(pParameter);
-    m_numOfParameter++;
-
-    return pParameter;
-}
-
-template<typename DTYPE> Container<Operator<DTYPE> *> *Layer<DTYPE>::GetOperatorContainer() {
-    return m_aaOperator;
-}
-
-template<typename DTYPE> Container<Tensorholder<DTYPE> *> *Layer<DTYPE>::GetParameterContainer() {
-    return m_aaParameter;
-}
-
-template<typename DTYPE> int Layer<DTYPE>::GetNumOfOperator() {
-    return m_numOfOperator;
-}
-
-template<typename DTYPE> int Layer<DTYPE>::GetNumOfParameter() {
-    return m_numOfParameter;
-}
-
-template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::PopOperator() {
-    m_numOfOperator--;
-    return m_aaOperator->Pop();
-}
-
-template<typename DTYPE> Tensorholder<DTYPE> *Layer<DTYPE>::PopParameter() {
-    m_numOfParameter--;
-    return m_aaParameter->Pop();
+template<typename DTYPE> int Layer<DTYPE>::GetNumOfExcutableOperator() {
+    return m_numOfExcutableOperator;
 }
 
 template<typename DTYPE> Tensor<DTYPE> *Layer<DTYPE>::GetResult() const {
-    return m_aaOperator->GetLast()->GetResult();
+    return m_pLastOperator->GetResult();
 }
 
 template<typename DTYPE> Container<Tensor<DTYPE> *> *Layer<DTYPE>::GetResultContainer() {
-    return m_aaOperator->GetLast()->GetResultContainer();
+    return m_pLastOperator->GetResultContainer();
 }
 
 template<typename DTYPE> Tensor<DTYPE> *Layer<DTYPE>::GetGradient() const {
-    return m_aaOperator->GetLast()->GetGradient();
+    return m_pLastOperator->GetGradient();
 }
 
 template<typename DTYPE> Container<Tensor<DTYPE> *> *Layer<DTYPE>::GetGradientContainer() {
-    return m_aaOperator->GetLast()->GetGradientContainer();
+    return m_pLastOperator->GetGradientContainer();
 }
 
 template<typename DTYPE> Tensor<DTYPE> *Layer<DTYPE>::GetDelta() const {
-    return m_aaOperator->GetLast()->GetDelta();
+    return m_pLastOperator->GetDelta();
 }
 
 template<typename DTYPE> Container<Tensor<DTYPE> *> *Layer<DTYPE>::GetDeltaContainer() {
-    return m_aaOperator->GetLast()->GetDeltaContainer();
+    return m_pLastOperator->GetDeltaContainer();
 }
 
 template<typename DTYPE> int Layer<DTYPE>::ForwardPropagate(int pTime, int pThreadNum) {
-    for (int i = 0; i < m_numOfOperator; i++) {
-        (*m_aaOperator)[i]->ForwardPropagate(pTime, pThreadNum);
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->ForwardPropagate(pTime, pThreadNum);
     }
     return TRUE;
 }
 
 template<typename DTYPE> int Layer<DTYPE>::BackPropagate(int pTime, int pThreadNum) {
-    for (int i = m_numOfOperator - 1; i >= 0; i--) {
-        (*m_aaOperator)[i]->BackPropagate(pTime, pThreadNum);
+    for (int i = m_numOfExcutableOperator - 1; i >= 0; i--) {
+        (*m_aaExcutableOperator)[i]->BackPropagate(pTime, pThreadNum);
     }
     return TRUE;
 }
-
-#if __CUDNN__
-template<typename DTYPE> int Layer<DTYPE>::ForwardPropagateOnGPU(int pTime) {
-    for (int i = 0; i < m_numOfOperator; i++) {
-        (*m_aaOperator)[i]->ForwardPropagateOnGPU(pTime);
-    }
-    return TRUE;
-}
-
-template<typename DTYPE> int Layer<DTYPE>::BackPropagateOnGPU(int pTime) {
-    for (int i = m_numOfOperator - 1; i >= 0; i--) {
-        (*m_aaOperator)[i]->BackPropagateOnGPU(pTime);
-    }
-    return TRUE;
-}
-
-#endif  // __CUDNN__
-
-template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::GetLastOperator() {
-    return m_aaOperator->GetLast();
-}
-
-template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU() {
-    m_Device = CPU;
-
-    for (int i = 0; i < m_numOfOperator; i++) {
-        (*m_aaOperator)[i]->SetDeviceCPU();
-    }
-}
-
-template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU(int pNumOfThread) {
-    m_Device      = CPU;
-    m_numOfThread = pNumOfThread;
-
-    for (int i = 0; i < m_numOfOperator; i++) {
-        (*m_aaOperator)[i]->SetDeviceCPU(pNumOfThread);
-    }
-}
-
-#ifdef __CUDNN__
-template<typename DTYPE> void Layer<DTYPE>::SetDeviceGPU() {
-    m_Device = GPU;
-
-    for (int i = 0; i < m_numOfOperator; i++) {
-        (*m_aaOperator)[i]->SetDeviceGPU();
-    }
-}
-
-template<typename DTYPE> void Layer<DTYPE>::SetCudnnHandle(cudnnHandle_t& pCudnnHandle) {
-    for (int i = 0; i < m_numOfOperator; i++) {
-        (*m_aaOperator)[i]->SetCudnnHandle(pCudnnHandle);
-    }
-}
-
-#endif  // if __CUDNN__
 
 template<typename DTYPE> int Layer<DTYPE>::ResetResult() {
-    for (int i = m_numOfOperator - 1; i >= 0; i--) {
-        (*m_aaOperator)[i]->ResetResult();
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->ResetResult();
     }
     return TRUE;
 }
 
 template<typename DTYPE> int Layer<DTYPE>::ResetGradient() {
-    for (int i = m_numOfOperator - 1; i >= 0; i--) {
-        (*m_aaOperator)[i]->ResetGradient();
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->ResetGradient();
     }
     return TRUE;
 }
@@ -219,8 +237,66 @@ template<typename DTYPE> void Layer<DTYPE>::PrintInformation() {
     std::cout << this->GetName() << " : ";
     std::cout << this->GetResult()->GetShape() << '\n';
 
-    for (int i = 0; i < m_numOfOperator; i++) {
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
         std::cout << "-- ";
-        (*m_aaOperator)[i]->PrintInformation();
+        (*m_aaExcutableOperator)[i]->PrintInformation();
     }
 }
+
+template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU() {
+    this->SetDevice(CPU);
+
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetDeviceCPU();
+    }
+}
+
+template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU(int pNumOfThread) {
+    this->SetDevice(CPU);
+    this->SetNumOfThread(pNumOfThread);
+
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetDeviceCPU(pNumOfThread);
+    }
+}
+
+#ifdef __CUDNN__
+
+template<typename DTYPE> void Layer<DTYPE>::SetDeviceGPU() {
+    this->SetDevice(GPU);
+
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetDeviceGPU();
+    }
+}
+
+template<typename DTYPE> void Layer<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle) {
+    this->SetDevice(GPU);
+    this->SetCudnnHandle(pCudnnHandle);
+
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetDeviceGPU(pCudnnHandle);
+    }
+}
+
+template<typename DTYPE> void Layer<DTYPE>::InitializeAttributeForGPU() {
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->InitializeAttributeForGPU();
+    }
+}
+
+template<typename DTYPE> int Layer<DTYPE>::ForwardPropagateOnGPU(int pTime) {
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->ForwardPropagateOnGPU(pTime);
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Layer<DTYPE>::BackPropagateOnGPU(int pTime) {
+    for (int i = m_numOfExcutableOperator - 1; i >= 0; i--) {
+        (*m_aaExcutableOperator)[i]->BackPropagateOnGPU(pTime);
+    }
+    return TRUE;
+}
+
+#endif  // if __CUDNN__

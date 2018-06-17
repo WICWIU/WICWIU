@@ -1,5 +1,5 @@
 #include "Operator/Tensorholder.h"
-#include "Operator/Reshape.h"
+#include "Operator/ReShape.h"
 
 #include "Operator/Relu.h"
 #include "Operator/Sigmoid.h"

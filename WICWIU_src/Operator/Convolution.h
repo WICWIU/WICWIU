@@ -9,7 +9,7 @@ private:
     int m_stride[2];
     int m_padding[2];
 
-#if __CUDNN__
+#ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, outputTensorDesc, deltaDesc, inputDeltaDesc;
     cudnnConvolutionDescriptor_t convDesc;
     cudnnFilterDescriptor_t filterDesc, filterDeltaDesc;
@@ -45,7 +45,7 @@ public:
     }
 
     virtual ~Convolution2D() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Convolution2D::~Convolution2D()" << '\n';
         #endif  // __DEBUG__
         Delete();
@@ -78,7 +78,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     void InitializeAttributeForGPU() {
         Operator<DTYPE> *pInput  = this->GetInput()[0];
         Operator<DTYPE> *pWeight = this->GetInput()[1];
@@ -191,7 +191,7 @@ public:
 #endif  // if __CUDNN__
 
     void Delete() {
-#if __CUDNN__
+#ifdef __CUDNN__
 
         if (inputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(inputTensorDesc));
         inputTensorDesc = NULL;
@@ -334,15 +334,15 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        m_pDevInput  = input->GetDeviceData(pTime);
-        m_pDevFilter = weight->GetDeviceData(0);
-        m_pDevOutput = result->GetDeviceData(pTime);
+        m_pDevInput  = input->GetGPUData(pTime);
+        m_pDevFilter = weight->GetGPUData(0);
+        m_pDevOutput = result->GetGPUData(pTime);
 
         checkCUDNN(cudnnConvolutionForward(this->GetCudnnHandle(), &m_alpha, inputTensorDesc, m_pDevInput, filterDesc, m_pDevFilter, convDesc,
                                            m_algo, m_devWorkSpace, m_sizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));
@@ -360,11 +360,11 @@ public:
         Tensor<DTYPE> *weight_gradient = this->GetInput()[1]->GetGradient();
         Tensor<DTYPE> *this_delta      = this->GetDelta();
 
-        m_pDevInput       = input->GetDeviceData(pTime);
-        m_pDevFilter      = weight->GetDeviceData(0);
-        m_pDevDelta       = this_delta->GetDeviceData(pTime);
-        m_pDevInputDelta  = input_delta->GetDeviceData(pTime);
-        m_pDevFilterDelta = weight_gradient->GetDeviceData(0);
+        m_pDevInput       = input->GetGPUData(pTime);
+        m_pDevFilter      = weight->GetGPUData(0);
+        m_pDevDelta       = this_delta->GetGPUData(pTime);
+        m_pDevInputDelta  = input_delta->GetGPUData(pTime);
+        m_pDevFilterDelta = weight_gradient->GetGPUData(0);
 
         checkCUDNN(cudnnConvolutionBackwardData(this->GetCudnnHandle(), &m_alpha, filterDesc, m_pDevFilter, deltaDesc, m_pDevDelta, convDesc,
                                                 m_dataAlgo, m_dataDevWorkSpace, m_dataSizeInBytes, &m_beta, inputDeltaDesc, m_pDevInputDelta));

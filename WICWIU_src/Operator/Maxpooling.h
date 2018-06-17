@@ -11,7 +11,7 @@ private:
 
     Tensor<int> *indexOfMaxInput;
 
-#if __CUDNN__
+#ifdef __CUDNN__
     cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
     cudnnPoolingDescriptor_t m_aPoolingDesc;
     DTYPE *m_pDevInput, *m_pDevOutput, *m_pDevInputDelta, *m_pDevDelta;
@@ -24,30 +24,30 @@ private:
 
 public:
     Maxpooling2D(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Maxpooling2D(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol);
     }
 
     Maxpooling2D(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, int padding, std::string pName) : Operator<DTYPE>(pInput, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Maxpooling2D(Operator<DTYPE> *, int, int, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol, padding, padding);
     }
 
     ~Maxpooling2D() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Maxpooling2D::~Maxpooling2D()" << '\n';
         #endif  // __DEBUG__
-#if __CUDNN__
+#ifdef __CUDNN__
         Delete();
 #endif  // if __CUDNN__
     }
 
     int Alloc(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, int padding1 = 0, int padding2 = 0) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Alloc(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
 
@@ -76,7 +76,7 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     void InitializeAttributeForGPU() {
         Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
         Shape *shapeOfInput  = input->GetShape();
@@ -127,7 +127,7 @@ public:
 
     void Delete() {
         delete indexOfMaxInput;
-#if __CUDNN__
+#ifdef __CUDNN__
 
         if (m_aInputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aInputTensorDesc));
         m_aInputTensorDesc = NULL;
@@ -243,13 +243,13 @@ public:
         return TRUE;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        m_pDevInput  = input->GetDeviceData(pTime);
-        m_pDevOutput = result->GetDeviceData(pTime);
+        m_pDevInput  = input->GetGPUData(pTime);
+        m_pDevOutput = result->GetGPUData(pTime);
 
         checkCUDNN(cudnnPoolingForward(this->GetCudnnHandle(), m_aPoolingDesc, &m_alpha, m_aInputTensorDesc, m_pDevInput,
                                        &m_beta, m_aOutputTensorDesc, m_pDevOutput));
@@ -265,10 +265,10 @@ public:
         Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result      = this->GetResult();
 
-        m_pDevInput      = input->GetDeviceData(pTime);
-        m_pDevOutput     = result->GetDeviceData(pTime);
-        m_pDevDelta      = this_delta->GetDeviceData(pTime);
-        m_pDevInputDelta = input_delta->GetDeviceData(pTime);
+        m_pDevInput      = input->GetGPUData(pTime);
+        m_pDevOutput     = result->GetGPUData(pTime);
+        m_pDevDelta      = this_delta->GetGPUData(pTime);
+        m_pDevInputDelta = input_delta->GetGPUData(pTime);
 
         checkCUDNN(cudnnPoolingBackward(this->GetCudnnHandle(), m_aPoolingDesc,
                                         &m_alpha, m_aOutputTensorDesc, m_pDevOutput,

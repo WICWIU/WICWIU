@@ -1,0 +1,4 @@
+*.ftpconfig
+*.ftpignore
+*.o
+*.gch

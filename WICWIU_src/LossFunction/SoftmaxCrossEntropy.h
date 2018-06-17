@@ -16,28 +16,28 @@ private:
 
 public:
     SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon, std::string pName = "NO NAME") : LossFunction<DTYPE>(pOperator, pLabel, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::SoftmaxCrossEntropy(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
         Alloc(pOperator, epsilon);
     }
 
     SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName = "NO NAME") : LossFunction<DTYPE>(pOperator, pLabel, pName) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::SoftmaxCrossEntropy(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
         Alloc(pOperator, 1e-6f);
     }
 
     virtual ~SoftmaxCrossEntropy() {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::~SoftmaxCrossEntropy()" << '\n';
         #endif  // __DEBUG__
         Delete();
     }
 
     virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) {
-        #if __DEBUG__
+        #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::Alloc(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
 
@@ -183,7 +183,7 @@ public:
         return NULL;
     }
 
-#if __CUDNN__
+#ifdef __CUDNN__
 
     Tensor<DTYPE>* ForwardPropagateOnGPU(int pTime = 0) {
         Tensor<DTYPE> *input         = this->GetTensor();
@@ -200,8 +200,8 @@ public:
         cudnnTensorDescriptor_t pInputDesc   = input->GetDescriptor();
         cudnnTensorDescriptor_t pSoftMaxDesc = softmaxresult->GetDescriptor();
 
-        DTYPE *pDevInput   = input->GetDeviceData(pTime);
-        DTYPE *pDevSoftMax = softmaxresult->GetDeviceData(pTime);
+        DTYPE *pDevInput   = input->GetGPUData(pTime);
+        DTYPE *pDevSoftMax = softmaxresult->GetGPUData(pTime);
 
         checkCUDNN(cudnnSoftmaxForward(this->GetCudnnHandle(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
                                        &alpha, pInputDesc, pDevInput,
