@@ -1,4 +1,4 @@
-#include "../../WICWIU_src/NeuralNetwork.h"
+#include "../../../WICWIU_src/NeuralNetwork.h"
 
 template<typename DTYPE> class BasicBlock : public Layer<DTYPE>{
 private:

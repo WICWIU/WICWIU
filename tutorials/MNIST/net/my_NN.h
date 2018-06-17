@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../../WICWIU_src/NeuralNetwork.h"
+#include "../../../WICWIU_src/NeuralNetwork.h"
 
 enum MODEL_OPTION {
     isSLP,
