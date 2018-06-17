@@ -3,6 +3,7 @@
 
 #include "Operator/Relu.h"
 #include "Operator/Sigmoid.h"
+#include "Operator/Tanh.h"
 
 #include "Operator/Add.h"
 #include "Operator/MatMul.h"
