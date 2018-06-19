@@ -6,12 +6,10 @@
 #include "MNIST_Reader.h"
 #include <time.h>
 
-#define BATCH             50
+#define BATCH             25
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
-// 10,000 is number of Test data
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define NUM_OF_THREAD     10
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
@@ -34,15 +32,13 @@ int main(int argc, char const *argv[]) {
     x->SetDeviceGPU();
     label->SetDeviceGPU();
     net->SetDeviceGPU();
-#else  // if __CUDNN__
-    net->SetDeviceCPU(NUM_OF_THREAD);
 #endif  // __CUDNN__
 
     net->PrintGraphInformation();
 
-    // pytorch check하기
     for (int i = 0; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';
+
         // ======================= Training =======================
         float train_accuracy = 0.f;
         float train_avg_loss = 0.f;
@@ -60,7 +56,7 @@ int main(int argc, char const *argv[]) {
 #ifdef __CUDNN__
             x_t->SetDeviceGPU();
             l_t->SetDeviceGPU();
-#endif  // __CUDNN__s
+#endif  // __CUDNN__
 
             net->FeedInputTensor(2, x_t, l_t);
             net->ResetParameterGradient();
@@ -68,7 +64,6 @@ int main(int argc, char const *argv[]) {
 
             train_accuracy    += net->GetAccuracy();
             train_avg_loss    += net->GetLoss();
-            nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
 
             printf("\rTraining complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
                    j + 1, LOOP_FOR_TRAIN,
@@ -80,37 +75,9 @@ int main(int argc, char const *argv[]) {
             if (j % 100 == 99) std::cout << '\n';
         }
         endTime = clock();
-
         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
+        printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
-        printf("\n(excution time per epoch : %f)\n", nProcessExcuteTime);
-
-        std::cout << '\n';
-
-        // float accum_accuracy = 0.f;
-        // float accum_avg_loss = 0.f;
-        //
-        // net->SetModeAccumulating();
-        //
-        // for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-        // dataset->CreateTrainDataPair(BATCH);
-        // x->SetTensor(dataset->GetTrainFeedImage());
-        // label->SetTensor(dataset->GetTrainFeedLabel());
-        // net->Testing();
-        // accum_accuracy += net->GetAccuracy();
-        // accum_avg_loss += net->GetLoss();
-        //
-        // printf("\rAccumulating complete percentage is %d / %d -> loss : %f, acc : %f",
-        // j + 1, LOOP_FOR_TRAIN,
-        // accum_avg_loss / (j + 1),
-        // accum_accuracy / (j + 1));
-        // fflush(stdout);
-        // }
-        // std::cout << '\n';
-
-        // Caution!
-        // Actually, we need to split training set between two set for training set and validation set
-        // but in this example we do not above action.
         // ======================= Testing ======================
         float test_accuracy = 0.f;
         float test_avg_loss = 0.f;
@@ -128,10 +95,9 @@ int main(int argc, char const *argv[]) {
             l_t->SetDeviceGPU();
 #endif  // __CUDNN__
 
-            x->SetTensor(x_t);
-            label->SetTensor(l_t);
-
+            net->FeedInputTensor(2, x_t, l_t);
             net->Testing();
+
             test_accuracy += net->GetAccuracy();
             test_avg_loss += net->GetLoss();
 
@@ -141,10 +107,9 @@ int main(int argc, char const *argv[]) {
                    test_accuracy / (j + 1));
             fflush(stdout);
         }
-        std::cout << '\n';
+        std::cout << "\n\n";
     }
 
-    // we need to save best weight and bias when occur best acc on test time
     delete dataset;
     delete net;
 
