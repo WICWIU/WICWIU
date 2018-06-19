@@ -24,7 +24,7 @@ public:
 
     int                                 IsValid(Operator<DTYPE> *pOperator); // Graph 분석 시 node에 추가할 것인지 확인한다.
 
-    Operator<DTYPE>                   * AnalyseGraph(Operator<DTYPE> *pResultOperator);
+    Operator<DTYPE>                   * AnalyzeGraph(Operator<DTYPE> *pResultOperator);
 
     Container<Operator<DTYPE> *>      * GetExcutableOperatorContainer();
     int                                 GetNumOfExcutableOperator();

@@ -43,7 +43,7 @@ public:
         // Last Relu
         out = new Relu<DTYPE>(out, "BasicBlock_Relu2" + pName);
 
-        this->AnalyseGraph(out);
+        this->AnalyzeGraph(out);
 
         return TRUE;
     }
@@ -139,7 +139,7 @@ public:
 
         out =new Linear<DTYPE>(out, 160, pNumOfClass, TRUE, "Classification");
 
-        this->AnalyseGraph(out);
+        this->AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================
         this->SetLossFunction(new SoftmaxCrossEntropy<float>(out, pLabel, "SCE"));

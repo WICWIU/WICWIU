@@ -101,7 +101,7 @@ template<typename DTYPE> int Layer<DTYPE>::IsValid(Operator<DTYPE> *pOperator) {
     return TRUE;
 }
 
-template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::AnalyseGraph(Operator<DTYPE> *pResultOperator) {
+template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::AnalyzeGraph(Operator<DTYPE> *pResultOperator) {
     // BFS
     Container<Operator<DTYPE> *> queue;
 

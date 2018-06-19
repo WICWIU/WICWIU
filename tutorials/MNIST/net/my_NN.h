@@ -23,7 +23,7 @@ public:
         // ======================= layer 1======================
         out = new Linear<float>(out, 784, 10, TRUE, "1");
 
-        AnalyseGraph(out);
+        AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================
         SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, 0.000001, "SCE"));
@@ -40,12 +40,12 @@ public:
         // ======================= layer 1======================
         out = new Linear<float>(out, 784, 15, TRUE, "1");
 
-        out = new Sigmoid<float>(out, "Sigmoid");
+        out = new Tanh<float>(out, "Tanh");
 
         // ======================= layer 2=======================
         out = new Linear<float>(out, 15, 10, TRUE, "2");
 
-        AnalyseGraph(out);
+        AnalyzeGraph(out);
 
 
         // ======================= Select LossFunction Function ===================

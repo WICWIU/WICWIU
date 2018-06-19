@@ -34,7 +34,7 @@ public:
         //// ======================= layer 4=======================
         out = new Linear<float>(out, 1024, 10, TRUE, "Fully-connected_2");
 
-        AnalyseGraph(out);
+        AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================
         SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));

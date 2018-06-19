@@ -25,7 +25,7 @@ public:
             out = new AddColWise<DTYPE>(out, pBias, "Layer_Add_" + pName);
         }
 
-        this->AnalyseGraph(out);
+        this->AnalyzeGraph(out);
 
         return TRUE;
     }

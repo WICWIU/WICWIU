@@ -49,7 +49,7 @@ public:
             out = new AddChannelWise<DTYPE>(out, pBias, "Convolution2D_Add_" + pName);
         }
 
-        this->AnalyseGraph(out);
+        this->AnalyzeGraph(out);
 
         return TRUE;
     }
