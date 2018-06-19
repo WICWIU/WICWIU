@@ -1,7 +1,7 @@
 #ifndef SOFTMAXCROSSENTROPY_H_
 #define SOFTMAXCROSSENTROPY_H_    value
 
-#include "..//LossFunction.h"
+#include "../LossFunction.h"
 
 template<typename DTYPE>
 class SoftmaxCrossEntropy : public LossFunction<DTYPE>{

@@ -1,7 +1,7 @@
 #ifndef MSE_H_
 #define MSE_H_    value
 
-#include "..//LossFunction.h"
+#include "../LossFunction.h"
 
 template<typename DTYPE>
 class MSE : public LossFunction<DTYPE>{

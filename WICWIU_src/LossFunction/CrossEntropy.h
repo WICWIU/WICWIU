@@ -1,7 +1,7 @@
 #ifndef CROSSENTROPY_H_
 #define CROSSENTROPY_H_    value
 
-#include "..//Operator.h"
+#include "../LossFunction.h"
 
 template<typename DTYPE>
 class CrossEntropy : public Operator<DTYPE>{
