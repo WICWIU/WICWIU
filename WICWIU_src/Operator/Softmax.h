@@ -1,7 +1,7 @@
 #ifndef SOFTMAX_H_
 #define SOFTMAX_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE>
 class Softmax : public Operator<DTYPE>{

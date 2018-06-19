@@ -1,7 +1,7 @@
 #ifndef CONVOLUTION_H_
 #define CONVOLUTION_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 #include <cstdio>
 
 template<typename DTYPE> class Convolution2D : public Operator<DTYPE>{

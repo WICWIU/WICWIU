@@ -1,7 +1,7 @@
 #ifndef ADD_H_
 #define ADD_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE> class Addall : public Operator<DTYPE>{
 private:

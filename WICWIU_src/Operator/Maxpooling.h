@@ -1,7 +1,7 @@
 #ifndef MAXPOOLING_H_
 #define MAXPOOLING_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE> class Maxpooling2D : public Operator<DTYPE>{
 private:

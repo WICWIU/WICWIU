@@ -1,7 +1,7 @@
 #ifndef __AVGPOOLING__
 #define __AVGPOOLING__    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE> class GlobalAvaragePooling2D : public Operator<DTYPE>{
 private:

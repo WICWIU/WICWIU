@@ -1,7 +1,7 @@
 #ifndef TANH_H_
 #define TANH_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE>
 class Tanh : public Operator<DTYPE>{

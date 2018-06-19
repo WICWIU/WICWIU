@@ -1,7 +1,7 @@
 #ifndef RESHAPE_H_
 #define RESHAPE_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE>
 class ReShape : public Operator<DTYPE>{

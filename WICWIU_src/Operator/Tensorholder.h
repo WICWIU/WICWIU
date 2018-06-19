@@ -1,7 +1,7 @@
 #ifndef TENSORHOLDER_H_
 #define TENSORHOLDER_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE> class Tensorholder : public Operator<DTYPE>{
 public:

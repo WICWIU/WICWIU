@@ -1,7 +1,7 @@
 #ifndef SIGMOID_H_
 #define SIGMOID_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE>
 class Sigmoid : public Operator<DTYPE>{

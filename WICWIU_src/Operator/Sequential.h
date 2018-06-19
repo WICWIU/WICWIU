@@ -1,7 +1,7 @@
 #ifndef SEQUENTIAL_H_
 #define SEQUENTIAL_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE>
 class Sequential : public Operator<DTYPE>{

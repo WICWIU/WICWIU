@@ -1,7 +1,7 @@
 #ifndef RELU_H_
 #define RELU_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 
 template<typename DTYPE> class Relu : public Operator<DTYPE>{
 private:

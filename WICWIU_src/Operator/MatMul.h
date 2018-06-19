@@ -1,7 +1,7 @@
 #ifndef MATMUL_H_
 #define MATMUL_H_    value
 
-#include "..//Operator.h"
+#include "../Operator.h"
 #include <cstdio>
 
 template<typename DTYPE> class MatMul : public Operator<DTYPE>{
