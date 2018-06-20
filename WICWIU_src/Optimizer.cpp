@@ -43,9 +43,9 @@ template<typename DTYPE> int Optimizer<DTYPE>::Delete() {
     return TRUE;
 }
 
-template<typename DTYPE> int Optimizer<DTYPE>::UpdateVariable() {
+template<typename DTYPE> int Optimizer<DTYPE>::UpdateParameter() {
     for (int i = 0; i < m_TrainableTensorDegree; i++) {
-        UpdateVariable((*m_ppTrainableTensors)[i]);
+        UpdateParameter((*m_ppTrainableTensors)[i]);
     }
     return TRUE;
 }
@@ -60,9 +60,9 @@ template<typename DTYPE> cudnnHandle_t& Optimizer<DTYPE>::GetCudnnHandle() {
     return m_pCudnnHandle;
 }
 
-template<typename DTYPE> int Optimizer<DTYPE>::UpdateVariableOnGPU() {
+template<typename DTYPE> int Optimizer<DTYPE>::UpdateParameterOnGPU() {
     for (int i = 0; i < m_TrainableTensorDegree; i++) {
-        UpdateVariableOnGPU((*m_ppTrainableTensors)[i]);
+        UpdateParameterOnGPU((*m_ppTrainableTensors)[i]);
     }
     return TRUE;
 }

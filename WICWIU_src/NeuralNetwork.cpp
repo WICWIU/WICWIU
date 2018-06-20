@@ -425,7 +425,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnCPU() {
     this->ForwardPropagate();
     this->BackPropagate();
 
-    m_aOptimizer->UpdateVariable();
+    m_aOptimizer->UpdateParameter();
 
     return TRUE;
 }
@@ -468,7 +468,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnMultiThread() {
     free(pThread);
     free(pThreadInfo);
 
-    m_aOptimizer->UpdateVariable();
+    m_aOptimizer->UpdateParameter();
 
     return TRUE;
 }
@@ -506,7 +506,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnGPU() {
     this->ForwardPropagateOnGPU();
     this->BackPropagateOnGPU();
 
-    m_aOptimizer->UpdateVariableOnGPU();
+    m_aOptimizer->UpdateParameterOnGPU();
 #else  // __CUDNN__
     std::cout << "There is no GPU option!" << '\n';
     exit(-1);

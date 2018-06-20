@@ -70,21 +70,21 @@ public:
         return TRUE;
     }
 
-    virtual int UpdateVariable() {
+    virtual int UpdateParameter() {
         if (m_momentum == 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateVariable((*m_ppParameter)[i]);
+                UpdateParameter((*m_ppParameter)[i]);
             }
         } else {
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateVariable((*m_ppParameter)[i], (*m_aaVelocity)[i]);
+                UpdateParameter((*m_ppParameter)[i], (*m_aaVelocity)[i]);
             }
         }
 
         return TRUE;
     }
 
-    int UpdateVariable(Operator<DTYPE> *pParameter) {
+    int UpdateParameter(Operator<DTYPE> *pParameter) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -99,7 +99,7 @@ public:
         return TRUE;
     }
 
-    int UpdateVariable(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
+    int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -118,21 +118,21 @@ public:
 #ifdef __CUDNN__
 
 
-    virtual int UpdateVariableOnGPU() {
+    virtual int UpdateParameterOnGPU() {
         if (m_momentum == 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateVariableOnGPU((*m_ppParameter)[i]);
+                UpdateParameterOnGPU((*m_ppParameter)[i]);
             }
         } else {
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateVariableOnGPU((*m_ppParameter)[i], (*m_aaVelocity)[i]);
+                UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaVelocity)[i]);
             }
         }
 
         return TRUE;
     }
 
-    int UpdateVariableOnGPU(Operator<DTYPE> *pParameter) {
+    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -154,7 +154,7 @@ public:
         return TRUE;
     }
 
-    int UpdateVariableOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
+    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 

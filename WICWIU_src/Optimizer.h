@@ -29,8 +29,8 @@ public:
     int                           Alloc(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection);
     int                           Delete();
 
-    virtual int                   UpdateVariable();
-    virtual int                   UpdateVariable(Operator<DTYPE> *pTrainableTensor) = 0;
+    virtual int                   UpdateParameter();
+    virtual int                   UpdateParameter(Operator<DTYPE> *pTrainableTensor) = 0;
 
     void                          SetLearningRate(float pLearningRate);
     void                          SetTrainableTensorDegree(int pTrainableTensorDegree);
@@ -46,8 +46,8 @@ public:
 
     virtual void   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     cudnnHandle_t& GetCudnnHandle();
-    virtual int    UpdateVariableOnGPU();
-    virtual int    UpdateVariableOnGPU(Operator<DTYPE> *pTrainableTensor) = 0;
+    virtual int    UpdateParameterOnGPU();
+    virtual int    UpdateParameterOnGPU(Operator<DTYPE> *pTrainableTensor) = 0;
 
 #endif  // if __CUDNN__
 };
