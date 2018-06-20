@@ -1,5 +1,3 @@
-/*g++ -g -o testing -std=c++11 main.cpp ../Header/Shape.cpp ../Header/Data.cpp ../Header/Tensor.cpp ../Header/Operator.cpp ../Header/LossFunction_.cpp ../Header/Optimizer.cpp ../Header/NeuralNetwork_.cpp*/
-
 #include "net/my_CNN.h"
 #include "net/my_NN.h"
 #include "net/my_Resnet.h"
