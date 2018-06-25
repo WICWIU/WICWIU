@@ -104,13 +104,13 @@ private:
 public:
     ResNet(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2, int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass) {
         Alloc(pInput, pLabel, pBlockType, pNumOfBlock1, pNumOfBlock2, pNumOfBlock3, pNumOfBlock4, pNumOfClass);
-
-        this->SetInput(2, pInput, pLabel);
     }
 
     virtual ~ResNet() {}
 
     int Alloc(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2, int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass) {
+        this->SetInput(2, pInput, pLabel);
+
         m_numInputChannel = 20;
 
         Operator<DTYPE> *out = pInput;
