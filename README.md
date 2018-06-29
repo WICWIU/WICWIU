@@ -2,7 +2,11 @@
 
 * WICWIU는 국내 대학 최초로 공개하는 딥러닝 오픈소스 프레임워크입니다.
 
+* WICWIU("What I Create, What I Understand.")라는 이름은 Richard Feynman의 "What I cannot create, I do not understand."에서 영감을 받아 지었습니다. "우리가 직접 만들며 이해한 딥러닝 프레임워크"라는 뜻입니다.
+
 * WICWIU는 모든 API가 C++로 제공되어 메모리 및 성능 최적화에 유리합니다. 또한, 응용시스템의 개발 외에도 프레임워크 자체를 특수한 환경에 맞도록 수정 및 확장이 가능합니다.
+
+* Custom Operator, 또는 Layer 개발을 위한 API documentation은 추후 올리겠습니다.
 
 * WICWIU는 Apache2.0 라이선스를 적용해 연구 목적 및 상용 목적으로 제약 없이 활용 가능합니다.
 
@@ -16,7 +20,9 @@
 
 * 높은 성능의 GPU 병렬 연산 (cuDNN)
 
-* 학습을 위한 한국어 문서
+* 학습을 위한 한국어 문서 (준비중)
+
+* 현재는 MNIST tutorial만 지원하지만, ImageNet tutorial도 공개하겠습니다.
 
 ## WICWIU는 다음과 같은 환경을 지원하고 있습니다.
 
@@ -55,14 +61,16 @@
 
 ## WICWIU를 사용하기 위해서는 다음 패키지들이 설치되어 있어야 합니다.
 * NVIDIA driver
-* cuda toolkit
-* cuDNN
+* cuda toolkit (tested on v.9.0)
+* cuDNN (tested on v7.0.5)
 
 ## WICWIU는 다음과 같은 방법으로 설치하실 수 있습니다.
 
 ```bash
 $ git clone https://github.com/WICWIU/WICWIU
-$ cd WICWIU/
+$ cd WICWIU/tutorials/MNIST
+$ make
+$ ./main
 ```
 
 자세한 사용방법은 예제파일을 참고하여 주시고, 추후 자료를 보강하도록 하겠습니다.
@@ -72,8 +80,8 @@ $ cd WICWIU/
 > WICWIU는 한동대학교 학부생 주도로 개발되었습니다.
 
 * 한동대학교 전산전자공학부 김인중 교수님.
-* 1기: 박천명(팀장), 김지웅, 기윤호, 김지현 (CNN)
-* 2기: 김승주(팀장), 윤성결, 최은서 (RNN)
+* 1기: 박천명(팀장), 김지웅, 기윤호, 김지현
+* 2기: 김승주(팀장), 윤성결, 최은서
 * 3기: 김경협, 윤동휘
 
 ## 저희팀과 연락하고 싶으신 분들은?
