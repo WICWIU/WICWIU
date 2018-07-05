@@ -1,7 +1,7 @@
 .SUFFIXES = .cpp .o
 
 CFLAGS = -O2 -std=c++11
-ENABLE_CUDNN = -D__CUDNN__
+#ENABLE_CUDNN = -D__CUDNN__
 #DFLAGS = -g -D__DEBUG__
 
 LFLAGS = -lcudart -lcudnn -lpthread

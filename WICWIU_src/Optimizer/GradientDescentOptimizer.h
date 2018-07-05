@@ -108,7 +108,7 @@ public:
         int capacity = trainable_data->GetCapacity();
 
         for (int i = 0; i < capacity; i++) {
-            (*pVelocity)[i]       = m_momentum * (*pVelocity)[i] + learning_rate * (*gradient)[i];
+            (*pVelocity)[i]       = m_momentum * (*pVelocity)[i] - learning_rate * (*gradient)[i];
             (*trainable_data)[i] += (*pVelocity)[i];
         }
 
