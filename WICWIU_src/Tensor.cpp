@@ -35,7 +35,7 @@ template<typename DTYPE> int Tensor<DTYPE>::Alloc(Shape *pShape, IsUseTime pAnsw
             }
         } else return FALSE;
 
-        m_aData = new Data<DTYPE>(pTime, pCapacityPerTime);
+        m_aLongArray = new LongArray<DTYPE>(pTime, pCapacityPerTime);
     }
 
     m_Device = CPU;
@@ -53,7 +53,7 @@ template<typename DTYPE> int Tensor<DTYPE>::Alloc(Tensor<DTYPE> *pTensor) {
         return FALSE;
     } else {
         m_aShape    = new Shape(pTensor->GetShape());
-        m_aData     = new Data<DTYPE>(pTensor->GetData());
+        m_aLongArray     = new LongArray<DTYPE>(pTensor->GetLongArray());
         m_Device    = pTensor->GetDevice();
         m_IsUseTime = pTensor->GetIsUseTime();
     }
@@ -71,9 +71,9 @@ template<typename DTYPE> void Tensor<DTYPE>::Delete() {
         m_aShape = NULL;
     }
 
-    if (m_aData) {
-        delete m_aData;
-        m_aData = NULL;
+    if (m_aLongArray) {
+        delete m_aLongArray;
+        m_aLongArray = NULL;
     }
 }
 
@@ -85,7 +85,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     #endif  // __DEBUG__
 
     m_aShape = NULL;
-    m_aData  = NULL;
+    m_aLongArray  = NULL;
     m_Device = CPU;
     Alloc(new Shape(pSize0, pSize1, pSize2, pSize3, pSize4), pAnswer);
 }
@@ -96,7 +96,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     #endif  // __DEBUG__
 
     m_aShape = NULL;
-    m_aData  = NULL;
+    m_aLongArray  = NULL;
     m_Device = CPU;
     Alloc(new Shape(pSize0, pSize1, pSize2, pSize3), pAnswer);
 }
@@ -107,7 +107,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     #endif  // __DEBUG__
 
     m_aShape = NULL;
-    m_aData  = NULL;
+    m_aLongArray  = NULL;
     m_Device = CPU;
     Alloc(new Shape(pSize0, pSize1, pSize2), pAnswer);
 }
@@ -118,7 +118,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, IsUseTime
     #endif  // __DEBUG__
 
     m_aShape = NULL;
-    m_aData  = NULL;
+    m_aLongArray  = NULL;
     m_Device = CPU;
     Alloc(new Shape(pSize0, pSize1), pAnswer);
 }
@@ -129,7 +129,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, IsUseTime pAnswer) {
     #endif  // __DEBUG__
 
     m_aShape = NULL;
-    m_aData  = NULL;
+    m_aLongArray  = NULL;
     m_Device = CPU;
     Alloc(new Shape(pSize0), pAnswer);
 }
@@ -140,7 +140,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(Shape *pShape, IsUseTime pAnswer)
     #endif  // __DEBUG__
 
     m_aShape = NULL;
-    m_aData  = NULL;
+    m_aLongArray  = NULL;
     m_Device = CPU;
     Alloc(pShape, pAnswer);
 }
@@ -151,7 +151,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(Tensor *pTensor) {
     #endif  // __DEBUG__
 
     m_aShape = NULL;
-    m_aData  = NULL;
+    m_aLongArray  = NULL;
     m_Device = CPU;
     Alloc(pTensor);
 }
@@ -188,12 +188,12 @@ template<typename DTYPE> int Tensor<DTYPE>::GetDim(int pRanknum) {
     return m_aShape->GetDim(pRanknum);
 }
 
-template<typename DTYPE> Data<DTYPE> *Tensor<DTYPE>::GetData() {
+template<typename DTYPE> LongArray<DTYPE> *Tensor<DTYPE>::GetLongArray() {
     #ifdef __DEBUG__
-    std::cout << "Tensor<DTYPE>::GetData()" << '\n';
+    std::cout << "Tensor<DTYPE>::GetLongArray()" << '\n';
     #endif  // __DEBUG__
 
-    return m_aData;
+    return m_aLongArray;
 }
 
 template<typename DTYPE> int Tensor<DTYPE>::GetCapacity() {
@@ -201,7 +201,7 @@ template<typename DTYPE> int Tensor<DTYPE>::GetCapacity() {
     std::cout << "Tensor<DTYPE>::GetCapacity()" << '\n';
     #endif  // __DEBUG__
 
-    return m_aData->GetCapacity();
+    return m_aLongArray->GetCapacity();
 }
 
 template<typename DTYPE> int Tensor<DTYPE>::GetElement(unsigned int index) {
@@ -209,7 +209,7 @@ template<typename DTYPE> int Tensor<DTYPE>::GetElement(unsigned int index) {
     std::cout << "Tensor<DTYPE>::GetElement(unsigned int index)" << '\n';
     #endif  // __DEBUG__
 
-    return m_aData->GetElement(index);
+    return m_aLongArray->GetElement(index);
 }
 
 template<typename DTYPE> DTYPE& Tensor<DTYPE>::operator[](unsigned int index) {
@@ -232,7 +232,7 @@ template<typename DTYPE> DTYPE& Tensor<DTYPE>::operator[](unsigned int index) {
     # endif // __DEBUG__
     #endif  // __CUDNN__
 
-    return (*m_aData)[index];
+    return (*m_aLongArray)[index];
 }
 
 template<typename DTYPE> Device Tensor<DTYPE>::GetDevice() {
@@ -251,10 +251,10 @@ template<typename DTYPE> IsUseTime Tensor<DTYPE>::GetIsUseTime() {
     return m_IsUseTime;
 }
 
-template<typename DTYPE> DTYPE *Tensor<DTYPE>::GetCPUData(unsigned int pTime) {
+template<typename DTYPE> DTYPE *Tensor<DTYPE>::GetCPULongArray(unsigned int pTime) {
     #ifdef __CUDNN__
     # if __DEBUG__
-    std::cout << "Tensor<DTYPE>::GetCPUData(unsigned int pTime)" << '\n';
+    std::cout << "Tensor<DTYPE>::GetCPULongArray(unsigned int pTime)" << '\n';
 
     if (m_Device == GPU) {
         printf("Warning! Tensor is allocated in Device(GPU) latest time\n");
@@ -271,7 +271,7 @@ template<typename DTYPE> DTYPE *Tensor<DTYPE>::GetCPUData(unsigned int pTime) {
     # endif // __DEBUG__
     #endif  // __CUDNN__
 
-    return m_aData->GetCPUData(pTime);
+    return m_aLongArray->GetCPULongArray(pTime);
 }
 
 template<typename DTYPE> int Tensor<DTYPE>::GetTimeSize() {
@@ -435,7 +435,7 @@ template<typename DTYPE> void Tensor<DTYPE>::Reset() {
     #endif  // __CUDNN__
 
     for (int i = 0; i < capacity; i++) {
-        (*m_aData)[i] = 0;
+        (*m_aLongArray)[i] = 0;
     }
 }
 
@@ -445,7 +445,7 @@ template<typename DTYPE> void Tensor<DTYPE>::SetDeviceCPU() {
     #endif  // __DEBUG__
 
     m_Device = CPU;
-    m_aData->SetDeviceCPU();
+    m_aLongArray->SetDeviceCPU();
     m_aShape->SetDeviceCPU();
 }
 
@@ -456,7 +456,7 @@ template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU() {
     # endif // __DEBUG__
 
     m_Device = GPU;
-    m_aData->SetDeviceGPU();
+    m_aLongArray->SetDeviceGPU();
     m_aShape->SetDeviceGPU();
 }
 
@@ -478,7 +478,7 @@ template<typename DTYPE> DTYPE *Tensor<DTYPE>::GetGPUData(unsigned int pTime) {
 
     # endif // __DEBUG__
 
-    return m_aData->GetGPUData(pTime);
+    return m_aLongArray->GetGPUData(pTime);
 }
 
 template<typename DTYPE> cudnnTensorDescriptor_t& Tensor<DTYPE>::GetDescriptor() {
@@ -509,14 +509,14 @@ template<typename DTYPE> void Tensor<DTYPE>::Reset(cudnnHandle_t& pCudnnHandle) 
 
     int pTime                     = this->GetTimeSize();
     cudnnTensorDescriptor_t pDesc = this->GetDescriptor();
-    DTYPE *pDevData               = NULL;
+    DTYPE *pDevLongArray               = NULL;
     float  zero                   = 0.f;
 
     for (int i = 0; i < pTime; i++) {
-        pDevData = this->GetGPUData(i);
+        pDevLongArray = this->GetGPUData(i);
         checkCUDNN(cudnnAddTensor(pCudnnHandle,
-                                  &zero, pDesc, pDevData,
-                                  &zero, pDesc, pDevData));
+                                  &zero, pDesc, pDevLongArray,
+                                  &zero, pDesc, pDevLongArray));
     }
 }
 

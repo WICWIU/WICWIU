@@ -3,23 +3,23 @@
 
 #include "Common.h"
 
-template<typename DTYPE> class Data {
+template<typename DTYPE> class LongArray {
 private:
-    DTYPE **m_aaHostData;
+    DTYPE **m_aaHostLongArray;
 
-    int m_CapacityOfData;
+    int m_CapacityOfLongArray;
     int m_TimeSize;
     int m_CapacityPerTime;
 
     Device m_Device;
 
 #ifdef __CUDNN__
-    DTYPE **m_aaDevData;
+    DTYPE **m_aaDevLongArray;
 #endif  // __CUDNN
 
 private:
     int  Alloc(unsigned int pTimeSize, unsigned int pCapacityPerTime);
-    int  Alloc(Data *pData);
+    int  Alloc(LongArray *pLongArray);
     void Delete();
 
 #ifdef __CUDNN__
@@ -30,10 +30,10 @@ private:
 #endif  // __CUDNN
 
 public:
-    Data(unsigned int pCapacity);
-    Data(unsigned int pTimeSize, unsigned int pCapacityPerTime);
-    Data(Data *pData);  // Copy Constructor
-    virtual ~Data();
+    LongArray(unsigned int pCapacity);
+    LongArray(unsigned int pTimeSize, unsigned int pCapacityPerTime);
+    LongArray(LongArray *pLongArray);  // Copy Constructor
+    virtual ~LongArray();
 
     int    GetCapacity();
     int    GetTimeSize();
@@ -41,7 +41,7 @@ public:
     DTYPE  GetElement(unsigned int index);
     DTYPE& operator[](unsigned int index);
     Device GetDevice();
-    DTYPE* GetCPUData(unsigned int pTime = 0);
+    DTYPE* GetCPULongArray(unsigned int pTime = 0);
 
     int    SetDeviceCPU();
 #ifdef __CUDNN__

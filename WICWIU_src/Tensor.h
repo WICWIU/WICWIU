@@ -2,7 +2,7 @@
 #define TENSOR_H_
 
 #include "Shape.h"
-#include "Data.h"
+#include "LongArray.h"
 
 enum IsUseTime {
     UseTime,
@@ -12,7 +12,7 @@ enum IsUseTime {
 template<typename DTYPE> class Tensor {
 private:
     Shape *m_aShape;
-    Data<DTYPE> *m_aData;
+    LongArray<DTYPE> *m_aLongArray;
     Device m_Device;
     IsUseTime m_IsUseTime;
 
@@ -35,15 +35,15 @@ public:
     Shape                  * GetShape();
     int                      GetRank();
     int                      GetDim(int pRanknum);
-    Data<DTYPE>            * GetData();
+    LongArray<DTYPE>            * GetLongArray();
     int                      GetCapacity();
     int                      GetElement(unsigned int index);
     DTYPE                  & operator[](unsigned int index);
     Device                   GetDevice();
     IsUseTime                GetIsUseTime();
-    DTYPE                  * GetCPUData(unsigned int pTime = 0);
+    DTYPE                  * GetCPULongArray(unsigned int pTime = 0);
 
-    int                      GetTimeSize(); // 추후 Data의 Timesize 반환
+    int                      GetTimeSize(); // 추후 LongArray의 Timesize 반환
     int                      GetBatchSize(); // 삭제 예정
     int                      GetChannelSize(); // 삭제 예정
     int                      GetRowSize(); // 삭제 예정
