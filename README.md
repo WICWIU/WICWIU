@@ -1,4 +1,4 @@
-# WICWIU(What I can Create is What I Understand)
+# WICWIU(What I can Create, What I Understand)
 
 * WICWIU는 국내 대학 최초로 공개하는 딥러닝 오픈소스 프레임워크입니다.
 
@@ -82,7 +82,7 @@ $ ./main
 * 한동대학교 전산전자공학부 김인중 교수님.
 * 1기: 박천명(팀장), 김지웅, 기윤호, 김지현
 * 2기: 김승주(팀장), 윤성결, 최은서
-* 3기: 김경협, 윤동휘
+* 3기: 김경협, 윤동휘, 권예성
 
 ## 저희팀과 연락하고 싶으신 분들은?
 프레임워크에 대해 궁금한 점이 있다면 hgudeeplearning@gmail.com 로 연락하시길 바랍니다.
