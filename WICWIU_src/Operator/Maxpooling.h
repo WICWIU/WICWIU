@@ -150,7 +150,7 @@ public:
     }
 
     // 메모리 효율을 생각하면 time에 따라 취해야 할 액션이 다르다.
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
         Shape *shapeOfInput  = input->GetShape();
 
@@ -178,9 +178,8 @@ public:
         int tempcol = 0;
 
         int ti = pTime;
-        int numOfThread = this->GetNumOfThread();
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
@@ -213,7 +212,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
 
         Tensor<DTYPE> *this_delta = this->GetDelta();
@@ -227,9 +226,8 @@ public:
         int indexOfDelta = 0;
 
         int ti = pTime;
-        int numOfThread = this->GetNumOfThread();
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {

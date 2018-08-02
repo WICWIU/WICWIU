@@ -91,7 +91,7 @@ public:
         }
     }
 
-    Tensor<DTYPE>* ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    Tensor<DTYPE>* ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input         = this->GetTensor();
         Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
         Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
@@ -104,9 +104,7 @@ public:
 
         int ti = pTime;
 
-        int numOfThread = this->GetNumOfThread();
-
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {  // thread
+        for (int ba = 0; ba < batchsize; ba++) {  // thread
             sum[ti][ba] = 0.f;
             max[ti][ba] = 0.f;
         }
@@ -119,7 +117,7 @@ public:
         int start = 0;
         int end   = 0;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             start = (ti * batchsize + ba) * capacity;
             end   = start + capacity;
 
@@ -128,7 +126,7 @@ public:
 
         DTYPE temp = 0.f;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             start = (ti * batchsize + ba) * capacity;
             end   = start + capacity;
 
@@ -139,7 +137,7 @@ public:
             temp        = 0.f;
         }
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             start = (ti * batchsize + ba) * capacity;
             end   = start + capacity;
 
@@ -153,7 +151,7 @@ public:
         return result;
     }
 
-    Tensor<DTYPE>* BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    Tensor<DTYPE>* BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
         Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
 
@@ -169,9 +167,7 @@ public:
 
         int ti = pTime;
 
-        int numOfThread = this->GetNumOfThread();
-
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             start = (ti * batchsize + ba) * capacity;
             end   = start + capacity;
 

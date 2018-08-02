@@ -205,16 +205,16 @@ template<typename DTYPE> Container<Tensor<DTYPE> *> *Layer<DTYPE>::GetDeltaConta
     return m_pLastOperator->GetDeltaContainer();
 }
 
-template<typename DTYPE> int Layer<DTYPE>::ForwardPropagate(int pTime, int pThreadNum) {
+template<typename DTYPE> int Layer<DTYPE>::ForwardPropagate(int pTime) {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->ForwardPropagate(pTime, pThreadNum);
+        (*m_aaExcutableOperator)[i]->ForwardPropagate(pTime);
     }
     return TRUE;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::BackPropagate(int pTime, int pThreadNum) {
+template<typename DTYPE> int Layer<DTYPE>::BackPropagate(int pTime) {
     for (int i = m_numOfExcutableOperator - 1; i >= 0; i--) {
-        (*m_aaExcutableOperator)[i]->BackPropagate(pTime, pThreadNum);
+        (*m_aaExcutableOperator)[i]->BackPropagate(pTime);
     }
     return TRUE;
 }
@@ -248,15 +248,6 @@ template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU() {
 
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->SetDeviceCPU();
-    }
-}
-
-template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU(int pNumOfThread) {
-    this->SetDevice(CPU);
-    this->SetNumOfThread(pNumOfThread);
-
-    for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->SetDeviceCPU(pNumOfThread);
     }
 }
 

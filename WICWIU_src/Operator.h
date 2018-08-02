@@ -19,7 +19,6 @@ private:
     std::string m_name;
     Device m_Device;
     Mode m_Mode;
-    int m_numOfThread;
     int m_isParameter;
     int m_isTrainable;
 
@@ -56,7 +55,6 @@ public:
     int                                   SetDelta(Tensor<DTYPE> *pTensor);
 
     int                                   SetDevice(Device pDevice);
-    int                                   SetNumOfThread(int pNumOfThread);
 
     int                                   SetIsTensorholder(int pIsParameter);
     int                                   SetIsTrainable(int pIsTrainable);
@@ -78,12 +76,11 @@ public:
 
     std::string                           GetName() const;
     virtual Device                        GetDevice();
-    int                                   GetNumOfThread();
     int                                   GetIsTensorholder();
     int                                   GetIsTrainable();
 
-    virtual int                           ForwardPropagate(int pTime = 0, int pThreadNum = 0);
-    virtual int                           BackPropagate(int pTime = 0, int pThreadNum = 0);
+    virtual int                           ForwardPropagate(int pTime = 0);
+    virtual int                           BackPropagate(int pTime = 0);
 
     // reset value
     virtual int                           ResetResult();
@@ -92,7 +89,6 @@ public:
     virtual void                          PrintInformation();
 
     virtual void                          SetDeviceCPU();
-    virtual void                          SetDeviceCPU(int pNumOfThread);
 
     virtual int                           SetResultOnCPU();
     virtual int                           SetGradientOnCPU();

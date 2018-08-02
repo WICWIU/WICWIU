@@ -3,11 +3,6 @@
 
 #include "Optimizer_utils.h"
 
-typedef struct {
-    void *m_NN;
-    int   m_threadNum;
-} ThreadInfo;
-
 template<typename DTYPE> class NeuralNetwork {
 private:
     Container<Operator<DTYPE> *> *m_aaOperator;
@@ -24,7 +19,6 @@ private:
     Optimizer<DTYPE> *m_aOptimizer;
 
     Device m_Device;
-    int m_numOfThread;
 
 #ifdef __CUDNN__
     cudnnHandle_t m_cudnnHandle;
@@ -72,11 +66,7 @@ public:
     int                           ForwardPropagate(int pTime = 0);
     int                           BackPropagate(int pTime = 0);
 
-    static void                 * ForwardPropagateForThread(void *param);
-    static void                 * BackPropagateForThread(void *param);
-
     void                          SetDeviceCPU();
-    void                          SetDeviceCPU(int pNumOfThread);
 
     void                          SetModeTraining();
     void                          SetModeAccumulating();
@@ -87,9 +77,6 @@ public:
 
     int                           TrainingOnCPU();
     int                           TestingOnCPU();
-
-    int                           TrainingOnMultiThread();     // Multi Threading
-    int                           TestingOnMultiThread();      // Multi Threading
 
     int                           TrainingOnGPU();
     int                           TestingOnGPU();

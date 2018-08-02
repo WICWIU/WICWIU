@@ -34,7 +34,7 @@ public:
         Delete();
     }
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         float *CUDNNCachedMean        = NULL;
         float *CUDNNCachedInvVariance = NULL;
 
@@ -170,7 +170,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         this->CopyTensorToFloat(m_pTenDerResult, m_aCUDNNDy);
 
         float *CUDNNX                 = NULL;

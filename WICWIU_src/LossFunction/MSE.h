@@ -39,10 +39,10 @@ public:
         return TRUE;
     }
 
-    Tensor<DTYPE>* ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
-        Tensor<DTYPE> *input    = this->GetTensor();
-        Tensor<DTYPE> *label    = this->GetLabel()->GetResult();
-        Tensor<DTYPE> *result   = this->GetResult();
+    Tensor<DTYPE>* ForwardPropagate(int pTime = 0) {
+        Tensor<DTYPE> *input  = this->GetTensor();
+        Tensor<DTYPE> *label  = this->GetLabel()->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
 
         int batchsize = input->GetBatchSize();
 
@@ -51,24 +51,23 @@ public:
         int colsize     = input->GetColSize();
         int capacity    = channelsize * rowsize * colsize;
 
-        int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int ti = pTime;
 
-        for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0, i = 0; ba < batchsize; ba++) {
             i = ti * batchsize + ba;
 
             for (int j = 0, index = 0; j < capacity; j++) {
-                index              = i * capacity + j;
-                (*result)[i]      += Error((*input)[index], (*label)[index]);
+                index         = i * capacity + j;
+                (*result)[i] += Error((*input)[index], (*label)[index]);
             }
         }
 
         return result;
     }
 
-    Tensor<DTYPE>* BackPropagate(int pTime = 0, int pThreadNum = 0) {
-        Tensor<DTYPE> *input    = this->GetTensor();
-        Tensor<DTYPE> *label    = this->GetLabel()->GetResult();
+    Tensor<DTYPE>* BackPropagate(int pTime = 0) {
+        Tensor<DTYPE> *input       = this->GetTensor();
+        Tensor<DTYPE> *label       = this->GetLabel()->GetResult();
         Tensor<DTYPE> *input_delta = this->GetOperator()->GetDelta();
 
         int batchsize = input->GetBatchSize();
@@ -78,10 +77,9 @@ public:
         int colsize     = input->GetColSize();
         int capacity    = channelsize * rowsize * colsize;
 
-        int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int ti = pTime;
 
-        for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0, i = 0; ba < batchsize; ba++) {
             i = ti * batchsize + ba;
 
             for (int j = 0, index = 0; j < capacity; j++) {

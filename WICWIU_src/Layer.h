@@ -38,8 +38,8 @@ public:
     virtual Tensor<DTYPE>             * GetDelta() const;
     virtual Container<Tensor<DTYPE> *>* GetDeltaContainer();
 
-    int                                 ForwardPropagate(int pTime = 0, int pThreadNum = 0);
-    int                                 BackPropagate(int pTime = 0, int pThreadNum = 0);
+    int                                 ForwardPropagate(int pTime = 0);
+    int                                 BackPropagate(int pTime = 0);
 
     int                                 ResetResult();
     int                                 ResetGradient();
@@ -47,7 +47,6 @@ public:
     void                                PrintInformation();
 
     void                                SetDeviceCPU();
-    void                                SetDeviceCPU(int pnumOfThread);
 
     // int                                 SetResultOnCPU();
     // int                                 SetGradientOnCPU();

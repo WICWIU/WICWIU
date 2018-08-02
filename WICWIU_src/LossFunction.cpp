@@ -15,7 +15,6 @@ template<typename DTYPE> LossFunction<DTYPE>::LossFunction(std::string pName) {
     m_pLabel         = NULL;
     m_name           = pName;
     m_Device         = CPU;
-    m_numOfThread    = 1;
 }
 
 template<typename DTYPE> LossFunction<DTYPE>::LossFunction(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) {
@@ -29,7 +28,6 @@ template<typename DTYPE> LossFunction<DTYPE>::LossFunction(Operator<DTYPE> *pOpe
     m_pLabel         = NULL;
     m_name           = pName;
     m_Device         = CPU;
-    m_numOfThread    = 1;
     Alloc(pOperator, pLabel);
 }
 
@@ -96,17 +94,17 @@ template<typename DTYPE> std::string LossFunction<DTYPE>::GetName() const {
     return m_name;
 }
 
-template<typename DTYPE> Tensor<DTYPE> *LossFunction<DTYPE>::ForwardPropagate(int pTime, int pThreadNum) {
+template<typename DTYPE> Tensor<DTYPE> *LossFunction<DTYPE>::ForwardPropagate(int pTime) {
     #ifdef __DEBUG__
-    std::cout << "LossFunction<DTYPE>::ForwardPropagate(int pTime, int pThreadNum)" << '\n';
+    std::cout << "LossFunction<DTYPE>::ForwardPropagate(int pTime)" << '\n';
     std::cout << this->GetName() << '\n';
     #endif  // __DEBUG__
     return NULL;
 }
 
-template<typename DTYPE> Tensor<DTYPE> *LossFunction<DTYPE>::BackPropagate(int pTime, int pThreadNum) {
+template<typename DTYPE> Tensor<DTYPE> *LossFunction<DTYPE>::BackPropagate(int pTime) {
     #ifdef __DEBUG__
-    std::cout << "LossFunction<DTYPE>::BackPropagate(int pTime, int pThreadNum)" << '\n';
+    std::cout << "LossFunction<DTYPE>::BackPropagate(int pTime)" << '\n';
     std::cout << this->GetName() << '\n';
     #endif  // __DEBUG__
     return NULL;
@@ -137,16 +135,6 @@ template<typename DTYPE> DTYPE& LossFunction<DTYPE>::operator[](unsigned int ind
 
 template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceCPU() {
     m_Device = CPU;
-
-#ifdef __CUDNN__
-    this->SetResultOnCPU();
-    this->SetGradientOnCPU();
-#endif  // __CUDNN__
-}
-
-template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceCPU(int pNumOfThread) {
-    m_Device      = CPU;
-    m_numOfThread = pNumOfThread;
 
 #ifdef __CUDNN__
     this->SetResultOnCPU();

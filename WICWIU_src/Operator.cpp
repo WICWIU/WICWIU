@@ -129,7 +129,6 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
     m_Mode        = TRAINING;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
-    m_numOfThread = 1;
     Alloc();
 }
 
@@ -146,7 +145,6 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_Mode        = TRAINING;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
-    m_numOfThread = 1;
     Alloc();
     AddEdgebetweenOperators(1, pInput);
 }
@@ -164,7 +162,6 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_Mode        = TRAINING;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
-    m_numOfThread = 1;
     Alloc();
     AddEdgebetweenOperators(2, pInput0, pInput1);
 }
@@ -266,11 +263,6 @@ template<typename DTYPE> int Operator<DTYPE>::SetDevice(Device pDevice) {
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::SetNumOfThread(int pNumOfThread) {
-    m_numOfThread = pNumOfThread;
-    return TRUE;
-}
-
 template<typename DTYPE> int Operator<DTYPE>::SetIsTensorholder(int pIsParameter) {
     m_isParameter = pIsParameter;
     return TRUE;
@@ -346,10 +338,6 @@ template<typename DTYPE> Device Operator<DTYPE>::GetDevice() {
     return m_Device;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::GetNumOfThread() {
-    return m_numOfThread;
-}
-
 template<typename DTYPE> int Operator<DTYPE>::GetIsTensorholder() {
     return m_isParameter;
 }
@@ -358,7 +346,7 @@ template<typename DTYPE> int Operator<DTYPE>::GetIsTrainable() {
     return m_isTrainable;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime, int pThreadNum) {
+template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime) {
     #ifdef __DEBUG__
     std::cout << "thread number : " << pThreadNum << '\n';
     std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
@@ -366,7 +354,7 @@ template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime, int pT
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::BackPropagate(int pTime, int pThreadNum) {
+template<typename DTYPE> int Operator<DTYPE>::BackPropagate(int pTime) {
     #ifdef __DEBUG__
     std::cout << "thread number : " << pThreadNum << '\n';
     std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
@@ -426,14 +414,6 @@ template<typename DTYPE> void Operator<DTYPE>::PrintInformation() {
 
 template<typename DTYPE> void Operator<DTYPE>::SetDeviceCPU() {
     this->SetDevice(CPU);
-
-    this->SetResultOnCPU();
-    this->SetGradientOnCPU();
-}
-
-template<typename DTYPE> void Operator<DTYPE>::SetDeviceCPU(int pNumOfThread) {
-    this->SetDevice(CPU);
-    this->SetNumOfThread(pNumOfThread);
 
     this->SetResultOnCPU();
     this->SetGradientOnCPU();

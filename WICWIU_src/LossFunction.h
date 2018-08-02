@@ -17,8 +17,6 @@ private:
 
     Device m_Device;
 
-    int m_numOfThread;
-
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
 #endif  // if __CUDNN__
@@ -43,8 +41,8 @@ public:
     std::string            GetName() const;
 
     // For Propagate
-    virtual Tensor<DTYPE>* ForwardPropagate(int pTime = 0, int pThreadNum = 0);
-    virtual Tensor<DTYPE>* BackPropagate(int pTime = 0, int pThreadNum = 0);
+    virtual Tensor<DTYPE>* ForwardPropagate(int pTime = 0);
+    virtual Tensor<DTYPE>* BackPropagate(int pTime = 0);
 
 #ifdef __CUDNN__
     virtual Tensor<DTYPE>* ForwardPropagateOnGPU(int pTime = 0);
@@ -54,7 +52,6 @@ public:
     DTYPE                & operator[](unsigned int index);
 
     virtual void           SetDeviceCPU();
-    virtual void           SetDeviceCPU(int pNumOfThread);
 #ifdef __CUDNN__
 
     // Setting Supporter
@@ -75,10 +72,6 @@ public:
 
     virtual Device GetDevice() {
         return m_Device;
-    }
-
-    int GetNumOfThread() {
-        return m_numOfThread;
     }
 
     // reset value

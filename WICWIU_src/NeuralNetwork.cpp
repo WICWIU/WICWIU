@@ -99,8 +99,7 @@ template<typename DTYPE> NeuralNetwork<DTYPE>::NeuralNetwork() {
     m_aLossFunction = NULL;
     m_aOptimizer    = NULL;
 
-    m_Device      = CPU;
-    m_numOfThread = 1;
+    m_Device = CPU;
 
 #ifdef __CUDNN__
     m_cudnnHandle = NULL;
@@ -318,43 +317,6 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagate(int pTime) {
     return TRUE;
 }
 
-template<typename DTYPE> void *NeuralNetwork<DTYPE>::ForwardPropagateForThread(void *param) {
-    ThreadInfo *pThreadInfo = (ThreadInfo *)param;
-
-    NeuralNetwork<DTYPE> *pNN = (NeuralNetwork<DTYPE> *)(pThreadInfo->m_NN);
-    int pTime                 = 0;
-    int pThreadNum            = pThreadInfo->m_threadNum;
-
-    Container<Operator<DTYPE> *> *m_apExcutableOperator = pNN->GetExcutableOperatorContainer();
-    int m_ExcutableOperatorDegree                       = m_apExcutableOperator->GetSize();
-    LossFunction<DTYPE> *m_aLossFunction                = pNN->GetLossFunction();
-
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->ForwardPropagate(pTime, pThreadNum);
-    }
-    m_aLossFunction->ForwardPropagate(pTime, pThreadNum);
-    return NULL;
-}
-
-template<typename DTYPE> void *NeuralNetwork<DTYPE>::BackPropagateForThread(void *param) {
-    ThreadInfo *pThreadInfo = (ThreadInfo *)param;
-
-    NeuralNetwork<DTYPE> *pNN = (NeuralNetwork<DTYPE> *)(pThreadInfo->m_NN);
-    int pTime                 = 0;
-    int pThreadNum            = pThreadInfo->m_threadNum;
-
-    Container<Operator<DTYPE> *> *m_apExcutableOperator = pNN->GetExcutableOperatorContainer();
-    int m_ExcutableOperatorDegree                       = m_apExcutableOperator->GetSize();
-    LossFunction<DTYPE> *m_aLossFunction                = pNN->GetLossFunction();
-
-    m_aLossFunction->BackPropagate(pTime, pThreadNum);
-
-    for (int i = m_ExcutableOperatorDegree - 1; i >= 0; i--) {
-        (*m_apExcutableOperator)[i]->BackPropagate(pTime, pThreadNum);
-    }
-    return NULL;
-}
-
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPU() {
     m_Device = CPU;
 
@@ -362,16 +324,6 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPU() {
         (*m_apExcutableOperator)[i]->SetDeviceCPU();
     }
     m_aLossFunction->SetDeviceCPU();
-}
-
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPU(int pNumOfThread) {
-    m_Device      = CPU;
-    m_numOfThread = pNumOfThread;
-
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetDeviceCPU(pNumOfThread);
-    }
-    m_aLossFunction->SetDeviceCPU(pNumOfThread);
 }
 
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeTraining() {
@@ -393,9 +345,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeInferencing() {
 }
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::Training() {
-    if ((m_Device == CPU) && (m_numOfThread > 1)) {
-        this->TrainingOnMultiThread();
-    } else if ((m_Device == CPU) && (m_numOfThread == 1)) {
+    if (m_Device == CPU) {
         this->TrainingOnCPU();
     } else if (m_Device == GPU) {
         this->TrainingOnGPU();
@@ -405,9 +355,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Training() {
 }
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::Testing() {
-    if ((m_Device == CPU) && (m_numOfThread > 1)) {
-        this->TestingOnMultiThread();
-    } else if ((m_Device == CPU) && (m_numOfThread == 1)) {
+    if (m_Device == CPU) {
         this->TestingOnCPU();
     } else if (m_Device == GPU) {
         this->TestingOnGPU();
@@ -435,64 +383,6 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TestingOnCPU() {
     this->ResetLossFunctionResult();
 
     this->ForwardPropagate();
-    return TRUE;
-}
-
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnMultiThread() {
-    this->ResetOperatorResult();
-    this->ResetOperatorGradient();
-    this->ResetLossFunctionResult();
-    this->ResetLossFunctionGradient();
-
-    pthread_t  *pThread     = (pthread_t *)malloc(sizeof(pthread_t) * m_numOfThread);
-    ThreadInfo *pThreadInfo = (ThreadInfo *)malloc(sizeof(ThreadInfo) * m_numOfThread);
-
-    for (int i = 0; i < m_numOfThread; i++) {
-        pThreadInfo[i].m_NN        = (void *)this;
-        pThreadInfo[i].m_threadNum = i;
-        pthread_create(&(pThread[i]), NULL, ForwardPropagateForThread, (void *)&(pThreadInfo[i]));
-    }
-
-    for (int i = 0; i < m_numOfThread; i++) {
-        pthread_join(pThread[i], NULL);
-    }
-
-    for (int i = 0; i < m_numOfThread; i++) {
-        pthread_create(&(pThread[i]), NULL, BackPropagateForThread, (void *)&(pThreadInfo[i]));
-    }
-
-    for (int i = 0; i < m_numOfThread; i++) {
-        pthread_join(pThread[i], NULL);
-    }
-
-    free(pThread);
-    free(pThreadInfo);
-
-    m_aOptimizer->UpdateParameter();
-
-    return TRUE;
-}
-
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TestingOnMultiThread() {
-    this->ResetOperatorResult();
-    this->ResetLossFunctionResult();
-
-    pthread_t  *pThread     = (pthread_t *)malloc(sizeof(pthread_t) * m_numOfThread);
-    ThreadInfo *pThreadInfo = (ThreadInfo *)malloc(sizeof(ThreadInfo) * m_numOfThread);
-
-    for (int i = 0; i < m_numOfThread; i++) {
-        pThreadInfo[i].m_NN        = (void *)this;
-        pThreadInfo[i].m_threadNum = i;
-        pthread_create(&(pThread[i]), NULL, ForwardPropagateForThread, (void *)&(pThreadInfo[i]));
-    }
-
-    for (int i = 0; i < m_numOfThread; i++) {
-        pthread_join(pThread[i], NULL);
-    }
-
-    free(pThread);
-    free(pThreadInfo);
-
     return TRUE;
 }
 
@@ -559,17 +449,17 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass)
 }
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass) {
-    Shape *pShape    = data->GetShape();
-    int    start     = Index5D(pShape, ti, ba, 0, 0, 0);
-    int    end       = start + numOfClass;
+    Shape *pShape = data->GetShape();
+    int    start  = Index5D(pShape, ti, ba, 0, 0, 0);
+    int    end    = start + numOfClass;
 
     // Initial max value is first element
-    DTYPE  max       = (*data)[start];
-    int    max_index = 0;
+    DTYPE max       = (*data)[start];
+    int   max_index = 0;
 
     for (int dim = start + 1; dim < end; dim++) {
         if ((*data)[dim] > max) {
-            max   = (*data)[dim];
+            max       = (*data)[dim];
             max_index = dim - start;
         }
     }
@@ -584,7 +474,7 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetLoss() {
     int timesize  = m_aLossFunction->GetResult()->GetTimeSize();
 
     for (int ba = 0; ba < batchsize; ba++) {
-        for(int ti = 0; ti < timesize; ti++ ){
+        for (int ti = 0; ti < timesize; ti++) {
             avg_loss += (*m_aLossFunction)[ba] / batchsize / timesize;
         }
     }

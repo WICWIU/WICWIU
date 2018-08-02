@@ -218,7 +218,7 @@ public:
 #endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *weight = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input  = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
@@ -239,10 +239,9 @@ public:
         Shape *inputTenShape  = input->GetShape();
         Shape *resultTenShape = result->GetShape();
 
-        int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int ti = pTime;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
@@ -260,7 +259,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *weight = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input  = this->GetInput()[1]->GetResult();
 
@@ -283,10 +282,9 @@ public:
         int input_index  = 0;
         int result_index = 0;
 
-        int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int ti = pTime;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {

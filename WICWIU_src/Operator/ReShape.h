@@ -69,7 +69,7 @@ public:
 
     void Delete() {}
 
-    int  ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int  ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
@@ -81,10 +81,9 @@ public:
 
         Shape *resultTenShape = result->GetShape();
 
-        int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int ti = pTime;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
@@ -98,7 +97,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *this_delta  = this->GetDelta();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
 
@@ -110,10 +109,9 @@ public:
 
         Shape *deltaTenShape = this_delta->GetShape();
 
-        int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int ti = pTime;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
@@ -152,7 +150,7 @@ public:
         Tensor<DTYPE> *this_delta  = this->GetDelta();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
 
-        DTYPE *pDevDelta  = this_delta->GetGPUData();
+        DTYPE *pDevDelta      = this_delta->GetGPUData();
         DTYPE *pDevInputDelta = input_delta->GetGPUData();
 
         cudnnTensorDescriptor_t pDesc = this_delta->GetDescriptor();

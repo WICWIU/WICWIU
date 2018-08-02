@@ -118,17 +118,16 @@ public:
 #endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *left   = (*input_contatiner)[0]->GetResult();
         Tensor<DTYPE> *right  = (*input_contatiner)[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        int m_ti        = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int m_ti = pTime;
 
-        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+        for (int m_ba = 0; m_ba < m_batchsize; m_ba++) {
             for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
                 for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
                     for (int m_co = 0; m_co < m_colsize; m_co++) {
@@ -143,17 +142,16 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *left_grad  = (*input_contatiner)[0]->GetGradient();
         Tensor<DTYPE> *right_grad = (*input_contatiner)[1]->GetGradient();
         Tensor<DTYPE> *this_grad  = this->GetGradient();
 
-        int m_ti        = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int m_ti = pTime;
 
-        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+        for (int m_ba = 0; m_ba < m_batchsize; m_ba++) {
             for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
                 for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
                     for (int m_co = 0; m_co < m_colsize; m_co++) {
@@ -346,17 +344,16 @@ public:
 #endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
         Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        int m_ti        = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int m_ti = pTime;
 
-        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+        for (int m_ba = 0; m_ba < m_batchsize; m_ba++) {
             for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
                 for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
                     for (int m_co = 0; m_co < m_colsize; m_co++) {
@@ -372,17 +369,16 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
         Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
         Tensor<DTYPE> *this_grad  = this->GetGradient();
 
-        int m_ti        = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int m_ti = pTime;
 
-        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+        for (int m_ba = 0; m_ba < m_batchsize; m_ba++) {
             for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
                 for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
                     for (int m_co = 0; m_co < m_colsize; m_co++) {
@@ -575,17 +571,16 @@ public:
     #endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *input  = (*input_contatiner)[0]->GetResult();
         Tensor<DTYPE> *bias   = (*input_contatiner)[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        int m_ti        = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int m_ti = pTime;
 
-        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+        for (int m_ba = 0; m_ba < m_batchsize; m_ba++) {
             for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
                 for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
                     for (int m_co = 0; m_co < m_colsize; m_co++) {
@@ -601,17 +596,16 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
 
         Tensor<DTYPE> *input_grad = (*input_contatiner)[0]->GetGradient();
         Tensor<DTYPE> *bias_grad  = (*input_contatiner)[1]->GetGradient();
         Tensor<DTYPE> *this_grad  = this->GetGradient();
 
-        int m_ti        = pTime;
-        int numOfThread = this->GetNumOfThread();
+        int m_ti = pTime;
 
-        for (int m_ba = pThreadNum; m_ba < m_batchsize; m_ba += numOfThread) {
+        for (int m_ba = 0; m_ba < m_batchsize; m_ba++) {
             for (int m_ch = 0; m_ch < m_channelsize; m_ch++) {
                 for (int m_ro = 0; m_ro < m_rowsize; m_ro++) {
                     for (int m_co = 0; m_co < m_colsize; m_co++) {
