@@ -489,6 +489,9 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::PrintGraphInformation() {
         (*m_apExcutableOperator)[i]->PrintInformation();
         std::cout << '\n';
     }
+
+    std::cout << "LossFunction: " << m_aLossFunction->GetName() << '\n';
+    // std::cout << "Optimizern: " << m_aOptimizer->GetName() << '\n';
 }
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::ResetOperatorResult() {

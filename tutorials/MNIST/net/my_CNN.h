@@ -34,16 +34,16 @@ public:
         //// ======================= layer 4=======================
         out = new Linear<float>(out, 1024, 10, TRUE, "Fully-connected_2");
 
-        // out = new Softmax<float>(out, "Softmax");
-
         AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================
-        SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
+        SetLossFunction(new HingeLoss<float>(out, label, "HL"));
+        // SetLossFunction(new MSE<float>(out, label, "MSE"));
+        // SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
 
         // ======================= Select Optimizer ===================
-        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.04, MINIMIZE));
+        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, MINIMIZE));
     }
 
     virtual ~my_CNN() {}

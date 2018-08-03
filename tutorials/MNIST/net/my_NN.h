@@ -26,7 +26,8 @@ public:
         AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================
-        SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, 0.000001, "SCE"));
+        SetLossFunction(new HingeLoss<float>(out, label, "HL"));
+        // SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, 0.000001, "SCE"));
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
@@ -50,25 +51,13 @@ public:
 
         // ======================= Select LossFunction Function ===================
         // SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
-        SetLossFunction(new MSE<float>(out, label, "MSE"));
+        SetLossFunction(new HingeLoss<float>(out, label, "HL"));
+        // SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
-        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.01, 0.9, MINIMIZE));
+        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.0001, 0.9, MINIMIZE));
     }
 
     virtual ~my_NN() {}
 
-    // Operator<float>* Linear(Operator<float> *pInput, int pNumInputCol, int pNumOutputCol, int use_bias = FALSE, std::string pName = NULL) {
-    //     Operator<float> *out = pInput;
-    //
-    //     Tensorholder<float> *pWeight = new Tensorholder<float>(Tensor<float>::Random_normal(1, 1, 1, pNumOutputCol, pNumInputCol, 0.0, 0.1), "Layer_Weight_" + pName);
-    //     out = new MatMul<float>(pWeight, out, "Layer_MatMul_" + pName);
-    //
-    //     if (use_bias) {
-    //         Tensorholder<float> *pBias = new Tensorholder<float>(Tensor<float>::Constants(1, 1, 1, 1, pNumOutputCol, 0.f), "Add_Bias_" + pName);
-    //         out = new AddColWise<float>(out, pBias, "Layer_Add_" + pName);
-    //     }
-    //
-    //     return out;
-    // }
 };
