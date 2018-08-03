@@ -14,3 +14,5 @@
 
 #include "Operator/BatchNormalize.h"
 #include "Operator/CUDNNBatchNormalize.h"
+
+#include "Operator/Softmax.h"
