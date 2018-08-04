@@ -1,12 +1,12 @@
 #ifndef __LINEAR_LAYER__
 #define __LINEAR_LAYER__    value
 
-#include "../Layer.h"
+#include "../Module.h"
 
-template<typename DTYPE> class Linear : public Layer<DTYPE>{
+template<typename DTYPE> class Linear : public Module<DTYPE>{
 private:
 public:
-    Linear(Operator<DTYPE> *pInput, int pNumInputCol, int pNumOutputCol, int use_bias = FALSE, std::string pName = NULL) : Layer<DTYPE>(pName) {
+    Linear(Operator<DTYPE> *pInput, int pNumInputCol, int pNumOutputCol, int use_bias = FALSE, std::string pName = NULL) : Module<DTYPE>(pName) {
         Alloc(pInput, pNumInputCol, pNumOutputCol, use_bias, pName);
     }
 

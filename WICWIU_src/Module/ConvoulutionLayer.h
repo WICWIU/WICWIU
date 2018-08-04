@@ -1,12 +1,12 @@
 #ifndef __CONVOLUTION_LAYER__
 #define __CONVOLUTION_LAYER__    value
 
-#include "../Layer.h"
+#include "../Module.h"
 
-// template<typename DTYPE> class ConvolutionLayer2D : public Layer<DTYPE>{
+// template<typename DTYPE> class ConvolutionLayer2D : public Module<DTYPE>{
 // private:
 // public:
-//     ConvolutionLayer2D(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pNumKernelRow, int pNumKernelCol, int pStrideRow, int pStrideCol, int pPadding, int use_bias = FALSE, std::string pName = "NO NAME") : Layer<DTYPE>(pName){
+//     ConvolutionLayer2D(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pNumKernelRow, int pNumKernelCol, int pStrideRow, int pStrideCol, int pPadding, int use_bias = FALSE, std::string pName = "NO NAME") : Module<DTYPE>(pName){
 //         Alloc(pInput, pNumInputChannel, pNumOutputChannel, pNumKernelRow, pNumKernelCol, pStrideRow, pStrideCol, pPadding, pPadding, use_bias, pName);
 //     }
 //
@@ -27,10 +27,10 @@
 //     }
 // };
 
-template<typename DTYPE> class ConvolutionLayer2D : public Layer<DTYPE>{
+template<typename DTYPE> class ConvolutionLayer2D : public Module<DTYPE>{
 private:
 public:
-    ConvolutionLayer2D(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pNumKernelRow, int pNumKernelCol, int pStrideRow, int pStrideCol, int pPadding, int use_bias = FALSE, std::string pName = "NO NAME") : Layer<DTYPE>(pName){
+    ConvolutionLayer2D(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pNumKernelRow, int pNumKernelCol, int pStrideRow, int pStrideCol, int pPadding, int use_bias = FALSE, std::string pName = "NO NAME") : Module<DTYPE>(pName){
         Alloc(pInput, pNumInputChannel, pNumOutputChannel, pNumKernelRow, pNumKernelCol, pStrideRow, pStrideCol, pPadding, pPadding, use_bias, pName);
     }
 
