@@ -1,6 +1,6 @@
 #include "../../../WICWIU_src/NeuralNetwork.h"
 
-template<typename DTYPE> class BasicBlock : public Layer<DTYPE>{
+template<typename DTYPE> class BasicBlock : public Module<DTYPE>{
 private:
 public:
     BasicBlock(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pStride = 1, std::string pName = NULL) {
@@ -49,7 +49,7 @@ public:
     }
 };
 
-// template<typename DTYPE> class Bottleneck : public Layer<DTYPE>{
+// template<typename DTYPE> class Bottleneck : public Module<DTYPE>{
 // private:
 // int m_expansion;
 //

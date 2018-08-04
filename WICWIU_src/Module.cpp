@@ -1,19 +1,19 @@
-#include "Layer.h"
+#include "Module.h"
 
-template class Layer<int>;
-template class Layer<float>;
-template class Layer<double>;
+template class Module<int>;
+template class Module<float>;
+template class Module<double>;
 
 //////////////////////////////////////////////////////////////////////////////// for private method
 
-template<typename DTYPE> int Layer<DTYPE>::Alloc() {
+template<typename DTYPE> int Module<DTYPE>::Alloc() {
     m_aaExcutableOperator = new Container<Operator<DTYPE> *>();
     return TRUE;
 }
 
-template<typename DTYPE> void Layer<DTYPE>::Delete() {
+template<typename DTYPE> void Module<DTYPE>::Delete() {
     #ifdef __DEBUG__
-    std::cout << "Layer<DTYPE>::Delete()" << '\n';
+    std::cout << "Module<DTYPE>::Delete()" << '\n';
     #endif  // __DEBUG__
 
     if (m_aaExcutableOperator) {
@@ -30,9 +30,9 @@ template<typename DTYPE> void Layer<DTYPE>::Delete() {
 
 //////////////////////////////////////////////////////////////////////////////// for public method
 
-template<typename DTYPE> Layer<DTYPE>::Layer(std::string pName) : Operator<DTYPE>(pName) {
+template<typename DTYPE> Module<DTYPE>::Module(std::string pName) : Operator<DTYPE>(pName) {
     #ifdef __DEBUG__
-    std::cout << "Layer<DTYPE>::Layer()" << '\n';
+    std::cout << "Module<DTYPE>::Module()" << '\n';
     #endif  // __DEBUG__
     m_aaExcutableOperator    = NULL;
     m_numOfExcutableOperator = 0;
@@ -41,21 +41,21 @@ template<typename DTYPE> Layer<DTYPE>::Layer(std::string pName) : Operator<DTYPE
     Alloc();
 }
 
-template<typename DTYPE> Layer<DTYPE>::~Layer() {
+template<typename DTYPE> Module<DTYPE>::~Module() {
     #ifdef __DEBUG__
-    std::cout << "Layer<DTYPE>::~Layer()" << '\n';
+    std::cout << "Module<DTYPE>::~Module()" << '\n';
     #endif  // __DEBUG__
 
     this->Delete();
 }
 
-template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::SetInput(Operator<DTYPE> *pInput) {
+template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::SetInput(Operator<DTYPE> *pInput) {
     this->AddEdgebetweenOperators(pInput);
 
     return pInput;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::SetInput(int pNumOfInput, ...) {
+template<typename DTYPE> int Module<DTYPE>::SetInput(int pNumOfInput, ...) {
     Operator<DTYPE> *temp = NULL;
 
     va_list ap;
@@ -70,7 +70,7 @@ template<typename DTYPE> int Layer<DTYPE>::SetInput(int pNumOfInput, ...) {
     return TRUE;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::IsInput(Operator<DTYPE> *pOperator) {
+template<typename DTYPE> int Module<DTYPE>::IsInput(Operator<DTYPE> *pOperator) {
     Container<Operator<DTYPE> *> *m_apInput = this->GetInputContainer();
     int m_InputDegree                       = m_apInput->GetSize();
 
@@ -81,7 +81,7 @@ template<typename DTYPE> int Layer<DTYPE>::IsInput(Operator<DTYPE> *pOperator) {
     return FALSE;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::IsValid(Operator<DTYPE> *pOperator) {
+template<typename DTYPE> int Module<DTYPE>::IsValid(Operator<DTYPE> *pOperator) {
     Container<Operator<DTYPE> *> *prevOp = pOperator->GetOutputContainer();
     int numOfOutputEdge                  = prevOp->GetSize();
     int check                            = 0;
@@ -101,7 +101,7 @@ template<typename DTYPE> int Layer<DTYPE>::IsValid(Operator<DTYPE> *pOperator) {
     return TRUE;
 }
 
-template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::AnalyzeGraph(Operator<DTYPE> *pResultOperator) {
+template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::AnalyzeGraph(Operator<DTYPE> *pResultOperator) {
     // BFS
     Container<Operator<DTYPE> *> queue;
 
@@ -173,67 +173,67 @@ template<typename DTYPE> Operator<DTYPE> *Layer<DTYPE>::AnalyzeGraph(Operator<DT
     return pResultOperator;
 }
 
-template<typename DTYPE> Container<Operator<DTYPE> *> *Layer<DTYPE>::GetExcutableOperatorContainer() {
+template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetExcutableOperatorContainer() {
     return m_aaExcutableOperator;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::GetNumOfExcutableOperator() {
+template<typename DTYPE> int Module<DTYPE>::GetNumOfExcutableOperator() {
     return m_numOfExcutableOperator;
 }
 
-template<typename DTYPE> Tensor<DTYPE> *Layer<DTYPE>::GetResult() const {
+template<typename DTYPE> Tensor<DTYPE> *Module<DTYPE>::GetResult() const {
     return m_pLastOperator->GetResult();
 }
 
-template<typename DTYPE> Container<Tensor<DTYPE> *> *Layer<DTYPE>::GetResultContainer() {
+template<typename DTYPE> Container<Tensor<DTYPE> *> *Module<DTYPE>::GetResultContainer() {
     return m_pLastOperator->GetResultContainer();
 }
 
-template<typename DTYPE> Tensor<DTYPE> *Layer<DTYPE>::GetGradient() const {
+template<typename DTYPE> Tensor<DTYPE> *Module<DTYPE>::GetGradient() const {
     return m_pLastOperator->GetGradient();
 }
 
-template<typename DTYPE> Container<Tensor<DTYPE> *> *Layer<DTYPE>::GetGradientContainer() {
+template<typename DTYPE> Container<Tensor<DTYPE> *> *Module<DTYPE>::GetGradientContainer() {
     return m_pLastOperator->GetGradientContainer();
 }
 
-template<typename DTYPE> Tensor<DTYPE> *Layer<DTYPE>::GetDelta() const {
+template<typename DTYPE> Tensor<DTYPE> *Module<DTYPE>::GetDelta() const {
     return m_pLastOperator->GetDelta();
 }
 
-template<typename DTYPE> Container<Tensor<DTYPE> *> *Layer<DTYPE>::GetDeltaContainer() {
+template<typename DTYPE> Container<Tensor<DTYPE> *> *Module<DTYPE>::GetDeltaContainer() {
     return m_pLastOperator->GetDeltaContainer();
 }
 
-template<typename DTYPE> int Layer<DTYPE>::ForwardPropagate(int pTime) {
+template<typename DTYPE> int Module<DTYPE>::ForwardPropagate(int pTime) {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->ForwardPropagate(pTime);
     }
     return TRUE;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::BackPropagate(int pTime) {
+template<typename DTYPE> int Module<DTYPE>::BackPropagate(int pTime) {
     for (int i = m_numOfExcutableOperator - 1; i >= 0; i--) {
         (*m_aaExcutableOperator)[i]->BackPropagate(pTime);
     }
     return TRUE;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::ResetResult() {
+template<typename DTYPE> int Module<DTYPE>::ResetResult() {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->ResetResult();
     }
     return TRUE;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::ResetGradient() {
+template<typename DTYPE> int Module<DTYPE>::ResetGradient() {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->ResetGradient();
     }
     return TRUE;
 }
 
-template<typename DTYPE> void Layer<DTYPE>::PrintInformation() {
+template<typename DTYPE> void Module<DTYPE>::PrintInformation() {
     std::cout << this->GetName() << " : ";
     std::cout << this->GetResult()->GetShape() << '\n';
 
@@ -243,7 +243,7 @@ template<typename DTYPE> void Layer<DTYPE>::PrintInformation() {
     }
 }
 
-template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU() {
+template<typename DTYPE> void Module<DTYPE>::SetDeviceCPU() {
     this->SetDevice(CPU);
 
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
@@ -253,7 +253,7 @@ template<typename DTYPE> void Layer<DTYPE>::SetDeviceCPU() {
 
 #ifdef __CUDNN__
 
-template<typename DTYPE> void Layer<DTYPE>::SetDeviceGPU() {
+template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU() {
     this->SetDevice(GPU);
 
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
@@ -261,7 +261,7 @@ template<typename DTYPE> void Layer<DTYPE>::SetDeviceGPU() {
     }
 }
 
-template<typename DTYPE> void Layer<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle) {
+template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle) {
     this->SetDevice(GPU);
     this->SetCudnnHandle(pCudnnHandle);
 
@@ -270,20 +270,20 @@ template<typename DTYPE> void Layer<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHa
     }
 }
 
-template<typename DTYPE> void Layer<DTYPE>::InitializeAttributeForGPU() {
+template<typename DTYPE> void Module<DTYPE>::InitializeAttributeForGPU() {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->InitializeAttributeForGPU();
     }
 }
 
-template<typename DTYPE> int Layer<DTYPE>::ForwardPropagateOnGPU(int pTime) {
+template<typename DTYPE> int Module<DTYPE>::ForwardPropagateOnGPU(int pTime) {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->ForwardPropagateOnGPU(pTime);
     }
     return TRUE;
 }
 
-template<typename DTYPE> int Layer<DTYPE>::BackPropagateOnGPU(int pTime) {
+template<typename DTYPE> int Module<DTYPE>::BackPropagateOnGPU(int pTime) {
     for (int i = m_numOfExcutableOperator - 1; i >= 0; i--) {
         (*m_aaExcutableOperator)[i]->BackPropagateOnGPU(pTime);
     }

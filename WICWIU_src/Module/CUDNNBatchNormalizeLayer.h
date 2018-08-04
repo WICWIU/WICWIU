@@ -3,12 +3,12 @@
 #ifndef __CUDNN_BATCH_NORMALIZE_LAYER__
 #define __CUDNN_BATCH_NORMALIZE_LAYER__ value
 
-#include "../Layer.h"
+#include "../Module.h"
 
-template<typename DTYPE> class CUDNNBatchNormalizeLayer2D : public Layer<DTYPE>{
+template<typename DTYPE> class CUDNNBatchNormalizeLayer2D : public Module<DTYPE>{
 private:
 public:
-    CUDNNBatchNormalizeLayer2D(Operator<DTYPE> *pInput, int pNumOfChannel, std::string pName = "NO NAME") : Layer<DTYPE>(pName) {
+    CUDNNBatchNormalizeLayer2D(Operator<DTYPE> *pInput, int pNumOfChannel, std::string pName = "NO NAME") : Module<DTYPE>(pName) {
         Alloc(pInput, pNumOfChannel, pName);
     }
 
@@ -28,7 +28,7 @@ public:
     }
 };
 
-template<typename DTYPE> class CUDNNBatchNormalizeLayer : public Layer<DTYPE>{
+template<typename DTYPE> class CUDNNBatchNormalizeLayer : public Module<DTYPE>{
 private:
 public:
     CUDNNBatchNormalizeLayer(Operator<DTYPE> *pInput, int pIsChannelwise = FALSE, std::string pName = "NO NAME") {
