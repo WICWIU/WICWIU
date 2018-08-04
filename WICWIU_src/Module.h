@@ -1,9 +1,9 @@
-#ifndef __LAYER__
-#define __LAYER__    value
+#ifndef __MODULE_H_
+#define __MODULE_H_    value
 
 #include "Operator_utils.h"
 
-template<typename DTYPE> class Layer : public Operator<DTYPE>{
+template<typename DTYPE> class Module : public Operator<DTYPE>{
 private:
     Container<Operator<DTYPE> *> *m_aaExcutableOperator;
     int m_numOfExcutableOperator;
@@ -15,8 +15,8 @@ private:
     void Delete();
 
 public:
-    Layer(std::string pName = "No Name");
-    virtual ~Layer();
+    Module(std::string pName = "No Name");
+    virtual ~Module();
 
     Operator<DTYPE>                   * SetInput(Operator<DTYPE> *pInput);
     int                                 SetInput(int pNumOfInput, ...);
@@ -63,4 +63,4 @@ public:
 #endif  // if __CUDNN__
 };
 
-#endif  // ifndef __LAYER__
+#endif  // ifndef __MODULE__

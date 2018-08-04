@@ -6,7 +6,7 @@
 
 * WICWIU는 모든 API가 C++로 제공되어 메모리 및 성능 최적화에 유리합니다. 또한, 응용시스템의 개발 외에도 프레임워크 자체를 특수한 환경에 맞도록 수정 및 확장이 가능합니다.
 
-* Custom Operator, 또는 Layer 개발을 위한 API documentation은 추후 올리겠습니다.
+* Custom Operator, 또는 Module 개발을 위한 API documentation은 추후 올리겠습니다.
 
 * WICWIU는 Apache2.0 라이선스를 적용해 연구 목적 및 상용 목적으로 제약 없이 활용 가능합니다.
 
@@ -45,8 +45,8 @@
     <td> Operator 클래스는 순전파와 역전파를 수행하는 저수준 연산을 포함하며, 각 연산의 결과 값을 각 객체의 멤버 변수로 저장하고 있는 클래스입니다. 저장된 결과는 연결된 다른 Operator나 Loss Function의 피연산자로 사용 가능합니다. 또한, 사용자는 Operator 클래스를 상속받아 새로운 연산자를 정의할 수 있습니다. </td>
 </tr>
 <tr>
-    <td><b> Layer </b></td>
-    <td> Layer 클래스는 복잡한 신경망 모델을 Operator 클래스만을 이용하여 구현하는 것이 불편하여 만들어진 고수준 연산 클래스입니다. 복수의 Operator들을 그래프 구조로 조합하여 정의하며, Operator와 다른 Layer와 재귀적 구조로 구성 가능합니다. </td>
+    <td><b> Module </b></td>
+    <td> Module 클래스는 복잡한 신경망 모델을 Operator 클래스만을 이용하여 구현하는 것이 불편하여 만들어진 고수준 연산 클래스입니다. 복수의 Operator들을 그래프 구조로 조합하여 정의하며, Operator와 다른 Module와 재귀적 구조로 구성 가능합니다. </td>
 </tr>
 <tr>
     <td><b> Loss Function & Optimizer  </b></td>
@@ -54,7 +54,7 @@
 </tr>
 <tr>
     <td><b> Neural Network </b></td>
-    <td> Neural Network 클래스는 신경망 모델을 표현하기 위한 클래스입니다. Operator와 Layer를 조합하여 신경망 모델을 구성하고 모델 학습의 전반적인 기능을 제공하고 있습니다. </td>
+    <td> Neural Network 클래스는 신경망 모델을 표현하기 위한 클래스입니다. Operator와 Module를 조합하여 신경망 모델을 구성하고 모델 학습의 전반적인 기능을 제공하고 있습니다. </td>
 </tr>
 </table>
 

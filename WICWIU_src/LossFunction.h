@@ -1,7 +1,7 @@
 #ifndef LossFunction_H_
 #define LossFunction_H_
 
-#include "Layer_utils.h"
+#include "Module_utils.h"
 
 template<typename DTYPE> class LossFunction {
 private:

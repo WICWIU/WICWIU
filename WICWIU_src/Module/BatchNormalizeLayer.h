@@ -1,12 +1,12 @@
 #ifndef __BATCH_NORMALIZE_LAYER__
 #define __BATCH_NORMALIZE_LAYER__ value
 
-#include "../Layer.h"
+#include "../Module.h"
 
-template<typename DTYPE> class BatchNormalizeLayer2D : public Layer<DTYPE>{
+template<typename DTYPE> class BatchNormalizeLayer2D : public Module<DTYPE>{
 private:
 public:
-    BatchNormalizeLayer2D(Operator<DTYPE> *pInput, int pNumOfChannel, std::string pName = "NO NAME") : Layer<DTYPE>(pName) {
+    BatchNormalizeLayer2D(Operator<DTYPE> *pInput, int pNumOfChannel, std::string pName = "NO NAME") : Module<DTYPE>(pName) {
         Alloc(pInput, pNumOfChannel, pName);
     }
 
@@ -26,7 +26,7 @@ public:
     }
 };
 
-template<typename DTYPE> class BatchNormalizeLayer : public Layer<DTYPE>{
+template<typename DTYPE> class BatchNormalizeLayer : public Module<DTYPE>{
 private:
 public:
     BatchNormalizeLayer(Operator<DTYPE> *pInput, int pIsChannelwise = FALSE, std::string pName = "NO NAME") {
