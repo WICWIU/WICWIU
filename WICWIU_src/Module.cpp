@@ -253,17 +253,6 @@ template<typename DTYPE> void Module<DTYPE>::SetDeviceCPU() {
 
 #ifdef __CUDNN__
 
-<<<<<<< HEAD:WICWIU_src/Module.cpp
-template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU() {
-    this->SetDevice(GPU);
-
-    for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->SetDeviceGPU();
-    }
-}
-
-template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle) {
-=======
 // template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
 // this->SetDevice(GPU);
 //
@@ -274,7 +263,6 @@ template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnH
 
 template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
     checkCudaErrors(cudaSetDevice(idOfDevice));
->>>>>>> GPU/DeviceID:WICWIU_src/Module.cpp
     this->SetDevice(GPU);
     this->SetDeviceID(idOfDevice);
     this->SetCudnnHandle(pCudnnHandle);
@@ -284,19 +272,11 @@ template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnH
     }
 }
 
-<<<<<<< HEAD:WICWIU_src/Module.cpp
-template<typename DTYPE> void Module<DTYPE>::InitializeAttributeForGPU() {
-    for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->InitializeAttributeForGPU();
-    }
-}
-=======
 // template<typename DTYPE> void Module<DTYPE>::InitializeAttributeForGPU(unsigned int idOfDevice) {
 // for (int i = 0; i < m_numOfExcutableOperator; i++) {
 // (*m_aaExcutableOperator)[i]->InitializeAttributeForGPU(idOfDevice);
 // }
 // }
->>>>>>> GPU/DeviceID:WICWIU_src/Module.cpp
 
 template<typename DTYPE> int Module<DTYPE>::ForwardPropagateOnGPU(int pTime) {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
