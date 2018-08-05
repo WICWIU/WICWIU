@@ -11,7 +11,7 @@ template<typename DTYPE> int LongArray<DTYPE>::Alloc(unsigned int pTimeSize, uns
 
     m_TimeSize        = pTimeSize;
     m_CapacityPerTime = pCapacityPerTime;
-    m_aaHostLongArray      = new DTYPE *[m_TimeSize];
+    m_aaHostLongArray = new DTYPE *[m_TimeSize];
 
     for (int i = 0; i < m_TimeSize; i++) {
         m_aaHostLongArray[i] = new DTYPE[m_CapacityPerTime];
@@ -35,7 +35,7 @@ template<typename DTYPE> int LongArray<DTYPE>::Alloc(LongArray *pLongArray) {
 
     m_TimeSize        = pLongArray->GetTimeSize();
     m_CapacityPerTime = pLongArray->GetCapacityPerTime();
-    m_aaHostLongArray      = new DTYPE *[m_TimeSize];
+    m_aaHostLongArray = new DTYPE *[m_TimeSize];
 
     for (int i = 0; i < m_TimeSize; i++) {
         m_aaHostLongArray[i] = new DTYPE[m_CapacityPerTime];
@@ -50,8 +50,9 @@ template<typename DTYPE> int LongArray<DTYPE>::Alloc(LongArray *pLongArray) {
     m_Device = pLongArray->GetDevice();
 
 #ifdef __CUDNN__
+    m_idOfDevice = pLongArray->GetDeviceID();
 
-    if (m_Device == GPU) pLongArray->SetDeviceGPU();
+    if (m_Device == GPU) pLongArray->SetDeviceGPU(m_idOfDevice);
 #endif  // if __CUDNN__
 
     return TRUE;
@@ -81,10 +82,12 @@ template<typename DTYPE> void LongArray<DTYPE>::Delete() {
 
 #ifdef __CUDNN__
 
-template<typename DTYPE> int LongArray<DTYPE>::AllocOnGPU() {
+template<typename DTYPE> int LongArray<DTYPE>::AllocOnGPU(unsigned int idOfDevice) {
     # if __DEBUG__
     std::cout << "LongArray<DTYPE>::AllocOnGPU()" << '\n';
     # endif // __DEBUG__
+    m_idOfDevice = idOfDevice;
+    checkCudaErrors(cudaSetDevice(idOfDevice));
 
     if (m_aaDevLongArray == NULL) {
         m_aaDevLongArray = new DTYPE *[m_TimeSize];
@@ -147,8 +150,9 @@ template<typename DTYPE> LongArray<DTYPE>::LongArray(unsigned int pTimeSize, uns
     #endif  // __DEBUG__
     m_TimeSize        = 0;
     m_CapacityPerTime = 0;
-    m_aaHostLongArray      = NULL;
+    m_aaHostLongArray = NULL;
     m_Device          = CPU;
+    m_idOfDevice      = 0;
 #ifdef __CUDNN__
     m_aaDevLongArray = NULL;
 #endif  // __CUDNN
@@ -161,8 +165,9 @@ template<typename DTYPE> LongArray<DTYPE>::LongArray(LongArray *pLongArray) {
     #endif  // __DEBUG__
     m_TimeSize        = 0;
     m_CapacityPerTime = 0;
-    m_aaHostLongArray      = NULL;
+    m_aaHostLongArray = NULL;
     m_Device          = CPU;
+    m_idOfDevice      = 0;
 #ifdef __CUDNN__
     m_aaDevLongArray = NULL;
 #endif  // __CUDNN
@@ -236,6 +241,10 @@ template<typename DTYPE> Device LongArray<DTYPE>::GetDevice() {
     return m_Device;
 }
 
+template<typename DTYPE> int LongArray<DTYPE>::GetDeviceID() {
+    return m_idOfDevice;
+}
+
 template<typename DTYPE> DTYPE *LongArray<DTYPE>::GetCPULongArray(unsigned int pTime) {
     #ifdef __CUDNN__
     # if __DEBUG__
@@ -271,37 +280,48 @@ template<typename DTYPE> int LongArray<DTYPE>::SetDeviceCPU() {
 }
 
 #ifdef __CUDNN__
-template<typename DTYPE> int LongArray<DTYPE>::SetDeviceGPU() {
+template<typename DTYPE> int LongArray<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
     # if __DEBUG__
     std::cout << "LongArray<DTYPE>::SetDeviceGPU()" << '\n';
     # endif // __DEBUG__
 
     m_Device = GPU;
 
-    if (m_aaDevLongArray == NULL) this->AllocOnGPU();
+    if (m_aaDevLongArray == NULL) this->AllocOnGPU(idOfDevice);
+
+    if (idOfDevice != m_idOfDevice) {
+        this->DeleteOnGPU();
+        this->AllocOnGPU(idOfDevice);
+    }
     this->MemcpyCPU2GPU();
     return TRUE;
 }
 
 template<typename DTYPE> DTYPE *LongArray<DTYPE>::GetGPUData(unsigned int pTime) {
-    # if __DEBUG__
+# if __DEBUG__
 
     if (m_Device == CPU) {
         printf("Warning! LongArray is allocated in Host(CPU) latest time\n");
         printf("Change mode CPU toGPU\n");
-        this->SetDeviceGPU();
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetGPUData" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 
-    # else // if __DEBUG__
+# else // if __DEBUG__
 
-    #  if __ACCURATE__
+#  if __ACCURATE__
 
     if (m_Device == CPU) {
-        this->SetDeviceGPU();
+      if (m_idOfDevice == -1) {
+          std::cout << "you need to set device GPU first before : GetGPUData" << '\n';
+          exit(-1);
+      } else this->SetDeviceGPU(m_idOfDevice);
     }
-    #  endif // __ACCURATE__
+#  endif // __ACCURATE__
 
-    # endif // __DEBUG__
+# endif // __DEBUG__
 
     return m_aaDevLongArray[pTime];
 }

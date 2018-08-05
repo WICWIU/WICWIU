@@ -58,8 +58,9 @@ int Shape::Alloc(Shape *pShape) {
     m_Device = pShape->GetDevice();
 
 #ifdef __CUDNN__
+    m_idOfDevice = pShape->GetDeviceID();
 
-    if (m_Device == GPU) SetDeviceGPU();
+    if (m_Device == GPU) SetDeviceGPU(m_idOfDevice);
 #endif  // if __CUDNN__
 
     return TRUE;
@@ -81,10 +82,13 @@ void Shape::Delete() {
 }
 
 #ifdef __CUDNN__
-int Shape::AllocOnGPU() {
+int Shape::AllocOnGPU(unsigned int idOfDevice) {
     # if __DEBUG__
     std::cout << "Shape::AllocOnGPU()" << '\n';
     # endif // __DEBUG__
+
+    m_idOfDevice = idOfDevice;
+    checkCudaErrors(cudaSetDevice(idOfDevice));
 
     if (m_desc == NULL) {
         if (m_Rank == 5) {
@@ -119,7 +123,11 @@ int Shape::ReShapeOnGPU() {
 
     DeleteOnGPU();
 
-    AllocOnGPU();
+    if (m_idOfDevice == -1) {
+        std::cout << "you need to set device GPU first before : ReShapeOnGPU" << '\n';
+        exit(-1);
+    }
+    AllocOnGPU(m_idOfDevice);
 
     return TRUE;
 }
@@ -252,6 +260,10 @@ Device Shape::GetDevice() {
     return m_Device;
 }
 
+int Shape::GetDeviceID() {
+    return m_idOfDevice;
+}
+
 int& Shape::operator[](int pRanknum) {
     #ifdef __DEBUG__
     std::cout << "Shape::operator[](int pRanknum)" << '\n';
@@ -311,7 +323,7 @@ int Shape::ReShape(int pRank, ...) {
 
 #ifdef __CUDNN__
 
-    if (m_desc == NULL) ReShapeOnGPU();
+    if (m_Device == GPU) ReShapeOnGPU();
 #endif  // if __CUDNN__
 
     return TRUE;
@@ -329,14 +341,14 @@ int Shape::SetDeviceCPU() {
 
 #ifdef __CUDNN__
 
-int Shape::SetDeviceGPU() {
+int Shape::SetDeviceGPU(unsigned int idOfDevice) {
     # if __DEBUG__
     std::cout << "Shape::SetDeviceGPU()" << '\n';
     # endif // __DEBUG__
 
     m_Device = GPU;
 
-    if (m_desc == NULL) AllocOnGPU();
+    if (m_desc == NULL) AllocOnGPU(idOfDevice);
 
     return TRUE;
 }
@@ -348,13 +360,20 @@ cudnnTensorDescriptor_t& Shape::GetDescriptor() {
     if (m_Device == CPU) {
         printf("Warning! Tensor is allocated in Host(CPU) latest time\n");
         printf("Change mode CPU toGPU\n");
-        this->SetDeviceGPU();
+
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetDescriptor" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 
     # else // if __DEBUG__
 
     if (m_Device == CPU) {
-        this->SetDeviceGPU();
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetDescriptor" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 
     # endif // __DEBUG__

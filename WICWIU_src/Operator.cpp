@@ -263,6 +263,11 @@ template<typename DTYPE> int Operator<DTYPE>::SetDevice(Device pDevice) {
     return TRUE;
 }
 
+template<typename DTYPE> int Operator<DTYPE>::SetDeviceID(unsigned int idOfDevice) {
+    m_idOfDevice = idOfDevice;
+    return TRUE;
+}
+
 template<typename DTYPE> int Operator<DTYPE>::SetIsTensorholder(int pIsParameter) {
     m_isParameter = pIsParameter;
     return TRUE;
@@ -336,6 +341,10 @@ template<typename DTYPE> std::string Operator<DTYPE>::GetName() const {
 
 template<typename DTYPE> Device Operator<DTYPE>::GetDevice() {
     return m_Device;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::GetDeviceID() {
+    return m_idOfDevice;
 }
 
 template<typename DTYPE> int Operator<DTYPE>::GetIsTensorholder() {
@@ -447,41 +456,44 @@ template<typename DTYPE> int Operator<DTYPE>::SetCudnnHandle(cudnnHandle_t& pCud
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::SetResultOnGPU() {
+template<typename DTYPE> int Operator<DTYPE>::SetResultOnGPU(unsigned int idOfDevice) {
     // Tensorholder의 경우는 하면 안된다.
     int size = m_aaResult->GetSize();
 
     for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->SetDeviceGPU();
+        (*m_aaResult)[i]->SetDeviceGPU(idOfDevice);
     }
 
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::SetGradientOnGPU() {
+template<typename DTYPE> int Operator<DTYPE>::SetGradientOnGPU(unsigned int idOfDevice) {
     int size = m_aaGradient->GetSize();
 
     for (int i = 0; i < size; i++) {
-        (*m_aaGradient)[i]->SetDeviceGPU();
+        (*m_aaGradient)[i]->SetDeviceGPU(idOfDevice);
     }
 
     return TRUE;
 }
 
-template<typename DTYPE> void Operator<DTYPE>::InitializeAttributeForGPU() {}
+template<typename DTYPE> void Operator<DTYPE>::InitializeAttributeForGPU(unsigned int idOfDevice) {}
 
-template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU() {
-    this->SetDevice(GPU);
-    this->SetResultOnGPU();
-    this->SetGradientOnGPU();
-}
+// template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
+// this->SetDevice(GPU);
+// this->SetDeviceID(idOfDevice);
+// this->SetResultOnGPU(idOfDevice);
+// this->SetGradientOnGPU(idOfDevice);
+// }
 
-template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle) {
+template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
+    checkCudaErrors(cudaSetDevice(idOfDevice));
     this->SetCudnnHandle(pCudnnHandle);
     this->SetDevice(GPU);
-    this->InitializeAttributeForGPU();
-    this->SetResultOnGPU();
-    this->SetGradientOnGPU();
+    this->SetDeviceID(idOfDevice);
+    this->InitializeAttributeForGPU(idOfDevice);
+    this->SetResultOnGPU(idOfDevice);
+    this->SetGradientOnGPU(idOfDevice);
 }
 
 template<typename DTYPE> cudnnHandle_t& Operator<DTYPE>::GetCudnnHandle() {

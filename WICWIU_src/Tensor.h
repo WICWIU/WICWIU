@@ -14,6 +14,7 @@ private:
     Shape *m_aShape;
     LongArray<DTYPE> *m_aLongArray;
     Device m_Device;
+    int m_idOfDevice = -1;
     IsUseTime m_IsUseTime;
 
 private:
@@ -35,7 +36,7 @@ public:
     Shape                  * GetShape();
     int                      GetRank();
     int                      GetDim(int pRanknum);
-    LongArray<DTYPE>            * GetLongArray();
+    LongArray<DTYPE>       * GetLongArray();
     int                      GetCapacity();
     int                      GetElement(unsigned int index);
     DTYPE                  & operator[](unsigned int index);
@@ -61,7 +62,7 @@ public:
 
     void                     SetDeviceCPU();
 #ifdef __CUDNN__
-    void                     SetDeviceGPU();
+    void                     SetDeviceGPU(unsigned int idOfDevice);
 
     DTYPE                  * GetGPUData(unsigned int pTime = 0);
     cudnnTensorDescriptor_t& GetDescriptor();

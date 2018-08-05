@@ -19,6 +19,7 @@ private:
     Optimizer<DTYPE> *m_aOptimizer;
 
     Device m_Device;
+    int m_idOfDevice = -1; // 추후 수정
 
 #ifdef __CUDNN__
     cudnnHandle_t m_cudnnHandle;
@@ -101,7 +102,8 @@ public:
     int                           ForwardPropagateOnGPU(int pTime = 0);
     int                           BackPropagateOnGPU(int pTime = 0);
 
-    void                          SetDeviceGPU();
+    void                          SetDeviceGPU(unsigned int idOfDevice);
+    int                           SetDeviceID(unsigned int idOfDevice);
 #endif  // __CUDNN__
 };
 

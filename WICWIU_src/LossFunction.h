@@ -16,6 +16,7 @@ private:
     std::string m_name;
 
     Device m_Device;
+    int m_idOfDevice = -1;
 
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
@@ -39,6 +40,8 @@ public:
     Tensor<DTYPE>        * GetTensor() const;
     Operator<DTYPE>      * GetLabel() const;
     std::string            GetName() const;
+    virtual Device         GetDevice();
+    virtual int            GetDeviceID();
 
     // For Propagate
     virtual Tensor<DTYPE>* ForwardPropagate(int pTime = 0);
@@ -58,21 +61,17 @@ public:
     virtual int    SetResultOnCPU();
     virtual int    SetGradientOnCPU();
 
-    virtual void   SetDeviceGPU();
-    virtual void   SetDeviceGPU(cudnnHandle_t& pCudnnHandle);
-    virtual void   InitializeAttributeForGPU();
+    // virtual void   SetDeviceGPU(unsigned int idOfDevice);
+    virtual void   SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    virtual void   InitializeAttributeForGPU(unsigned int idOfDevice);
 
     cudnnHandle_t& GetCudnnHandle();
 
     // Setting Supporter
-    virtual int    SetResultOnGPU();
-    virtual int    SetGradientOnGPU();
+    virtual int    SetResultOnGPU(unsigned int idOfDevice);
+    virtual int    SetGradientOnGPU(unsigned int idOfDevice);
 
 #endif  // if __CUDNN__
-
-    virtual Device GetDevice() {
-        return m_Device;
-    }
 
     // reset value
     int ResetResult();

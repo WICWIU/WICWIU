@@ -12,6 +12,7 @@ private:
     int m_CapacityPerTime;
 
     Device m_Device;
+    int m_idOfDevice = -1;
 
 #ifdef __CUDNN__
     DTYPE **m_aaDevLongArray;
@@ -23,7 +24,7 @@ private:
     void Delete();
 
 #ifdef __CUDNN__
-    int  AllocOnGPU();
+    int  AllocOnGPU(unsigned int idOfDevice);
     void DeleteOnGPU();
     int  MemcpyCPU2GPU();
     int  MemcpyGPU2CPU();
@@ -41,11 +42,12 @@ public:
     DTYPE  GetElement(unsigned int index);
     DTYPE& operator[](unsigned int index);
     Device GetDevice();
+    int    GetDeviceID();
     DTYPE* GetCPULongArray(unsigned int pTime = 0);
 
     int    SetDeviceCPU();
 #ifdef __CUDNN__
-    int    SetDeviceGPU();
+    int    SetDeviceGPU(unsigned int idOfDevice);
 
     DTYPE* GetGPUData(unsigned int pTime = 0);
 
