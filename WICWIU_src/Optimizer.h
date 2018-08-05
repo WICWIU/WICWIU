@@ -16,6 +16,8 @@ private:
     Container<Operator<DTYPE> *> *m_ppTrainableTensors;
     int m_TrainableTensorDegree;
 
+    int m_idOfDevice = -1;
+
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
 #endif  // if __CUDNN__
@@ -43,11 +45,14 @@ public:
     int                           ResetParameterGradient();
 
 #ifdef __CUDNN__
+    void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    virtual void                  InitializeAttributeForGPU(unsigned int idOfDevice) = 0;
+    virtual void                  SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
+    virtual int                   UpdateParameterOnGPU();
+    virtual int                   UpdateParameterOnGPU(Operator<DTYPE> *pTrainableTensor) = 0;
 
-    virtual void   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     cudnnHandle_t& GetCudnnHandle();
-    virtual int    UpdateParameterOnGPU();
-    virtual int    UpdateParameterOnGPU(Operator<DTYPE> *pTrainableTensor) = 0;
+    int            GetDeviceID();
 
 #endif  // if __CUDNN__
 };

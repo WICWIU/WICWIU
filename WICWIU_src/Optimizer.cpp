@@ -52,8 +52,19 @@ template<typename DTYPE> int Optimizer<DTYPE>::UpdateParameter() {
 
 #ifdef __CUDNN__
 
+template<typename DTYPE> void Optimizer<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
+    checkCudaErrors(cudaSetDevice(idOfDevice));
+    SetCudnnHandle(pCudnnHandle);
+    m_idOfDevice = idOfDevice;
+    InitializeAttributeForGPU(idOfDevice);
+}
+
 template<typename DTYPE> void Optimizer<DTYPE>::SetCudnnHandle(cudnnHandle_t& pCudnnHandle) {
     m_pCudnnHandle = pCudnnHandle;
+}
+
+template<typename DTYPE> int Optimizer<DTYPE>::GetDeviceID() {
+    return m_idOfDevice;
 }
 
 template<typename DTYPE> cudnnHandle_t& Optimizer<DTYPE>::GetCudnnHandle() {

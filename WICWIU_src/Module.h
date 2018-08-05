@@ -10,6 +10,9 @@ private:
 
     Operator<DTYPE> *m_pLastOperator;
 
+    Device m_Device;
+    unsigned int m_idOfDevice = 0;
+
 private:
     int  Alloc();
     void Delete();
@@ -20,6 +23,7 @@ public:
 
     Operator<DTYPE>                   * SetInput(Operator<DTYPE> *pInput);
     int                                 SetInput(int pNumOfInput, ...);
+
     int                                 IsInput(Operator<DTYPE> *pOperator);
 
     int                                 IsValid(Operator<DTYPE> *pOperator); // Graph 분석 시 node에 추가할 것인지 확인한다.
@@ -54,9 +58,9 @@ public:
     // int                                 SetResultOnGPU();
     // int                                 SetGradientOnGPU();
 
-    void SetDeviceGPU();
-    void SetDeviceGPU(cudnnHandle_t& pCudnnHandle);
-    void InitializeAttributeForGPU();
+    // void SetDeviceGPU(unsigned int idOfDevice);
+    void SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    // void InitializeAttributeForGPU(unsigned int idOfDevice);
 
     int  ForwardPropagateOnGPU(int pTime = 0);
     int  BackPropagateOnGPU(int pTime = 0);

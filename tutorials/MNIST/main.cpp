@@ -8,6 +8,7 @@
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
+#define GPUID             7
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
@@ -18,19 +19,22 @@ int main(int argc, char const *argv[]) {
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
     // ======================= Select net ===================
-    NeuralNetwork<float> *net = new my_CNN(x, label);
+    // NeuralNetwork<float> *net = new my_CNN(x, label);
     // NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
     // NeuralNetwork<float> *net = new my_NN(x, label, isMLP);
-    // NeuralNetwork<float> *net = Resnet14<float>(x, label);
+    NeuralNetwork<float> *net = Resnet14<float>(x, label);
 
     // ======================= Prepare Data ===================
     MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
 
 #ifdef __CUDNN__
-    x->SetDeviceGPU();
-    label->SetDeviceGPU();
-    net->SetDeviceGPU();
+    // x->SetDeviceGPU(GPUID);
+    // label->SetDeviceGPU(GPUID);
+    net->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
+
+    // int temp;
+    // std::cin >> temp;
 
     net->PrintGraphInformation();
 
@@ -52,16 +56,16 @@ int main(int argc, char const *argv[]) {
             Tensor<float> *l_t = dataset->GetTrainFeedLabel();
 
 #ifdef __CUDNN__
-            x_t->SetDeviceGPU();
-            l_t->SetDeviceGPU();
+            x_t->SetDeviceGPU(GPUID); // 추후 자동화 필요
+            l_t->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
-
+  // std::cin >> temp;
             net->FeedInputTensor(2, x_t, l_t);
             net->ResetParameterGradient();
             net->Training();
-
-            train_accuracy    += net->GetAccuracy();
-            train_avg_loss    += net->GetLoss();
+  // std::cin >> temp;
+            train_accuracy += net->GetAccuracy();
+            train_avg_loss += net->GetLoss();
 
             printf("\rTraining complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
                    j + 1, LOOP_FOR_TRAIN,
@@ -72,7 +76,7 @@ int main(int argc, char const *argv[]) {
 
             if (j % 100 == 99) std::cout << '\n';
         }
-        endTime = clock();
+        endTime            = clock();
         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
@@ -89,8 +93,8 @@ int main(int argc, char const *argv[]) {
             Tensor<float> *l_t = dataset->GetTestFeedLabel();
 
 #ifdef __CUDNN__
-            x_t->SetDeviceGPU();
-            l_t->SetDeviceGPU();
+            x_t->SetDeviceGPU(GPUID);
+            l_t->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
 
             net->FeedInputTensor(2, x_t, l_t);

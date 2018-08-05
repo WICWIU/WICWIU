@@ -77,7 +77,7 @@ public:
     }
 
 #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
         Shape *shapeOfInput  = input->GetShape();
 

@@ -554,23 +554,36 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagateOnGPU(int pTime)
     return TRUE;
 }
 
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU() {
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
     // std::cout << "NeuralNetwork<DTYPE>::SetModeGPU()" << '\n';
+    checkCudaErrors(cudaSetDevice(idOfDevice));
+    
     m_Device = GPU;
     this->AllocOnGPU();
 
     for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
         // important order
-        (*m_apExcutableOperator)[i]->SetDeviceGPU(m_cudnnHandle);
+        (*m_apExcutableOperator)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
     }
 
     for (int i = 0; i < m_ParameterDegree; i++) {
         // important order
-        (*m_apParameter)[i]->SetDeviceGPU(m_cudnnHandle);
+        (*m_apParameter)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
     }
-    m_aLossFunction->SetDeviceGPU(m_cudnnHandle);
 
-    m_aOptimizer->SetCudnnHandle(m_cudnnHandle);
+    for (int i = 0; i < m_InputDegree; i++) {
+        // important order
+        (*m_apInput)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+    }
+
+    m_aLossFunction->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+
+    m_aOptimizer->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+}
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::SetDeviceID(unsigned int idOfDevice) {
+    m_idOfDevice = idOfDevice;
+    return TRUE;
 }
 
 #endif  // __CUDNN__

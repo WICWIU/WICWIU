@@ -94,6 +94,14 @@ template<typename DTYPE> std::string LossFunction<DTYPE>::GetName() const {
     return m_name;
 }
 
+template<typename DTYPE> Device LossFunction<DTYPE>::GetDevice() {
+    return m_Device;
+}
+
+template<typename DTYPE> int LossFunction<DTYPE>::GetDeviceID() {
+    return m_idOfDevice;
+}
+
 template<typename DTYPE> Tensor<DTYPE> *LossFunction<DTYPE>::ForwardPropagate(int pTime) {
     #ifdef __DEBUG__
     std::cout << "LossFunction<DTYPE>::ForwardPropagate(int pTime)" << '\n';
@@ -155,29 +163,32 @@ template<typename DTYPE> int LossFunction<DTYPE>::SetGradientOnCPU() {
     return TRUE;
 }
 
-template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceGPU() {
-    m_Device = GPU;
-    this->SetResultOnGPU();
-    this->SetGradientOnGPU();
-}
+// template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
+// m_Device = GPU;
+// this->SetResultOnGPU(idOfDevice);
+// this->SetGradientOnGPU(idOfDevice);
+// }
 
-template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle) {
+template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
+    checkCudaErrors(cudaSetDevice(idOfDevice));
     m_Device       = GPU;
+    m_idOfDevice   = idOfDevice;
     m_pCudnnHandle = pCudnnHandle;
-    this->SetResultOnGPU();
-    this->SetGradientOnGPU();
+    this->SetResultOnGPU(idOfDevice);
+    this->SetGradientOnGPU(idOfDevice);
+    this->InitializeAttributeForGPU(idOfDevice);
 }
 
-template<typename DTYPE> void LossFunction<DTYPE>::InitializeAttributeForGPU() {}
+template<typename DTYPE> void LossFunction<DTYPE>::InitializeAttributeForGPU(unsigned int idOfDevice) {}
 
-template<typename DTYPE> int LossFunction<DTYPE >::SetResultOnGPU() {
-    if (m_aResult) m_aResult->SetDeviceGPU();
+template<typename DTYPE> int LossFunction<DTYPE >::SetResultOnGPU(unsigned int idOfDevice) {
+    if (m_aResult) m_aResult->SetDeviceGPU(idOfDevice);
 
     return TRUE;
 }
 
-template<typename DTYPE> int LossFunction<DTYPE>::SetGradientOnGPU() {
-    if (m_aGradient) m_aGradient->SetDeviceGPU();
+template<typename DTYPE> int LossFunction<DTYPE>::SetGradientOnGPU(unsigned int idOfDevice) {
+    if (m_aGradient) m_aGradient->SetDeviceGPU(idOfDevice);
 
     return TRUE;
 }

@@ -59,7 +59,7 @@ public:
     }
 
 #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         m_alpha = 1;
         m_beta  = 0;
 
@@ -285,7 +285,7 @@ public:
     }
 
 #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         m_alpha = 1;
         m_beta  = 0;
 
@@ -512,7 +512,7 @@ public:
     }
 
     #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         m_alpha = 1;
         m_beta  = 0;
 

@@ -64,7 +64,7 @@ public:
     }
 
 #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Operator<DTYPE> *pWeight = this->GetInput()[0];
         Operator<DTYPE> *pInput  = this->GetInput()[1];
 

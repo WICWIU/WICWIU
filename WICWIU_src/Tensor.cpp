@@ -52,10 +52,10 @@ template<typename DTYPE> int Tensor<DTYPE>::Alloc(Tensor<DTYPE> *pTensor) {
         printf("Receive NULL pointer of Tensor<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
         return FALSE;
     } else {
-        m_aShape    = new Shape(pTensor->GetShape());
-        m_aLongArray     = new LongArray<DTYPE>(pTensor->GetLongArray());
-        m_Device    = pTensor->GetDevice();
-        m_IsUseTime = pTensor->GetIsUseTime();
+        m_aShape     = new Shape(pTensor->GetShape());
+        m_aLongArray = new LongArray<DTYPE>(pTensor->GetLongArray());
+        m_Device     = pTensor->GetDevice();
+        m_IsUseTime  = pTensor->GetIsUseTime();
     }
 
     return TRUE;
@@ -84,9 +84,9 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     std::cout << "Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, IsUseTime pAnswer)" << '\n';
     #endif  // __DEBUG__
 
-    m_aShape = NULL;
-    m_aLongArray  = NULL;
-    m_Device = CPU;
+    m_aShape     = NULL;
+    m_aLongArray = NULL;
+    m_Device     = CPU;
     Alloc(new Shape(pSize0, pSize1, pSize2, pSize3, pSize4), pAnswer);
 }
 
@@ -95,9 +95,9 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     std::cout << "Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize2, int pSize3, IsUseTime pAnswer)" << '\n';
     #endif  // __DEBUG__
 
-    m_aShape = NULL;
-    m_aLongArray  = NULL;
-    m_Device = CPU;
+    m_aShape     = NULL;
+    m_aLongArray = NULL;
+    m_Device     = CPU;
     Alloc(new Shape(pSize0, pSize1, pSize2, pSize3), pAnswer);
 }
 
@@ -106,9 +106,9 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     std::cout << "Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize2, IsUseTime pAnswer)" << '\n';
     #endif  // __DEBUG__
 
-    m_aShape = NULL;
-    m_aLongArray  = NULL;
-    m_Device = CPU;
+    m_aShape     = NULL;
+    m_aLongArray = NULL;
+    m_Device     = CPU;
     Alloc(new Shape(pSize0, pSize1, pSize2), pAnswer);
 }
 
@@ -117,9 +117,9 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, IsUseTime
     std::cout << "Tensor<DTYPE>::Tensor(int pSize0, int pSize1, IsUseTime pAnswer)" << '\n';
     #endif  // __DEBUG__
 
-    m_aShape = NULL;
-    m_aLongArray  = NULL;
-    m_Device = CPU;
+    m_aShape     = NULL;
+    m_aLongArray = NULL;
+    m_Device     = CPU;
     Alloc(new Shape(pSize0, pSize1), pAnswer);
 }
 
@@ -128,9 +128,9 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, IsUseTime pAnswer) {
     std::cout << "Tensor<DTYPE>::Tensor(int pSize0, IsUseTime pAnswer)" << '\n';
     #endif  // __DEBUG__
 
-    m_aShape = NULL;
-    m_aLongArray  = NULL;
-    m_Device = CPU;
+    m_aShape     = NULL;
+    m_aLongArray = NULL;
+    m_Device     = CPU;
     Alloc(new Shape(pSize0), pAnswer);
 }
 
@@ -139,9 +139,9 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(Shape *pShape, IsUseTime pAnswer)
     std::cout << "Tensor<DTYPE>::Tensor(Shape *pShape, IsUseTime pAnswer)" << '\n';
     #endif  // __DEBUG__
 
-    m_aShape = NULL;
-    m_aLongArray  = NULL;
-    m_Device = CPU;
+    m_aShape     = NULL;
+    m_aLongArray = NULL;
+    m_Device     = CPU;
     Alloc(pShape, pAnswer);
 }
 
@@ -150,9 +150,9 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(Tensor *pTensor) {
     std::cout << "Tensor<DTYPE>::Tensor(Tensor *pTensor)" << '\n';
     #endif  // __DEBUG__
 
-    m_aShape = NULL;
-    m_aLongArray  = NULL;
-    m_Device = CPU;
+    m_aShape     = NULL;
+    m_aLongArray = NULL;
+    m_Device     = CPU;
     Alloc(pTensor);
 }
 
@@ -450,14 +450,16 @@ template<typename DTYPE> void Tensor<DTYPE>::SetDeviceCPU() {
 }
 
 #ifdef __CUDNN__
-template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU() {
+template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
     # if __DEBUG__
     std::cout << "Tensor<DTYPE>::SetDeviceGPU()" << '\n';
     # endif // __DEBUG__
-
-    m_Device = GPU;
-    m_aLongArray->SetDeviceGPU();
-    m_aShape->SetDeviceGPU();
+    checkCudaErrors(cudaSetDevice(idOfDevice));
+    
+    m_Device     = GPU;
+    m_idOfDevice = idOfDevice;
+    m_aLongArray->SetDeviceGPU(idOfDevice);
+    m_aShape->SetDeviceGPU(idOfDevice);
 }
 
 template<typename DTYPE> DTYPE *Tensor<DTYPE>::GetGPUData(unsigned int pTime) {
@@ -467,13 +469,20 @@ template<typename DTYPE> DTYPE *Tensor<DTYPE>::GetGPUData(unsigned int pTime) {
     if (m_Device == CPU) {
         printf("Warning! Tensor is allocated in Host(CPU) latest time\n");
         printf("Change mode CPU toGPU\n");
-        this->SetDeviceGPU();
+
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetGPUData" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 
     # else // if __DEBUG__
 
     if (m_Device == CPU) {
-        this->SetDeviceGPU();
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetGPUData" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 
     # endif // __DEBUG__
@@ -484,6 +493,27 @@ template<typename DTYPE> DTYPE *Tensor<DTYPE>::GetGPUData(unsigned int pTime) {
 template<typename DTYPE> cudnnTensorDescriptor_t& Tensor<DTYPE>::GetDescriptor() {
     # if __DEBUG__
     std::cout << "Tensor<DTYPE>::GetDescriptor()" << '\n';
+
+    if (m_Device == CPU) {
+        printf("Warning! Tensor is allocated in Host(CPU) latest time\n");
+        printf("Change mode CPU toGPU\n");
+
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetDescriptor" << '\n';
+            exit(-1);
+        }
+        this->SetDeviceGPU(m_idOfDevice);
+    }
+
+    # else // if __DEBUG__
+
+    if (m_Device == CPU) {
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetDescriptor" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
+    }
+
     # endif // __DEBUG__
 
     return m_aShape->GetDescriptor();
@@ -496,20 +526,27 @@ template<typename DTYPE> void Tensor<DTYPE>::Reset(cudnnHandle_t& pCudnnHandle) 
     if (m_Device == CPU) {
         printf("Warning! Tensor is allocated in Host(CPU) latest time\n");
         printf("Change mode CPU toGPU\n");
-        this->SetDeviceGPU();
+
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : Reset" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 
     # else // if __DEBUG__
 
     if (m_Device == CPU) {
-        this->SetDeviceGPU();
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : Reset" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 
     # endif // __DEBUG__
 
     int pTime                     = this->GetTimeSize();
     cudnnTensorDescriptor_t pDesc = this->GetDescriptor();
-    DTYPE *pDevLongArray               = NULL;
+    DTYPE *pDevLongArray          = NULL;
     float  zero                   = 0.f;
 
     for (int i = 0; i < pTime; i++) {
@@ -541,7 +578,7 @@ template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Random_normal(Shape *pSha
     Tensor<DTYPE> *temp = new Tensor<DTYPE>(pShape, pAnswer);
 
     int   capacity = temp->GetCapacity();
-    DTYPE v1 = 0.f, v2 = 0.f, mid_result = 0.f, result = 0.f;
+    DTYPE v1 = 0.f, v2 = 0.f, mid_result = 0.f;
 
     // Random number generator on normal distribution
     for (int i = 0; i < capacity; i++) {

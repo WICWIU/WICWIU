@@ -68,6 +68,13 @@ public:
         return TRUE;
     }
 
+    #ifdef __CUDNN__
+        void InitializeAttributeForGPU(unsigned int idOfDevice) {
+            m_aSoftmaxResult->SetDeviceGPU(idOfDevice);
+        }
+
+    #endif  // if __CUDNN__
+
     virtual void Delete() {
         if (m_aSoftmaxResult) {
             delete m_aSoftmaxResult;

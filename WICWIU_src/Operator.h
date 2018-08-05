@@ -18,6 +18,7 @@ private:
     Container<Tensor<DTYPE> *> *m_aaGradient;
     std::string m_name;
     Device m_Device;
+    int m_idOfDevice = -1;
     Mode m_Mode;
     int m_isParameter;
     int m_isTrainable;
@@ -55,6 +56,7 @@ public:
     int                                   SetDelta(Tensor<DTYPE> *pTensor);
 
     int                                   SetDevice(Device pDevice);
+    int                                   SetDeviceID(unsigned int idOfDevice);
 
     int                                   SetIsTensorholder(int pIsParameter);
     int                                   SetIsTrainable(int pIsTrainable);
@@ -76,6 +78,7 @@ public:
 
     std::string                           GetName() const;
     virtual Device                        GetDevice();
+    virtual int                           GetDeviceID();
     int                                   GetIsTensorholder();
     int                                   GetIsTrainable();
 
@@ -94,12 +97,12 @@ public:
     virtual int                           SetGradientOnCPU();
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
-    virtual int                           SetResultOnGPU();
-    virtual int                           SetGradientOnGPU();
+    virtual int                           SetResultOnGPU(unsigned int idOfDevice);
+    virtual int                           SetGradientOnGPU(unsigned int idOfDevice);
 
-    virtual void                          SetDeviceGPU();
-    virtual void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle);
-    virtual void                          InitializeAttributeForGPU();
+    // virtual void                          SetDeviceGPU(unsigned int idOfDevice);
+    virtual void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    virtual void                          InitializeAttributeForGPU(unsigned int idOfDevice);
 
     cudnnHandle_t& GetCudnnHandle();
 
