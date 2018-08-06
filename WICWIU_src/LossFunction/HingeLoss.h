@@ -6,21 +6,29 @@
 template<typename DTYPE>
 class HingeLoss : public LossFunction<DTYPE>{
 private:
-    Tensor<DTYPE> *indexForBackProp;
+    Tensor<DTYPE> *m_aindexForBackProp;
+    float m_theta;
 
 public:
-    HingeLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel) : LossFunction<DTYPE>(pOperator, pLabel) {
+    HingeLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, float theta = 1.f) : LossFunction<DTYPE>(pOperator, pLabel) {
         #ifdef __DEBUG__
         std::cout << "HingeLoss::HingeLoss(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pOperator);
+        this->Alloc(pOperator, theta);
     }
 
     HingeLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName) {
         #ifdef __DEBUG__
         std::cout << "HingeLoss::HingeLoss(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pOperator);
+        this->Alloc(pOperator, 1.f);
+    }
+
+    HingeLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, float theta, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName) {
+        #ifdef __DEBUG__
+        std::cout << "HingeLoss::HingeLoss(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
+        #endif  // __DEBUG__
+        this->Alloc(pOperator, theta);
     }
 
     ~HingeLoss() {
@@ -29,7 +37,7 @@ public:
         #endif  // __DEBUG__
     }
 
-    virtual int Alloc(Operator<DTYPE> *pOperator) {
+    int Alloc(Operator<DTYPE> *pOperator, float theta) {
         #ifdef __DEBUG__
         std::cout << "HingeLoss::Alloc(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
@@ -44,16 +52,25 @@ public:
 
         this->SetResult(new Tensor<DTYPE>(timesize, batchSize, 1, 1, 1));
 
-        indexForBackProp = Tensor<DTYPE>::Constants(timesize, batchSize, channelsize, rowsize, colsize, 0.f);
+        m_aindexForBackProp = Tensor<DTYPE>::Constants(timesize, batchSize, channelsize, rowsize, colsize, 0.f);
+
+        m_theta = theta;
 
         return TRUE;
+    }
+
+    void Delete() {
+        if (m_aindexForBackProp) {
+            delete m_aindexForBackProp;
+            m_aindexForBackProp = NULL;
+        }
     }
 
     Tensor<DTYPE>* ForwardPropagate(int timeIdx = 0) {
         Tensor<DTYPE> *input   = this->GetTensor();
         Tensor<DTYPE> *desired = this->GetLabel()->GetResult();
         Tensor<DTYPE> *result  = this->GetResult();
-        indexForBackProp->Reset();
+        m_aindexForBackProp->Reset();
 
         int batchSize = input->GetBatchSize();
 
@@ -86,12 +103,12 @@ public:
             int    curClass = 0;
 
             for (DTYPE *dp = dStart; dp < dLimit; dp++, curClass++, ip++) {
-                if ((*ip + 1 > trueClassScore) && (curClass != trueClass)) {
-                    *rp += *ip - trueClassScore + 1;
+                if ((*ip + m_theta > trueClassScore) && (curClass != trueClass)) {
+                    *rp += *ip - trueClassScore + m_theta;
 
                     // for backpropagation, not necessary for forward
-                    (*indexForBackProp)[curClass + firstOutputIdx]  += 1;
-                    (*indexForBackProp)[trueClass + firstOutputIdx] += -1;
+                    (*m_aindexForBackProp)[curClass + firstOutputIdx]  += 1;
+                    (*m_aindexForBackProp)[trueClass + firstOutputIdx] += -1;
                 }
             }
         }
@@ -121,7 +138,7 @@ public:
             for (int j = 0, index = 0; j < capacity; j++) {
                 index = i * capacity + j;
 
-                (*input_delta)[index] += (*indexForBackProp)[index] / batchSize;
+                (*input_delta)[index] += (*m_aindexForBackProp)[index] / batchSize;
             }
         }
 
