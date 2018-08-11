@@ -2,3 +2,5 @@
 #include "Module/ConvoulutionLayer.h"
 // #include "Module/BatchNormalizeLayer.h"
 // #include "Module/CUDNNBatchNormalizeLayer.h"
+#include "Module/PReluLayer.h"
+#include "Module/TransposedConvoulutionLayer.h"
