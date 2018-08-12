@@ -4,3 +4,4 @@
 *.gch
 main
 CommentAboutDocumentation
+tutorials/CIFAR10/cifar-10-batches-bin/
