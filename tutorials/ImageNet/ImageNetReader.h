@@ -73,16 +73,13 @@ private:
 
         if (m_aaImagesOfClass) {
             // We cannot dealloc this part, is it charactor of string value?
-            // for (int i = 0; i < NUMBER_OF_CLASS; i++) {
-            // std::cout << "check" << '\n';
-            //
-            // if (m_aaImagesOfClass[i]) {
-            // std::cout << m_aaImagesOfClass[i]<< '\n';
-            // delete m_aaImagesOfClass[i];
-            // std::cout << "check" << '\n';
-            // m_aaImagesOfClass[i] = NULL;
-            // }
-            // }
+            for (int i = 0; i < NUMBER_OF_CLASS; i++) {
+                if (m_aaImagesOfClass[i]) {
+                    std::cout << m_aaImagesOfClass[i] << '\n';
+                    delete[] m_aaImagesOfClass[i];
+                    m_aaImagesOfClass[i] = NULL;
+                }
+            }
 
             delete m_aaImagesOfClass;
             m_aaImagesOfClass = NULL;
@@ -119,8 +116,6 @@ private:
         if (m_aaQForData) {
             if (m_aaQForData->size() != 0) {
                 int numOfTensor = m_aaQForData->size();
-
-                std::cout << "numOfTensor : " << numOfTensor << '\n';
 
                 for (int i = 0; i < numOfTensor; i++) {
                     Tensor<DTYPE> **temp = m_aaQForData->front();
