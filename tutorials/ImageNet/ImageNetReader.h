@@ -24,7 +24,6 @@ private:
     // list of Class
     string m_className[NUMBER_OF_CLASS];
     // for shuffle class index
-    // std::vector<int> *m_shuffledList;
     vector<int> m_shuffledList;
     // number of img of each class
     int m_aNumOfImageOfClass[NUMBER_OF_CLASS];
@@ -52,7 +51,7 @@ private:
 
 private:
     int Alloc() {
-        for (int i=1; i<NUMBER_OF_CLASS; ++i) m_shuffledList.push_back(i);
+        for (int i = 1; i < NUMBER_OF_CLASS; ++i) m_shuffledList.push_back(i);
 
         m_aaImagesOfClass = new string *[NUMBER_OF_CLASS];
 
@@ -144,7 +143,7 @@ public:
 
         // start data preprocessing with above information
         // It works with thread
-        // it will be end when recieve "STOP" signal
+        // it will be end when receive "STOP" signal
 
         pthread_create(&m_thread, NULL, &ImageNetDataReader::ThreadFunc, (void *)this);
     }
@@ -296,6 +295,15 @@ public:
                 sem_post(&m_mutex);
                 sem_post(&m_full);
 
+                // int empty_value = 0;
+                // int full_value  = 0;
+                //
+                // sem_getvalue(&m_empty, &empty_value);
+                // sem_getvalue(&m_full,  &full_value);
+                //
+                // printf("full : %d, empty : %d \n", full_value, empty_value);
+
+
                 m_recallnum++;
             } while (m_work);
         } else {
@@ -323,7 +331,7 @@ public:
         string imgName = m_aaImagesOfClass[classNum][imgNum];
         // std::cout << "imgName : " << imgName << '\n';
 
-        string filePath  = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName; // check with printf
+        string filePath = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName;  // check with printf
 
         // std::cout << "filePath : " << filePath << '\n';
 
@@ -416,6 +424,14 @@ public:
 
         sem_post(&m_mutex);
         sem_post(&m_empty);
+
+        // int empty_value = 0;
+        // int full_value  = 0;
+        //
+        // sem_getvalue(&m_empty, &empty_value);
+        // sem_getvalue(&m_full,  &full_value);
+        //
+        // printf("full : %d, empty : %d \n", full_value, empty_value);
 
         return result;
     }
