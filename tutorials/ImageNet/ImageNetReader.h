@@ -154,8 +154,6 @@ public:
         // it will be end when recieve "STOP" signal
 
         pthread_create(&m_thread, NULL, &ImageNetDataReader::ThreadFunc, (void *)this);
-
-        pthread_join(m_thread, NULL);
     }
 
     virtual ~ImageNetDataReader() {
@@ -275,12 +273,13 @@ public:
 
         if (m_isTrain) {
             do {
-                if ((m_recallnum * (m_batchSize + 1) - 1) > NUMBER_OF_CLASS) m_recallnum = 0  /* this->Shuffle()*/;
+                if (((m_recallnum + 1) * m_batchSize - 1) > NUMBER_OF_CLASS) m_recallnum = 0  /* this->Shuffle()*/;
 
                 std::cout << "m_recallnum : " << m_recallnum << '\n';
 
                 for (int i = 0; i < m_batchSize; i++) {
                     classNum = (*m_aShuffledList)[i + m_recallnum * m_batchSize];
+                    // std::cout << i + m_recallnum * m_batchSize << '\n';
                     // std::cout << classNum << ' ';
                     imgNum = rand() % m_aNumOfImageOfClass[classNum];  // random select from range(0, m_aNumOfImageOfClass[classNum])
                     // std::cout << m_aNumOfImageOfClass[classNum] << " : " << imgNum << '\n';
@@ -318,7 +317,7 @@ public:
 
         string filePath  = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName; // check with printf
 
-        std::cout << "filePath : " << filePath << '\n';
+        // std::cout << "filePath : " << filePath << '\n';
 
         int width    = 224; // column
         int height   = 224; // row
@@ -419,6 +418,11 @@ public:
         // terminate every element
         sem_post(&m_empty);
         sem_post(&m_full);
+
+        // thread join
+        pthread_join(m_thread, NULL);
+
+        std::cout << "Data Reader Thread is terminated!" << '\n';
 
         return TRUE;
     }
