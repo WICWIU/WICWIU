@@ -6,14 +6,16 @@ ENABLE_CUDNN = -D__CUDNN__
 
 LFLAGS = -lcudart -lcudnn -lpthread -ljpeg -lturbojpeg
 
-INCLUDE_PATH = -I../../../../JpegLib -I/usr/local/cuda/include -I/opt/libjpeg-turbo/include
-LIB_PATH = -L. -L/usr/local/cuda/lib64 -L/opt/libjpeg-turbo/lib64
+INCLUDE_PATH = -I/usr/local/cuda/include -I../../../../JpegLib
+LIB_PATH = -L. -L/usr/local/cuda/lib64 -I../../../../JpegLib
+
+# INCLUDE_PATH = -I/usr/local/cuda/include -I/opt/libjpeg-turbo/include
+# LIB_PATH = -L. -L/usr/local/cuda/lib64 -L/opt/libjpeg-turbo/lib64
 
 CC = g++
 NVCC = nvcc
 
 WICWIU_LIB = ../../lib/libwicwiu.a
-# TURBOJPEG_LIB = ../../../../JpegLib/libturbojpeg.a
 
 WICWIU_SRCS = \
 	../../WICWIU_src/Shape.cpp	\
@@ -22,7 +24,7 @@ WICWIU_SRCS = \
 	../../WICWIU_src/Operator.cpp	\
 	../../WICWIU_src/LossFunction.cpp	\
 	../../WICWIU_src/Optimizer.cpp	\
-	../../WICWIU_src/Layer.cpp	\
+	../../WICWIU_src/Module.cpp	\
 	../../WICWIU_src/NeuralNetwork.cpp
 
 WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}

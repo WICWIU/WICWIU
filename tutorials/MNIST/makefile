@@ -4,9 +4,9 @@ CFLAGS = -O2 -std=c++11
 ENABLE_CUDNN = -D__CUDNN__
 #DFLAGS = -g -D__DEBUG__
 
-LFLAGS = -lcudart -lcudnn -lpthread -ljpeg
+LFLAGS = -lcudart -lcudnn -lpthread
 
-INCLUDE_PATH = -I../../JpegLib -I/usr/local/cuda/include
+INCLUDE_PATH = -I/usr/local/cuda/include
 LIB_PATH = -L. -L/usr/local/cuda/lib64
 
 
@@ -22,7 +22,7 @@ WICWIU_SRCS = \
 	../../WICWIU_src/Operator.cpp	\
 	../../WICWIU_src/LossFunction.cpp	\
 	../../WICWIU_src/Optimizer.cpp	\
-	../../WICWIU_src/Layer.cpp	\
+	../../WICWIU_src/Module.cpp	\
 	../../WICWIU_src/NeuralNetwork.cpp
 
 WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}
