@@ -4,16 +4,16 @@ CFLAGS = -O2 -std=c++11
 ENABLE_CUDNN = -D__CUDNN__
 #DFLAGS = -g -D__DEBUG__
 
-LFLAGS = -lcudart -lcudnn -lpthread -ljpeg
+LFLAGS = -lcudart -lcudnn -lpthread -ljpeg -lturbojpeg
 
-INCLUDE_PATH = -I../../JpegLib -I/usr/local/cuda/include
-LIB_PATH = -L. -L/usr/local/cuda/lib64
-
+INCLUDE_PATH = -I../../../../JpegLib -I/usr/local/cuda/include -I/opt/libjpeg-turbo/include
+LIB_PATH = -L. -L/usr/local/cuda/lib64 -L/opt/libjpeg-turbo/lib64
 
 CC = g++
 NVCC = nvcc
 
 WICWIU_LIB = ../../lib/libwicwiu.a
+# TURBOJPEG_LIB = ../../../../JpegLib/libturbojpeg.a
 
 WICWIU_SRCS = \
 	../../WICWIU_src/Shape.cpp	\
