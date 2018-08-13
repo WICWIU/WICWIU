@@ -8,7 +8,20 @@
 #include <semaphore.h>
 #include <pthread.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <turbojpeg.h>
+
 #include "../../WICWIU_src/Tensor_utils.h"
+
+#define _throw(action, message) { \
+  printf("ERROR in line %d while %s:\n%s\n", __LINE__, action, message); \
+  retval = -1;  goto bailout; \
+}
+#define _throwtj(action)  _throw(action, tjGetErrorStr2(tjInstance))
+#define _throwunix(action)  _throw(action, strerror(errno))
 
 #define NUMBER_OF_CLASS    1000
 
@@ -318,26 +331,99 @@ public:
     }
 
     Tensor<DTYPE>* Image2Tensor(int classNum, int imgNum  /*Address of Image*/) {
+        int width, height;
+        int ch, ro, co;
+        char *inFormat, *outFormat;
+        FILE *jpegFile = NULL;
+        unsigned char *imgBuf = NULL, *jpegBuf = NULL;
+        int pixelFormat = TJPF_RGB;
+        tjhandle tjInstance = NULL;
+        long size;
+        int inSubsamp, inColorspace;
+        unsigned long jpegSize;
+        // unsigned char * clone;
+        int xOfImage = 0, yOfImage = 0;
+        const int lengthLimit = 224; // lengthLimit
+        const int colorDim = 3;  // channel
+
         string classDir = m_className[classNum];
         // std::cout << classDir << '\n';
+
         string imgName = m_aaImagesOfClass[classNum][imgNum];
         // std::cout << "imgName : " << imgName << '\n';
 
         string filePath  = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName; // check with printf
-
         // std::cout << "filePath : " << filePath << '\n';
 
-        int width    = 224; // column
-        int height   = 224; // row
-        int colorDim = 3;  // channel
-
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, colorDim * height * width);
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
         // Tensor<DTYPE> *temp = Tensor<DTYPE>::Constants(1, 1, 1, 1, colorDim * height * width, classNum);
 
         // Load image
-        // convert image to tensor
+        /* Read the JPEG file into memory. */
+        if ((jpegFile = fopen(filePath, "rb")) == NULL) _throwunix("opening input file");
+        if (fseek(jpegFile, 0, SEEK_END) < 0 || ((size = ftell(jpegFile)) < 0) || fseek(jpegFile, 0, SEEK_SET) < 0) _throwunix("determining input file size");
+        if (size == 0) _throw("determining input file size", "Input file contains no data");
+        jpegSize = (unsigned long)size;
+        if ((jpegBuf = (unsigned char *)tjAlloc(jpegSize)) == NULL) _throwunix("allocating JPEG buffer");
+        if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1) _throwunix("reading input file");
+        fclose(jpegFile); jpegFile = NULL;
 
+        // Decompressing
+        if ((tjInstance = tjInitDecompress()) == NULL) _throwtj("initializing decompressor");
+        if (tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height, &inSubsamp, &inColorspace) < 0)
+          _throwtj("reading JPEG header");
+
+        printf("Input Image:  %d x %d pixels\n", width, height);
+
+        if ((imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat])) == NULL)
+            _throwunix("allocating uncompressed image buffer");
+        if (tjDecompress2(tjInstance, jpegBuf, jpegSize, imgBuf, width, 0, height, pixelFormat, 0) < 0)
+            _throwtj("decompressing JPEG image");
+        tjFree(jpegBuf);  jpegBuf = NULL;
+        tjDestroy(tjInstance);  tjInstance = NULL;
+
+        // clone = imgBuf;
+        // for(int i = 0; i < height; i++){
+        //     for(int j = 0; j < width; j++){
+        //         printf("height = %d, width = %d, R: %d ", i, j, *clone);
+        //         clone = clone + sizeof(unsigned char);
+        //         printf("height = %d, width = %d, G: %d ", i, j, *clone);
+        //         clone = clone + sizeof(unsigned char);
+        //         printf("height = %d, width = %d, B: %d \n", i, j, *clone);
+        //         clone = clone + sizeof(unsigned char);
+        //     }
+        // }
+
+        // printf("Output Image (%s):  %d x %d pixels", outFormat, width, height);
+        // printf("\n");
+        //
+        // if (tjSaveImage(argv[2], imgBuf, width, 0, height, pixelFormat, 0) < 0)
+        //   _throwtj("saving output image");
+
+        // convert image to tensor
+        xOfImage = random_generator(width - lengthLimit);
+        yOfImage = random_generator(height - lengthLimit);
+
+        // should be modularized
+        for(ch = 0; ch < colorDim; ch++) {
+            for(ro = yOfImage; ro < lengthLimit; ro++) {
+                for(co = xOfImage; co < lengthLimit; co++) {
+                    (*temp)[index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+                    print("ch = %d, ro = %d, co = %d : %f \n", ch, ro, co, (*temp)[index3D(temp->GetShape(), ch, ro, co)]);
+                }
+            }
+        }
+        temp::ReShape(1, 1, colorDim, lengthLimit, lengthLimit);
+
+        tjFree(imgBuf);
         return temp;
+
+        bailout:
+        if (imgBuf) tjFree(imgBuf);
+        if (tjInstance) tjDestroy(tjInstance);
+        if (jpegBuf) tjFree(jpegBuf);
+        if (jpegFile) fclose(jpegFile);
+        return NULL;
     }
 
     Tensor<DTYPE>* Label2Tensor(int classNum  /*Address of Label*/) {
