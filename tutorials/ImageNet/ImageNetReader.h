@@ -24,7 +24,8 @@ private:
     // list of Class
     string m_className[NUMBER_OF_CLASS];
     // for shuffle class index
-    std::vector<int> *m_aShuffledList;
+    // std::vector<int> *m_shuffledList;
+    std::vector<int> m_shuffledList;
     // number of img of each class
     int m_aNumOfImageOfClass[NUMBER_OF_CLASS];
     // image set of each class
@@ -51,10 +52,7 @@ private:
 
 private:
     int Alloc() {
-        int numOfClass[NUMBER_OF_CLASS] = { 0 };
-
-        for (int i = 0; i < NUMBER_OF_CLASS; i++) numOfClass[i] = i;
-        m_aShuffledList = new vector<int>(numOfClass, numOfClass + NUMBER_OF_CLASS);
+        for (int i=1; i<NUMBER_OF_CLASS; ++i) m_shuffledList.push_back(i);
 
         m_aaImagesOfClass = new string *[NUMBER_OF_CLASS];
 
@@ -66,11 +64,6 @@ private:
     }
 
     void Delete() {
-        if (m_aShuffledList) {
-            delete m_aShuffledList;
-            m_aShuffledList = NULL;
-        }
-
         if (m_aaImagesOfClass) {
             // We cannot dealloc this part, is it charactor of string value?
             for (int i = 0; i < NUMBER_OF_CLASS; i++) {
@@ -272,20 +265,27 @@ public:
         Tensor<DTYPE> *preprocessedLabels = NULL;
 
         if (m_isTrain) {
+            this->ShuffleClassNum();
+
             do {
-                if (((m_recallnum + 1) * m_batchSize - 1) > NUMBER_OF_CLASS) m_recallnum = 0  /* this->Shuffle()*/;
+                if (((m_recallnum + 1) * m_batchSize - 1) > NUMBER_OF_CLASS) {
+                    this->ShuffleClassNum();
+                    m_recallnum = 0;
+                }
 
                 std::cout << "m_recallnum : " << m_recallnum << '\n';
 
                 for (int i = 0; i < m_batchSize; i++) {
-                    classNum = (*m_aShuffledList)[i + m_recallnum * m_batchSize];
-                    // std::cout << i + m_recallnum * m_batchSize << '\n';
+                    classNum = m_shuffledList[i + m_recallnum * m_batchSize];
+                    std::cout << classNum << ' ';
+                    // std::cout << i + m_recallnum * m_batchSize << ' ';
                     // std::cout << classNum << ' ';
                     imgNum = rand() % m_aNumOfImageOfClass[classNum];  // random select from range(0, m_aNumOfImageOfClass[classNum])
                     // std::cout << m_aNumOfImageOfClass[classNum] << " : " << imgNum << '\n';
                     m_aaSetOfImage->push(this->Image2Tensor(classNum, imgNum));
                     m_aaSetOfLabel->push(this->Label2Tensor(classNum));
                 }
+                std::cout << '\n';
                 preprocessedImages = this->ConcatenateImage(m_aaSetOfImage);
                 preprocessedLabels = this->ConcatenateLabel(m_aaSetOfLabel);
 
@@ -307,6 +307,15 @@ public:
         }
 
         return TRUE;
+    }
+
+    static int random_generator(int upperbound) {
+        return rand() % upperbound;
+    }
+
+    void ShuffleClassNum() {
+        srand(unsigned(time(0)));
+        random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 
     Tensor<DTYPE>* Image2Tensor(int classNum, int imgNum  /*Address of Image*/) {
