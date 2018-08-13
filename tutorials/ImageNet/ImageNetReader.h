@@ -25,7 +25,7 @@ private:
     string m_className[NUMBER_OF_CLASS];
     // for shuffle class index
     // std::vector<int> *m_shuffledList;
-    std::vector<int> m_shuffledList;
+    vector<int> m_shuffledList;
     // number of img of each class
     int m_aNumOfImageOfClass[NUMBER_OF_CLASS];
     // image set of each class
@@ -273,11 +273,11 @@ public:
                     m_recallnum = 0;
                 }
 
-                std::cout << "m_recallnum : " << m_recallnum << '\n';
+                // std::cout << "m_recallnum : " << m_recallnum << '\n';
 
                 for (int i = 0; i < m_batchSize; i++) {
                     classNum = m_shuffledList[i + m_recallnum * m_batchSize];
-                    std::cout << classNum << ' ';
+                    // std::cout << classNum << ' ';
                     // std::cout << i + m_recallnum * m_batchSize << ' ';
                     // std::cout << classNum << ' ';
                     imgNum = rand() % m_aNumOfImageOfClass[classNum];  // random select from range(0, m_aNumOfImageOfClass[classNum])
@@ -285,7 +285,6 @@ public:
                     m_aaSetOfImage->push(this->Image2Tensor(classNum, imgNum));
                     m_aaSetOfLabel->push(this->Label2Tensor(classNum));
                 }
-                std::cout << '\n';
                 preprocessedImages = this->ConcatenateImage(m_aaSetOfImage);
                 preprocessedLabels = this->ConcatenateLabel(m_aaSetOfLabel);
 
