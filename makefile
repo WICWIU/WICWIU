@@ -21,13 +21,13 @@ WICWIU_SRCS = \
 	WICWIU_src/Operator.cpp	\
 	WICWIU_src/LossFunction.cpp	\
 	WICWIU_src/Optimizer.cpp	\
-	WICWIU_src/Layer.cpp	\
-	WICWIU_src/ImageLoader.cpp	\
+	WICWIU_src/Module.cpp	\
 	WICWIU_src/NeuralNetwork.cpp
+
 
 WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}
 
-all:	$(WICWIU_LIB) 
+all:	$(WICWIU_LIB)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) $(LIB_PATH) -c $< -o $@

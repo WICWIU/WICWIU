@@ -16,12 +16,12 @@
 
 #include "../../WICWIU_src/Tensor_utils.h"
 
-#define _throw(action, message) { \
-  printf("ERROR in line %d while %s:\n%s\n", __LINE__, action, message); \
-  retval = -1;  goto bailout; \
-}
-#define _throwtj(action)  _throw(action, tjGetErrorStr2(tjInstance))
-#define _throwunix(action)  _throw(action, strerror(errno))
+// #define _throw(action, message) { \
+//   printf("ERROR in line %d while %s:\n%s\n", __LINE__, action, message); \
+//   retval = -1;  goto bailout; \
+// }
+// #define _throwtj(action)  _throw(action, tjGetErrorStr2(tjInstance))
+// #define _throwunix(action)  _throw(action, strerror(errno))
 
 #define NUMBER_OF_CLASS    1000
 
@@ -361,7 +361,7 @@ public:
         // std::cout << "imgName : " << imgName << '\n';
 
         string filePath = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName;  // check with printf
-
+        const char *cstr = filePath.c_str();
         // std::cout << "filePath : " << filePath << '\n';
 
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
@@ -369,7 +369,7 @@ public:
 
         // Load image
         /* Read the JPEG file into memory. */
-        if ((jpegFile = fopen(filePath, "rb")) == NULL) _throwunix("opening input file");
+        if ((jpegFile = fopen(cstr, "rb")) == NULL) _throwunix("opening input file");
         if (fseek(jpegFile, 0, SEEK_END) < 0 || ((size = ftell(jpegFile)) < 0) || fseek(jpegFile, 0, SEEK_SET) < 0) _throwunix("determining input file size");
         if (size == 0) _throw("determining input file size", "Input file contains no data");
         jpegSize = (unsigned long)size;
@@ -417,14 +417,13 @@ public:
         for(ch = 0; ch < colorDim; ch++) {
             for(ro = yOfImage; ro < lengthLimit; ro++) {
                 for(co = xOfImage; co < lengthLimit; co++) {
-                    (*temp)[index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
-                    print("ch = %d, ro = %d, co = %d : %f \n", ch, ro, co, (*temp)[index3D(temp->GetShape(), ch, ro, co)]);
+                    (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+                    printf("ch = %d, ro = %d, co = %d : %f \n", ch, ro, co, (*temp)[Index3D(temp->GetShape(), ch, ro, co)]);
                 }
             }
         }
-        temp::ReShape(1, 1, colorDim, lengthLimit, lengthLimit);
-
         tjFree(imgBuf);
+
         return temp;
 
         bailout:
