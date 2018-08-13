@@ -339,20 +339,20 @@ public:
     }
 
     Tensor<DTYPE>* Image2Tensor(int classNum, int imgNum  /*Address of Image*/) {
-        int width, height;
-        int ch, ro, co;
+        int   width, height;
+        int   ch, ro, co;
         char *inFormat, *outFormat;
         FILE *jpegFile = NULL;
         unsigned char *imgBuf = NULL, *jpegBuf = NULL;
-        int pixelFormat = TJPF_RGB;
+        int pixelFormat     = TJPF_RGB;
         tjhandle tjInstance = NULL;
-        long size;
+        long     size;
         int inSubsamp, inColorspace;
         unsigned long jpegSize;
         // unsigned char * clone;
         int xOfImage = 0, yOfImage = 0;
-        const int lengthLimit = 224; // lengthLimit
-        const int colorDim = 3;  // channel
+        const int lengthLimit = 224;  // lengthLimit
+        const int colorDim    = 3; // channel
 
         string classDir = m_className[classNum];
         // std::cout << classDir << '\n';
@@ -360,77 +360,63 @@ public:
         string imgName = m_aaImagesOfClass[classNum][imgNum];
         // std::cout << "imgName : " << imgName << '\n';
 
-        string filePath = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName;  // check with printf
+        string filePath  = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName; // check with printf
         const char *cstr = filePath.c_str();
+
         // std::cout << "filePath : " << filePath << '\n';
 
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
-        // Tensor<DTYPE> *temp = Tensor<DTYPE>::Constants(1, 1, 1, 1, colorDim * height * width, classNum);
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
 
-        // Load image
+        // Load image (no throw and catch)
         /* Read the JPEG file into memory. */
-        if ((jpegFile = fopen(cstr, "rb")) == NULL) _throwunix("opening input file");
-        if (fseek(jpegFile, 0, SEEK_END) < 0 || ((size = ftell(jpegFile)) < 0) || fseek(jpegFile, 0, SEEK_SET) < 0) _throwunix("determining input file size");
-        if (size == 0) _throw("determining input file size", "Input file contains no data");
+        jpegFile = fopen(cstr, "rb");
+
+        fseek(jpegFile, 0, SEEK_END);
+        size = ftell(jpegFile);
+        fseek(jpegFile, 0, SEEK_SET);
+
         jpegSize = (unsigned long)size;
-        if ((jpegBuf = (unsigned char *)tjAlloc(jpegSize)) == NULL) _throwunix("allocating JPEG buffer");
-        if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1) _throwunix("reading input file");
+        jpegBuf  = (unsigned char *)tjAlloc(jpegSize);
+
+        if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1) exit(-1);
         fclose(jpegFile); jpegFile = NULL;
 
-        // Decompressing
-        if ((tjInstance = tjInitDecompress()) == NULL) _throwtj("initializing decompressor");
-        if (tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height, &inSubsamp, &inColorspace) < 0)
-          _throwtj("reading JPEG header");
-
-        printf("Input Image:  %d x %d pixels\n", width, height);
-
-        if ((imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat])) == NULL)
-            _throwunix("allocating uncompressed image buffer");
-        if (tjDecompress2(tjInstance, jpegBuf, jpegSize, imgBuf, width, 0, height, pixelFormat, 0) < 0)
-            _throwtj("decompressing JPEG image");
-        tjFree(jpegBuf);  jpegBuf = NULL;
-        tjDestroy(tjInstance);  tjInstance = NULL;
-
-        // clone = imgBuf;
-        // for(int i = 0; i < height; i++){
-        //     for(int j = 0; j < width; j++){
-        //         printf("height = %d, width = %d, R: %d ", i, j, *clone);
-        //         clone = clone + sizeof(unsigned char);
-        //         printf("height = %d, width = %d, G: %d ", i, j, *clone);
-        //         clone = clone + sizeof(unsigned char);
-        //         printf("height = %d, width = %d, B: %d \n", i, j, *clone);
-        //         clone = clone + sizeof(unsigned char);
-        //     }
-        // }
-
-        // printf("Output Image (%s):  %d x %d pixels", outFormat, width, height);
-        // printf("\n");
-        //
-        // if (tjSaveImage(argv[2], imgBuf, width, 0, height, pixelFormat, 0) < 0)
-        //   _throwtj("saving output image");
+        tjInstance = tjInitDecompress();
+        tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height, &inSubsamp, &inColorspace);
+        imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat]);
+        tjDecompress2(tjInstance, jpegBuf, jpegSize, imgBuf, width, 0, height, pixelFormat, 0);
+        tjFree(jpegBuf); jpegBuf          = NULL;
+        tjDestroy(tjInstance); tjInstance = NULL;
 
         // convert image to tensor
         xOfImage = random_generator(width - lengthLimit);
         yOfImage = random_generator(height - lengthLimit);
 
+        std::cout << temp->GetShape() << '\n';
+
         // should be modularized
-        for(ch = 0; ch < colorDim; ch++) {
-            for(ro = yOfImage; ro < lengthLimit; ro++) {
-                for(co = xOfImage; co < lengthLimit; co++) {
+        for (ch = 0; ch < colorDim; ch++) {
+            for (ro = yOfImage; ro < lengthLimit; ro++) {
+                for (co = xOfImage; co < lengthLimit; co++) {
                     (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
-                    printf("ch = %d, ro = %d, co = %d : %f \n", ch, ro, co, (*temp)[Index3D(temp->GetShape(), ch, ro, co)]);
+                    // printf("ch = %d, ro = %d, co = %d : %f \n", ch, ro, co, (*temp)[Index3D(temp->GetShape(), ch, ro, co)]);
                 }
             }
         }
         tjFree(imgBuf);
 
+        temp->ReShape(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
+
+        // std::cout << temp->GetShape() << '\n';
+
         return temp;
 
-        bailout:
-        if (imgBuf) tjFree(imgBuf);
-        if (tjInstance) tjDestroy(tjInstance);
-        if (jpegBuf) tjFree(jpegBuf);
-        if (jpegFile) fclose(jpegFile);
+        // bailout:
+        // if (imgBuf) tjFree(imgBuf);
+        // if (tjInstance) tjDestroy(tjInstance);
+        // if (jpegBuf) tjFree(jpegBuf);
+        // if (jpegFile) fclose(jpegFile);
+
         return NULL;
     }
 
