@@ -75,7 +75,7 @@ private:
             // We cannot dealloc this part, is it charactor of string value?
             for (int i = 0; i < NUMBER_OF_CLASS; i++) {
                 if (m_aaImagesOfClass[i]) {
-                    std::cout << m_aaImagesOfClass[i] << '\n';
+                    // std::cout << m_aaImagesOfClass[i] << '\n';
                     delete[] m_aaImagesOfClass[i];
                     m_aaImagesOfClass[i] = NULL;
                 }
@@ -154,6 +154,8 @@ public:
         // it will be end when recieve "STOP" signal
 
         pthread_create(&m_thread, NULL, &ImageNetDataReader::ThreadFunc, (void *)this);
+
+        pthread_join(m_thread, NULL);
     }
 
     virtual ~ImageNetDataReader() {
@@ -314,12 +316,16 @@ public:
         string imgName = m_aaImagesOfClass[classNum][imgNum];
         // std::cout << "imgName : " << imgName << '\n';
 
+        string filePath  = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName; // check with printf
+
+        std::cout << "filePath : " << filePath << '\n';
+
         int width    = 224; // column
         int height   = 224; // row
         int colorDim = 3;  // channel
 
-        // Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, colorDim * height * width);
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Constants(1, 1, 1, 1, colorDim * height * width, classNum);
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, colorDim * height * width);
+        // Tensor<DTYPE> *temp = Tensor<DTYPE>::Constants(1, 1, 1, 1, colorDim * height * width, classNum);
 
         // Load image
         // convert image to tensor
