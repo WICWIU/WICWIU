@@ -127,7 +127,7 @@ private:
                     m_aaQForData->pop();
                     delete temp[0];
                     delete temp[1];
-                    delete temp;
+                    delete[] temp;
                     temp = NULL;
                 }
             }
@@ -308,13 +308,13 @@ public:
                 sem_post(&m_mutex);
                 sem_post(&m_full);
 
-                // int empty_value = 0;
-                // int full_value  = 0;
-                //
-                // sem_getvalue(&m_empty, &empty_value);
-                // sem_getvalue(&m_full,  &full_value);
-                //
-                // printf("full : %d, empty : %d \n", full_value, empty_value);
+                int empty_value = 0;
+                int full_value  = 0;
+
+                sem_getvalue(&m_empty, &empty_value);
+                sem_getvalue(&m_full,  &full_value);
+
+                printf("full : %d, empty : %d \n", full_value, empty_value);
 
 
                 m_recallnum++;
@@ -323,7 +323,7 @@ public:
             do {
                 std::cout << "not now! it will be prepared" << '\n';
                 exit(-1);
-            } while (m_work  /*with semaphore*/);
+            } while (m_work);
         }
 
         return TRUE;
@@ -338,25 +338,25 @@ public:
         random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 
-	void Resize(int channel, int oldHeight, int oldWidth, unsigned char *oldData, int newHeight, int newWidth, unsigned char *newData)
-	{
-		unsigned char *dest = newData;
+    void Resize(int channel, int oldHeight, int oldWidth, unsigned char *oldData, int newHeight, int newWidth, unsigned char *newData) {
+        unsigned char *dest = newData;
 
-		for(int newy = 0; newy < newHeight; newy++){
-	       int oldy = newy * oldHeight / newHeight;
-	//	       if(oldy >= oldHeight)
-	//		   oldy = oldHeight - 1;			// for safety
-	       unsigned char *srcLine = oldData + oldy * oldWidth * channel;
-	       for(int newx = 0; newx < newWidth; newx++){
-	           int oldx = newx * oldWidth / newWidth;
-	//	       if(oldx >= oldWidth)
-	//		   oldx = oldWidth - 1;			// for safety
-			   unsigned char *src = srcLine + oldx * channel;
-		       for(int c = 0; c < channel; c++)
-				   *(dest++) = *(src++);
-	       }
-		}
-	}
+        for (int newy = 0; newy < newHeight; newy++) {
+            int oldy = newy * oldHeight / newHeight;
+            // if(oldy >= oldHeight)
+            // oldy = oldHeight - 1;			// for safety
+            unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+
+            for (int newx = 0; newx < newWidth; newx++) {
+                int oldx = newx * oldWidth / newWidth;
+                // if(oldx >= oldWidth)
+                // oldx = oldWidth - 1;			// for safety
+                unsigned char *src = srcLine + oldx * channel;
+
+                for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+            }
+        }
+    }
 
     Tensor<DTYPE>* Image2Tensor(int classNum, int imgNum  /*Address of Image*/) {
         int   width, height;
@@ -371,9 +371,9 @@ public:
         unsigned long jpegSize;
         // unsigned char * clone;
         int xOfImage = 0, yOfImage = 0;
-        const int lengthLimit = 224;  // lengthLimit
-        const int colorDim    = 3; // channel
-		unsigned char *imgReshapeBuf = NULL;
+        const int lengthLimit        = 224; // lengthLimit
+        const int colorDim           = 3; // channel
+        unsigned char *imgReshapeBuf = NULL;
 
         string classDir = m_className[classNum];
         // std::cout << classDir << '\n';
@@ -409,83 +409,78 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-		if(width < lengthLimit || height < lengthLimit){
-			int newHeight = 0, newWidth = 0;
-			if(width < height){
-				newHeight = height * (float)lengthLimit / width;
-				newWidth = lengthLimit;
-				imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-			}
-			else{
-				newHeight = lengthLimit;
-				newWidth = width * (float)lengthLimit / height;
-				imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-			}
-			Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
+        if ((width < lengthLimit) || (height < lengthLimit)) {
+            int newHeight = 0, newWidth = 0;
 
-			// ofstream myfile;
-		    // myfile.open("example.txt", std::ofstream::out | std::ofstream::app);
+            if (width < height) {
+                newHeight     = height * (float)lengthLimit / width;
+                newWidth      = lengthLimit;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            } else {
+                newHeight     = lengthLimit;
+                newWidth      = width * (float)lengthLimit / height;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            }
+            Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
+
+            // ofstream myfile;
+            // myfile.open("example.txt", std::ofstream::out | std::ofstream::app);
             //
-			// myfile << "Origin" << endl;
-			// for (ch = 0; ch < colorDim; ch++) {
-			// 	for (ro = 0; ro < height; ro++) {
-			// 		for (co = 0; co < width; co++) {
-			// 			myfile << (int)imgBuf[ro * width * colorDim + co * colorDim + ch] << ",";
-			// 		}
-			// 		myfile << endl;
-			// 	}
-			// 	myfile << endl;
-			// }
+            // myfile << "Origin" << endl;
+            // for (ch = 0; ch < colorDim; ch++) {
+            // for (ro = 0; ro < height; ro++) {
+            // for (co = 0; co < width; co++) {
+            // myfile << (int)imgBuf[ro * width * colorDim + co * colorDim + ch] << ",";
+            // }
+            // myfile << endl;
+            // }
+            // myfile << endl;
+            // }
             //
-			// myfile << "Reshape" << endl;
-			// for (ch = 0; ch < colorDim; ch++) {
-			// 	for (ro = 0; ro < newHeight; ro++) {
-			// 		for (co = 0; co < newWidth; co++) {
-			// 			myfile << (int)imgReshapeBuf[ro * newWidth * colorDim + co * colorDim + ch] << ",";
-			// 		}
-			// 		myfile << endl;
-			// 	}
-			// 	myfile << endl;
-			// }
-			// myfile.close();
-			width = newWidth;
-			height = newHeight;
-		}
+            // myfile << "Reshape" << endl;
+            // for (ch = 0; ch < colorDim; ch++) {
+            // for (ro = 0; ro < newHeight; ro++) {
+            // for (co = 0; co < newWidth; co++) {
+            // myfile << (int)imgReshapeBuf[ro * newWidth * colorDim + co * colorDim + ch] << ",";
+            // }
+            // myfile << endl;
+            // }
+            // myfile << endl;
+            // }
+            // myfile.close();
+            width  = newWidth;
+            height = newHeight;
+        }
 
         // convert image to tensor
-		if(width!=lengthLimit) 		xOfImage = random_generator(width - lengthLimit);
-		if(height!=lengthLimit) 	yOfImage = random_generator(height - lengthLimit);
+        if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
 
-        std::cout << temp->GetShape() << '\n';
+        // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
+
+        if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
+
+        // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
+
+        // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
         for (ch = 0; ch < colorDim; ch++) {
             for (ro = yOfImage; ro < lengthLimit; ro++) {
-				for (co = xOfImage; co < lengthLimit; co++) {
-					if(imgReshapeBuf == NULL)
-                    	(*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
-					else
-						(*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgReshapeBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
-				}
+                for (co = xOfImage; co < lengthLimit; co++) {
+                    if (imgReshapeBuf == NULL) (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+                    else (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgReshapeBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+                }
             }
         }
 
-		tjFree(imgBuf);
-		delete[] imgReshapeBuf;
+        tjFree(imgBuf);
+        delete[] imgReshapeBuf;
 
         temp->ReShape(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
 
         // std::cout << temp->GetShape() << '\n';
 
         return temp;
-
-        // bailout:
-        // if (imgBuf) tjFree(imgBuf);
-        // if (tjInstance) tjDestroy(tjInstance);
-        // if (jpegBuf) tjFree(jpegBuf);
-        // if (jpegFile) fclose(jpegFile);
-
-        return NULL;
     }
 
     Tensor<DTYPE>* Label2Tensor(int classNum  /*Address of Label*/) {
@@ -565,13 +560,13 @@ public:
         sem_post(&m_mutex);
         sem_post(&m_empty);
 
-        // int empty_value = 0;
-        // int full_value  = 0;
-        //
-        // sem_getvalue(&m_empty, &empty_value);
-        // sem_getvalue(&m_full,  &full_value);
-        //
-        // printf("full : %d, empty : %d \n", full_value, empty_value);
+        int empty_value = 0;
+        int full_value  = 0;
+
+        sem_getvalue(&m_empty, &empty_value);
+        sem_getvalue(&m_full,  &full_value);
+
+        printf("full : %d, empty : %d \n", full_value, empty_value);
 
         return result;
     }
