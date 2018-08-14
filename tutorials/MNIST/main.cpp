@@ -8,7 +8,7 @@
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             7
+#define GPUID             0
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
@@ -19,10 +19,10 @@ int main(int argc, char const *argv[]) {
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
     // ======================= Select net ===================
-    // NeuralNetwork<float> *net = new my_CNN(x, label);
+    NeuralNetwork<float> *net = new my_CNN(x, label);
     // NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
     // NeuralNetwork<float> *net = new my_NN(x, label, isMLP);
-    NeuralNetwork<float> *net = Resnet14<float>(x, label);
+    // NeuralNetwork<float> *net = Resnet14<float>(x, label);
 
     // ======================= Prepare Data ===================
     MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
@@ -37,6 +37,14 @@ int main(int argc, char const *argv[]) {
     // std::cin >> temp;
 
     net->PrintGraphInformation();
+
+    float best_loss = 50;
+
+    // @ When load parameters
+    // FILE *fp = fopen("parameters.b", "rb");
+    // net->Load(fp);
+    // fread(&best_loss, sizeof(float), 1, fp);
+    // fclose(fp);
 
     for (int i = 0; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';
@@ -56,14 +64,14 @@ int main(int argc, char const *argv[]) {
             Tensor<float> *l_t = dataset->GetTrainFeedLabel();
 
 #ifdef __CUDNN__
-            x_t->SetDeviceGPU(GPUID); // 추후 자동화 필요
+            x_t->SetDeviceGPU(GPUID);  // 추후 자동화 필요
             l_t->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
-  // std::cin >> temp;
+            // std::cin >> temp;
             net->FeedInputTensor(2, x_t, l_t);
             net->ResetParameterGradient();
             net->Training();
-  // std::cin >> temp;
+            // std::cin >> temp;
             train_accuracy += net->GetAccuracy();
             train_avg_loss += net->GetLoss();
 
@@ -110,6 +118,16 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
         }
         std::cout << "\n\n";
+
+        if ((best_loss > (test_avg_loss / LOOP_FOR_TEST))) {
+            std::cout << "save parameters...";
+            FILE *fp = fopen("parameters.b", "wb");
+            net->Save(fp);
+            best_loss = (test_avg_loss / LOOP_FOR_TEST);
+            fwrite(&best_loss, sizeof(float), 1, fp);
+            fclose(fp);
+            std::cout << "done" << "\n\n";
+        }
     }
 
     delete dataset;
