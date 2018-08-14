@@ -34,6 +34,7 @@ private:
     string m_dirOfTestImage   = "ILSVRC2012_img_val256/";
     string m_classInformation = "synset_words.txt";
 
+    /*Training image*/
     // list of Class
     string m_className[NUMBER_OF_CLASS];
     // for shuffle class index
@@ -42,6 +43,12 @@ private:
     int m_aNumOfImageOfClass[NUMBER_OF_CLASS];
     // image set of each class
     string **m_aaImagesOfClass;
+
+    /*Testing image*/
+    int m_numOfTestImage;
+    int *m_classNumOfEachImage;
+    string *m_listOfTestImage;
+
     // batch Tensor << before concatenate
     queue<Tensor<DTYPE> *> *m_aaSetOfImage;  // size : batch size
     queue<Tensor<DTYPE> *> *m_aaSetOfLabel;  // size : batch size
@@ -51,6 +58,7 @@ private:
 
     int m_batchSize;
     int m_recallnum;
+    int m_bufferSize;
 
     int m_isTrain;
 
@@ -127,7 +135,7 @@ private:
                     m_aaQForData->pop();
                     delete temp[0];
                     delete temp[1];
-                    delete temp;
+                    delete[] temp;
                     temp = NULL;
                 }
             }
@@ -138,9 +146,12 @@ private:
 
 public:
     ImageNetDataReader(int batchSize, int bufferSize, int isTrain) {
+        m_numOfTestImage = 0;
+
         m_batchSize = batchSize;
         m_isTrain   = isTrain;
         m_recallnum = 0;
+        m_bufferSize = bufferSize;
 
         sem_init(&m_full,  0, 0);
         sem_init(&m_empty, 0, bufferSize);
@@ -158,11 +169,50 @@ public:
         // It works with thread
         // it will be end when receive "STOP" signal
 
-        pthread_create(&m_thread, NULL, &ImageNetDataReader::ThreadFunc, (void *)this);
     }
 
     virtual ~ImageNetDataReader() {
         Delete();
+    }
+
+    int StartProduce(){
+        sem_init(&m_full,  0, 0);
+        sem_init(&m_empty, 0, m_bufferSize);
+        sem_init(&m_mutex, 0, 1);
+
+        m_work = 1;
+
+        pthread_create(&m_thread, NULL, &ImageNetDataReader::ThreadFunc, (void *)this);
+
+        return TRUE;
+    }
+
+    int StopProduce() {
+        // some signal
+        m_work = 0;
+        // terminate every element
+        sem_post(&m_empty);
+        sem_post(&m_full);
+
+        // thread join
+        pthread_join(m_thread, NULL);
+
+        if (m_aaQForData) {
+            if (m_aaQForData->size() != 0) {
+                int numOfTensor = m_aaQForData->size();
+
+                for (int i = 0; i < numOfTensor; i++) {
+                    Tensor<DTYPE> **temp = m_aaQForData->front();
+                    m_aaQForData->pop();
+                    delete temp[0];
+                    delete temp[1];
+                    delete[] temp;
+                    temp = NULL;
+                }
+            }
+        }
+
+        return TRUE;
     }
 
     int CheckClassList() {
@@ -197,6 +247,8 @@ public:
                 }
             }
         }
+
+        fclose(pFile);
 
         return TRUE;
     }
@@ -241,14 +293,70 @@ public:
                         exit(-1);
                     }
                 }
+
+                fclose(pFile);
+
             }
         } else {
-            for (int i = 0; i < NUMBER_OF_CLASS; i++) {
-                // string temp = m_className[i];
-                // temp = m_path + m_dirOfTestImage + temp // check with printf
-                // m_aNumOfImageOfClass[i] = numOfImageOfTargeClass;
-                // string * listOfImage = new string[numOfImageOfTargeClass]
-                // for (int i = 0; i < numOfImageOfTargeClass; i++) {/*listOfImage[i] = img_name[i]*/}
+            for (int classNum = 0; classNum < NUMBER_OF_CLASS; classNum++) {
+                string filePath  = m_path + '/' + m_dirOfTestImage + '/' + m_className[classNum] + "/list.txt"; // check with printf
+                const char *cstr = filePath.c_str();
+
+                // list file : 1st line - number of image, the others - image file name
+                FILE *pFile = NULL;
+                pFile = fopen(cstr, "r");
+
+                if (pFile == NULL) {
+                    printf("file open fail\n");
+                    exit(-1);
+                } else {
+                    char realValue[100];
+
+                    if (fscanf(pFile, "%s", realValue)) {
+                        m_aNumOfImageOfClass[classNum] = atoi(realValue);
+
+                        int numOfImageOfClass = m_aNumOfImageOfClass[classNum];
+
+                        m_numOfTestImage += m_aNumOfImageOfClass[classNum];
+                        // std::cout << m_aNumOfImageOfClass[i] << '\n';
+                        string *listOfImage = new string[m_aNumOfImageOfClass[classNum]];
+
+                        for (int imageNum = 0; imageNum < numOfImageOfClass; imageNum++) {
+                            if (fscanf(pFile, "%s", realValue)) {
+                                listOfImage[imageNum] = realValue;
+                                // std::cout << listOfImage[i] << '\n';
+                            } else {
+                                printf("there is something error\n");
+                                exit(-1);
+                            }
+                        }
+
+                        m_aaImagesOfClass[classNum] = listOfImage;
+                    } else {
+                        printf("there is something error\n");
+                        exit(-1);
+                    }
+                }
+
+                fclose(pFile);
+            }
+
+            // std::cout << "m_numOfTestImage : " << m_numOfTestImage << '\n';
+
+            m_classNumOfEachImage = new int[m_numOfTestImage];
+            m_listOfTestImage     = new string[m_numOfTestImage];
+            int count = 0;
+
+            for (int classNum = 0; classNum < NUMBER_OF_CLASS; classNum++) {
+                int numOfImageOfClass = m_aNumOfImageOfClass[classNum];
+
+                for (int subCount = 0; subCount < numOfImageOfClass; subCount++) {
+                    m_classNumOfEachImage[count] = classNum;
+                    m_listOfTestImage[count]     = m_aaImagesOfClass[classNum][subCount];
+
+                    // std::cout << m_classNumOfEachImage[count] << " : " << m_listOfTestImage[count] << '\n';
+                    count++;
+                }
             }
         }
 
@@ -259,6 +367,7 @@ public:
 
     static void* ThreadFunc(void *arg) {
         ImageNetDataReader<DTYPE> *reader = (ImageNetDataReader<DTYPE> *)arg;
+
         reader->DataPreprocess();
 
         return NULL;
@@ -269,9 +378,11 @@ public:
         // if buffer is full, it need to be sleep
         // When buffer has empty space again, it will be wake up
         // semaphore is used
+        m_recallnum = 0;
 
-        int classNum = 0;  // random class
-        int imgNum   = 0;     // random image of above class
+        int classNum   = 0; // random class
+        int imgNum     = 0;   // random image of above class
+        string imgName = "\0";
 
         Tensor<DTYPE> *preprocessedImages = NULL;
         Tensor<DTYPE> *preprocessedLabels = NULL;
@@ -280,7 +391,7 @@ public:
             this->ShuffleClassNum();
 
             do {
-                if (((m_recallnum + 1) * m_batchSize - 1) > NUMBER_OF_CLASS) {
+                if (((m_recallnum + 1) * m_batchSize) > NUMBER_OF_CLASS) {
                     this->ShuffleClassNum();
                     m_recallnum = 0;
                 }
@@ -316,14 +427,48 @@ public:
                 //
                 // printf("full : %d, empty : %d \n", full_value, empty_value);
 
-
                 m_recallnum++;
             } while (m_work);
         } else {
             do {
-                std::cout << "not now! it will be prepared" << '\n';
-                exit(-1);
-            } while (m_work  /*with semaphore*/);
+                if(((m_recallnum + 1) * m_batchSize) > m_numOfTestImage){
+                    std::cout << "resume" << '\n';
+                    m_recallnum = 0;
+                }
+
+
+                for (int i = 0; i < m_batchSize; i++) {
+                    classNum = m_classNumOfEachImage[i + m_recallnum * m_batchSize];
+                    // std::cout << classNum << ' ';
+                    // std::cout << i + m_recallnum * m_batchSize<< '\n';
+                    // std::cout << classNum << ' ';
+                    imgName = m_listOfTestImage[i + m_recallnum * m_batchSize];  // random select from range(0, m_aNumOfImageOfClass[classNum])
+                    // std::cout << classNum << " : " << imgName << '\n';
+                    m_aaSetOfImage->push(this->Image2Tensor(classNum, imgName));
+                    m_aaSetOfLabel->push(this->Label2Tensor(classNum));
+
+                }
+                preprocessedImages = this->ConcatenateImage(m_aaSetOfImage);
+                preprocessedLabels = this->ConcatenateLabel(m_aaSetOfLabel);
+
+                sem_wait(&m_empty);
+                sem_wait(&m_mutex);
+
+                this->AddData2Buffer(preprocessedImages, preprocessedLabels);
+
+                sem_post(&m_mutex);
+                sem_post(&m_full);
+
+                // int empty_value = 0;
+                // int full_value  = 0;
+                //
+                // sem_getvalue(&m_empty, &empty_value);
+                // sem_getvalue(&m_full,  &full_value);
+                //
+                // printf("full : %d, empty : %d \n", full_value, empty_value);
+
+                m_recallnum++;
+            } while (m_work);
         }
 
         return TRUE;
@@ -338,21 +483,42 @@ public:
         random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 
+    void Resize(int channel, int oldHeight, int oldWidth, unsigned char *oldData, int newHeight, int newWidth, unsigned char *newData) {
+        unsigned char *dest = newData;
+
+        for (int newy = 0; newy < newHeight; newy++) {
+            int oldy = newy * oldHeight / newHeight;
+            // if(oldy >= oldHeight)
+            // oldy = oldHeight - 1;			// for safety
+            unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+
+            for (int newx = 0; newx < newWidth; newx++) {
+                int oldx = newx * oldWidth / newWidth;
+                // if(oldx >= oldWidth)
+                // oldx = oldWidth - 1;			// for safety
+                unsigned char *src = srcLine + oldx * channel;
+
+                for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+            }
+        }
+    }
+
     Tensor<DTYPE>* Image2Tensor(int classNum, int imgNum  /*Address of Image*/) {
-        int width, height;
-        int ch, ro, co;
+        int   width, height;
+        int   ch, ro, co;
         char *inFormat, *outFormat;
         FILE *jpegFile = NULL;
         unsigned char *imgBuf = NULL, *jpegBuf = NULL;
-        int pixelFormat = TJPF_RGB;
+        int pixelFormat     = TJPF_RGB;
         tjhandle tjInstance = NULL;
-        long size;
+        long     size;
         int inSubsamp, inColorspace;
         unsigned long jpegSize;
         // unsigned char * clone;
         int xOfImage = 0, yOfImage = 0;
-        const int lengthLimit = 224; // lengthLimit
-        const int colorDim = 3;  // channel
+        const int lengthLimit        = 224; // lengthLimit
+        const int colorDim           = 3; // channel
+        unsigned char *imgReshapeBuf = NULL;
 
         string classDir = m_className[classNum];
         // std::cout << classDir << '\n';
@@ -360,78 +526,182 @@ public:
         string imgName = m_aaImagesOfClass[classNum][imgNum];
         // std::cout << "imgName : " << imgName << '\n';
 
+        // create file address
         string filePath = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName;  // check with printf
+
         const char *cstr = filePath.c_str();
+
         // std::cout << "filePath : " << filePath << '\n';
 
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
-        // Tensor<DTYPE> *temp = Tensor<DTYPE>::Constants(1, 1, 1, 1, colorDim * height * width, classNum);
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
 
-        // Load image
+        // Load image (no throw and catch)
         /* Read the JPEG file into memory. */
-        if ((jpegFile = fopen(cstr, "rb")) == NULL) _throwunix("opening input file");
-        if (fseek(jpegFile, 0, SEEK_END) < 0 || ((size = ftell(jpegFile)) < 0) || fseek(jpegFile, 0, SEEK_SET) < 0) _throwunix("determining input file size");
-        if (size == 0) _throw("determining input file size", "Input file contains no data");
+        jpegFile = fopen(cstr, "rb");
+
+        fseek(jpegFile, 0, SEEK_END);
+        size = ftell(jpegFile);
+        fseek(jpegFile, 0, SEEK_SET);
+
         jpegSize = (unsigned long)size;
-        if ((jpegBuf = (unsigned char *)tjAlloc(jpegSize)) == NULL) _throwunix("allocating JPEG buffer");
-        if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1) _throwunix("reading input file");
+        jpegBuf  = (unsigned char *)tjAlloc(jpegSize);
+
+        if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1) exit(-1);
         fclose(jpegFile); jpegFile = NULL;
 
-        // Decompressing
-        if ((tjInstance = tjInitDecompress()) == NULL) _throwtj("initializing decompressor");
-        if (tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height, &inSubsamp, &inColorspace) < 0)
-          _throwtj("reading JPEG header");
+        tjInstance = tjInitDecompress();
+        tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height, &inSubsamp, &inColorspace);
+        imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat]);
+        tjDecompress2(tjInstance, jpegBuf, jpegSize, imgBuf, width, 0, height, pixelFormat, 0);
+        tjFree(jpegBuf); jpegBuf          = NULL;
+        tjDestroy(tjInstance); tjInstance = NULL;
 
-        printf("Input Image:  %d x %d pixels\n", width, height);
+        if ((width < lengthLimit) || (height < lengthLimit)) {
+            int newHeight = 0, newWidth = 0;
 
-        if ((imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat])) == NULL)
-            _throwunix("allocating uncompressed image buffer");
-        if (tjDecompress2(tjInstance, jpegBuf, jpegSize, imgBuf, width, 0, height, pixelFormat, 0) < 0)
-            _throwtj("decompressing JPEG image");
-        tjFree(jpegBuf);  jpegBuf = NULL;
-        tjDestroy(tjInstance);  tjInstance = NULL;
+            if (width < height) {
+                newHeight     = height * (float)lengthLimit / width;
+                newWidth      = lengthLimit;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            } else {
+                newHeight     = lengthLimit;
+                newWidth      = width * (float)lengthLimit / height;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            }
+            Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
 
-        // clone = imgBuf;
-        // for(int i = 0; i < height; i++){
-        //     for(int j = 0; j < width; j++){
-        //         printf("height = %d, width = %d, R: %d ", i, j, *clone);
-        //         clone = clone + sizeof(unsigned char);
-        //         printf("height = %d, width = %d, G: %d ", i, j, *clone);
-        //         clone = clone + sizeof(unsigned char);
-        //         printf("height = %d, width = %d, B: %d \n", i, j, *clone);
-        //         clone = clone + sizeof(unsigned char);
-        //     }
-        // }
-
-        // printf("Output Image (%s):  %d x %d pixels", outFormat, width, height);
-        // printf("\n");
-        //
-        // if (tjSaveImage(argv[2], imgBuf, width, 0, height, pixelFormat, 0) < 0)
-        //   _throwtj("saving output image");
+            width  = newWidth;
+            height = newHeight;
+        }
 
         // convert image to tensor
-        xOfImage = random_generator(width - lengthLimit);
-        yOfImage = random_generator(height - lengthLimit);
+        if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
+
+        // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
+
+        if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
+
+        // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
+
+        // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
-        for(ch = 0; ch < colorDim; ch++) {
-            for(ro = yOfImage; ro < lengthLimit; ro++) {
-                for(co = xOfImage; co < lengthLimit; co++) {
-                    (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
-                    printf("ch = %d, ro = %d, co = %d : %f \n", ch, ro, co, (*temp)[Index3D(temp->GetShape(), ch, ro, co)]);
+        for (ch = 0; ch < colorDim; ch++) {
+            for (ro = yOfImage; ro < lengthLimit; ro++) {
+                for (co = xOfImage; co < lengthLimit; co++) {
+                    if (imgReshapeBuf == NULL) (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+                    else (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgReshapeBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
                 }
             }
         }
+
         tjFree(imgBuf);
+        delete[] imgReshapeBuf;
+
+        temp->ReShape(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
+
+        // std::cout << temp->GetShape() << '\n';
 
         return temp;
+    }
 
-        bailout:
-        if (imgBuf) tjFree(imgBuf);
-        if (tjInstance) tjDestroy(tjInstance);
-        if (jpegBuf) tjFree(jpegBuf);
-        if (jpegFile) fclose(jpegFile);
-        return NULL;
+    Tensor<DTYPE>* Image2Tensor(int classNum, string imgName  /*Address of Image*/) {
+        int   width, height;
+        int   ch, ro, co;
+        char *inFormat, *outFormat;
+        FILE *jpegFile = NULL;
+        unsigned char *imgBuf = NULL, *jpegBuf = NULL;
+        int pixelFormat     = TJPF_RGB;
+        tjhandle tjInstance = NULL;
+        long     size;
+        int inSubsamp, inColorspace;
+        unsigned long jpegSize;
+        // unsigned char * clone;
+        int xOfImage = 0, yOfImage = 0;
+        const int lengthLimit        = 224; // lengthLimit
+        const int colorDim           = 3; // channel
+        unsigned char *imgReshapeBuf = NULL;
+
+        string classDir = m_className[classNum];
+        // std::cout << classDir << '\n';
+
+        // create file address
+        string filePath = m_path + '/' + m_dirOfTestImage + '/' + classDir + '/' + imgName;  // check with printf
+
+        const char *cstr = filePath.c_str();
+
+        // std::cout << "filePath : " << filePath << '\n';
+
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
+
+        // Load image (no throw and catch)
+        /* Read the JPEG file into memory. */
+        jpegFile = fopen(cstr, "rb");
+
+        fseek(jpegFile, 0, SEEK_END);
+        size = ftell(jpegFile);
+        fseek(jpegFile, 0, SEEK_SET);
+
+        jpegSize = (unsigned long)size;
+        jpegBuf  = (unsigned char *)tjAlloc(jpegSize);
+
+        if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1) exit(-1);
+        fclose(jpegFile); jpegFile = NULL;
+
+        tjInstance = tjInitDecompress();
+        tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height, &inSubsamp, &inColorspace);
+        imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat]);
+        tjDecompress2(tjInstance, jpegBuf, jpegSize, imgBuf, width, 0, height, pixelFormat, 0);
+        tjFree(jpegBuf); jpegBuf          = NULL;
+        tjDestroy(tjInstance); tjInstance = NULL;
+
+        if ((width < lengthLimit) || (height < lengthLimit)) {
+            int newHeight = 0, newWidth = 0;
+
+            if (width < height) {
+                newHeight     = height * (float)lengthLimit / width;
+                newWidth      = lengthLimit;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            } else {
+                newHeight     = lengthLimit;
+                newWidth      = width * (float)lengthLimit / height;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            }
+            Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
+
+            width  = newWidth;
+            height = newHeight;
+        }
+
+        // convert image to tensor
+        if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
+
+        // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
+
+        if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
+
+        // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
+
+        // std::cout << temp->GetShape() << '\n';
+
+        // should be modularized
+        for (ch = 0; ch < colorDim; ch++) {
+            for (ro = yOfImage; ro < lengthLimit; ro++) {
+                for (co = xOfImage; co < lengthLimit; co++) {
+                    if (imgReshapeBuf == NULL) (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+                    else (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgReshapeBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+                }
+            }
+        }
+
+        tjFree(imgBuf);
+        delete[] imgReshapeBuf;
+
+        temp->ReShape(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
+
+        // std::cout << temp->GetShape() << '\n';
+
+        return temp;
     }
 
     Tensor<DTYPE>* Label2Tensor(int classNum  /*Address of Label*/) {
@@ -460,6 +730,7 @@ public:
             delete singleImage;
             singleImage = NULL;
         }
+
 
         // setOfImage->clear();
 
@@ -522,18 +793,5 @@ public:
         return result;
     }
 
-    int StopDataPreprocess() {
-        // some signal
-        m_work = 0;
-        // terminate every element
-        sem_post(&m_empty);
-        sem_post(&m_full);
 
-        // thread join
-        pthread_join(m_thread, NULL);
-
-        std::cout << "Data Reader Thread is terminated!" << '\n';
-
-        return TRUE;
-    }
 };

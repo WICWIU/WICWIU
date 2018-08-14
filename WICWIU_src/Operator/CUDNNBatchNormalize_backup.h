@@ -11,56 +11,57 @@ template<typename DTYPE>
 class CUDNNBatchNormalize : public Operator<DTYPE>{
 public:
     CUDNNBatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, std::string pName) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
-                # if __DEBUG__
+# if __DEBUG__
         std::cout << "CUDNNBatchNormalize:: CUDNNBatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
-            # endif // __DEBUG__
+# endif // __DEBUG__
 
-        Allocate(pInput, pScale, pBias, pIsChannelwise, CUDNN_BN_MIN_EPSILON);
+        Alloc(pInput, pScale, pBias, pIsChannelwise, CUDNN_BN_MIN_EPSILON);
     }
 
     CUDNNBatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, float pEpsilon, std::string pName) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
-                # if __DEBUG__
+# if __DEBUG__
         std::cout << "CUDNNBatchNormalize:: CUDNNBatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, float, std:: string)" << '\n';
-            # endif // __DEBUG__
+# endif // __DEBUG__
 
-        Allocate(pInput, pScale, pBias, pIsChannelwise, pEpsilon);
+        Alloc(pInput, pScale, pBias, pIsChannelwise, pEpsilon);
     }
 
     ~CUDNNBatchNormalize() {
-                # if __DEBUG__
+# if __DEBUG__
         std::cout << "CUDNNBatchNormalize:: ~ CUDNNBatchNormalize()" << '\n';
-            # endif // __DEBUG__
+# endif // __DEBUG__
 
         Delete();
     }
 
+# ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime = 0) {
         float *CUDNNCachedMean        = NULL;
         float *CUDNNCachedInvVariance = NULL;
 
-        this->CopyTensorToFloat(m_pTenInput, m_aCUDNNX);
-        this->CopyTensorToFloat(m_pTenScale, m_aCUDNNBnScale);
-        this->CopyTensorToFloat(m_pTenBias, m_aCUDNNBnBias);
+        // this->CopyTensorToFloat(m_pTenInput, m_aCUDNNX);
+        // this->CopyTensorToFloat(m_pTenScale, m_aCUDNNBnScale);
+        // this->CopyTensorToFloat(m_pTenBias, m_aCUDNNBnBias);
 
-        float *CUDNNX       = NULL;
-        float *CUDNNBnScale = NULL;
-        float *CUDNNBnBias  = NULL;
+        float *CUDNNX       = m_pTenInput->GetGPUData(pTime);
+        float *CUDNNBnScale = m_pTenScale->GetGPUData(0);
+        float *CUDNNBnBias  = m_pTenBias->GetGPUData(0);
 
-        float *CUDNNY             = NULL;
+        float *CUDNNY             = m_pTenResult->GetGPUData(pTime);
         float *CUDNNTotalMean     = NULL;
         float *CUDNNTotalVariance = NULL;
 
-        checkCudaErrors(cudaMalloc(&CUDNNX, (m_inputBytes)));
-        checkCudaErrors(cudaMalloc(&CUDNNBnScale, (m_batchSummaryBytes)));
-        checkCudaErrors(cudaMalloc(&CUDNNBnBias, (m_batchSummaryBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNX, (m_inputBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNBnScale, (m_batchSummaryBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNBnBias, (m_batchSummaryBytes)));
 
-        checkCudaErrors(cudaMalloc(&CUDNNY, (m_inputBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNY, (m_inputBytes)));
         checkCudaErrors(cudaMalloc(&CUDNNTotalMean, (m_batchSummaryBytes)));
         checkCudaErrors(cudaMalloc(&CUDNNTotalVariance, (m_batchSummaryBytes)));
 
-        checkCudaErrors(cudaMemcpy(CUDNNX, m_aCUDNNX, m_inputBytes, cudaMemcpyHostToDevice));
-        checkCudaErrors(cudaMemcpy(CUDNNBnScale, m_aCUDNNBnScale, m_batchSummaryBytes, cudaMemcpyHostToDevice));
-        checkCudaErrors(cudaMemcpy(CUDNNBnBias, m_aCUDNNBnBias, m_batchSummaryBytes, cudaMemcpyHostToDevice));
+        // checkCudaErrors(cudaMemcpy(CUDNNX, m_aCUDNNX, m_inputBytes, cudaMemcpyHostToDevice));
+        // checkCudaErrors(cudaMemcpy(CUDNNBnScale, m_aCUDNNBnScale, m_batchSummaryBytes, cudaMemcpyHostToDevice));
+        // checkCudaErrors(cudaMemcpy(CUDNNBnBias, m_aCUDNNBnBias, m_batchSummaryBytes, cudaMemcpyHostToDevice));
 
         checkCudaErrors(cudaMemcpy(CUDNNTotalMean, m_aCUDNNTotalMean, m_batchSummaryBytes, cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(CUDNNTotalVariance, m_aCUDNNTotalVariance, m_batchSummaryBytes, cudaMemcpyHostToDevice));
@@ -138,64 +139,65 @@ public:
         }
         checkCudaErrors(cudaDeviceSynchronize());
 
-        checkCudaErrors(cudaFree(CUDNNX));
-        checkCudaErrors(cudaFree(CUDNNBnScale));
-        checkCudaErrors(cudaFree(CUDNNBnBias));
-        CUDNNX       = NULL;
-        CUDNNBnScale = NULL;
-        CUDNNBnBias  = NULL;
+        // checkCudaErrors(cudaFree(CUDNNX));
+        // checkCudaErrors(cudaFree(CUDNNBnScale));
+        // checkCudaErrors(cudaFree(CUDNNBnBias));
+        // CUDNNX       = NULL;
+        // CUDNNBnScale = NULL;
+        // CUDNNBnBias  = NULL;
 
-        checkCudaErrors(cudaMemcpy(m_aCUDNNY, CUDNNY, m_inputBytes, cudaMemcpyDeviceToHost));
+        // checkCudaErrors(cudaMemcpy(m_aCUDNNY, CUDNNY, m_inputBytes, cudaMemcpyDeviceToHost));
         checkCudaErrors(cudaMemcpy(m_aCUDNNTotalMean, CUDNNTotalMean, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
         checkCudaErrors(cudaMemcpy(m_aCUDNNTotalVariance, CUDNNTotalVariance, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
 
         if (m_mode == TRAINING) {
             checkCudaErrors(cudaMemcpy(m_aCUDNNCachedMean, CUDNNCachedMean, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
             checkCudaErrors(cudaMemcpy(m_aCUDNNCachedInvVariance, CUDNNCachedInvVariance, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaFree(CUDNNCachedMean));
+            checkCudaErrors(cudaFree(CUDNNCachedInvVariance));
+            CUDNNCachedMean        = NULL;
+            CUDNNCachedInvVariance = NULL;
         }
-        checkCudaErrors(cudaFree(CUDNNY));
+        // checkCudaErrors(cudaFree(CUDNNY));
         checkCudaErrors(cudaFree(CUDNNTotalMean));
         checkCudaErrors(cudaFree(CUDNNTotalVariance));
-        checkCudaErrors(cudaFree(CUDNNCachedMean));
-        checkCudaErrors(cudaFree(CUDNNCachedInvVariance));
-        CUDNNY                 = NULL;
-        CUDNNTotalMean         = NULL;
-        CUDNNTotalVariance     = NULL;
-        CUDNNCachedMean        = NULL;
-        CUDNNCachedInvVariance = NULL;
 
-        for (int i = 0; i < m_inputCapacity; i++) {
-            (*m_pTenResult)[i] = m_aCUDNNY[i];
-        }
+        // CUDNNY                 = NULL;
+        CUDNNTotalMean     = NULL;
+        CUDNNTotalVariance = NULL;
+
+        // for (int i = 0; i < m_inputCapacity; i++) {
+        // (*m_pTenResult)[i] = m_aCUDNNY[i];
+        // }
         return TRUE;
     }
 
     int BackPropagateOnGPU(int pTime = 0) {
-        this->CopyTensorToFloat(m_pTenDerResult, m_aCUDNNDy);
+        // this->CopyTensorToFloat(m_pTenDerResult, m_aCUDNNDy);
 
-        float *CUDNNX                 = NULL;
-        float *CUDNNBnScale           = NULL;
-        float *CUDNNDy                = NULL;
+        float *CUDNNX                 = m_pTenInput->GetGPUData(pTime);
+        float *CUDNNBnScale           = m_pTenScale->GetGPUData(0);
+        float *CUDNNDy                = m_pTenDerResult->GetGPUData(pTime);
         float *CUDNNCachedMean        = NULL;
         float *CUDNNCachedInvVariance = NULL;
 
-        float *CUDNNDx          = NULL;
-        float *CUDNNBnScaleDiff = NULL;
-        float *CUDNNBnBiasDiff  = NULL;
+        float *CUDNNDx          = m_pTenDerInput->GetGPUData(pTime);
+        float *CUDNNBnScaleDiff = m_pTenDerScale->GetGPUData(pTime);
+        float *CUDNNBnBiasDiff  = m_pTenDerBias->GetGPUData(pTime);
 
-        checkCudaErrors(cudaMalloc(&CUDNNX, (m_inputBytes)));
-        checkCudaErrors(cudaMalloc(&CUDNNBnScale, (m_batchSummaryBytes)));
-        checkCudaErrors(cudaMalloc(&CUDNNDy, (m_inputBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNX, (m_inputBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNBnScale, (m_batchSummaryBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNDy, (m_inputBytes)));
         checkCudaErrors(cudaMalloc(&CUDNNCachedMean, (m_batchSummaryBytes)));
         checkCudaErrors(cudaMalloc(&CUDNNCachedInvVariance, (m_batchSummaryBytes)));
 
-        checkCudaErrors(cudaMalloc(&CUDNNDx, (m_inputBytes)));
-        checkCudaErrors(cudaMalloc(&CUDNNBnScaleDiff, (m_batchSummaryBytes)));
-        checkCudaErrors(cudaMalloc(&CUDNNBnBiasDiff, (m_batchSummaryBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNDx, (m_inputBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNBnScaleDiff, (m_batchSummaryBytes)));
+        // checkCudaErrors(cudaMalloc(&CUDNNBnBiasDiff, (m_batchSummaryBytes)));
 
-        checkCudaErrors(cudaMemcpy(CUDNNX, m_aCUDNNX, m_inputBytes, cudaMemcpyHostToDevice));
-        checkCudaErrors(cudaMemcpy(CUDNNBnScale, m_aCUDNNBnScale, m_batchSummaryBytes, cudaMemcpyHostToDevice));
-        checkCudaErrors(cudaMemcpy(CUDNNDy, m_aCUDNNDy, m_inputBytes, cudaMemcpyHostToDevice));
+        // checkCudaErrors(cudaMemcpy(CUDNNX, m_aCUDNNX, m_inputBytes, cudaMemcpyHostToDevice));
+        // checkCudaErrors(cudaMemcpy(CUDNNBnScale, m_aCUDNNBnScale, m_batchSummaryBytes, cudaMemcpyHostToDevice));
+        // checkCudaErrors(cudaMemcpy(CUDNNDy, m_aCUDNNDy, m_inputBytes, cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(CUDNNCachedMean, m_aCUDNNCachedMean, m_batchSummaryBytes, cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(CUDNNCachedInvVariance, m_aCUDNNCachedInvVariance, m_batchSummaryBytes, cudaMemcpyHostToDevice));
 
@@ -224,35 +226,38 @@ public:
                    );
         checkCudaErrors(cudaDeviceSynchronize());
 
-        checkCudaErrors(cudaFree(CUDNNX));
-        checkCudaErrors(cudaFree(CUDNNBnScale));
-        checkCudaErrors(cudaFree(CUDNNDy));
+        // checkCudaErrors(cudaFree(CUDNNX));
+        // checkCudaErrors(cudaFree(CUDNNBnScale));
+        // checkCudaErrors(cudaFree(CUDNNDy));
         checkCudaErrors(cudaFree(CUDNNCachedMean));
         checkCudaErrors(cudaFree(CUDNNCachedInvVariance));
-        CUDNNX                 = NULL;
-        CUDNNBnScale           = NULL;
-        CUDNNDy                = NULL;
+        // CUDNNX                 = NULL;
+        // CUDNNBnScale           = NULL;
+        // CUDNNDy                = NULL;
         CUDNNCachedMean        = NULL;
         CUDNNCachedInvVariance = NULL;
 
-        checkCudaErrors(cudaMemcpy(m_aCUDNNDx, CUDNNDx, m_inputBytes, cudaMemcpyDeviceToHost));
-        checkCudaErrors(cudaMemcpy(m_aCUDNNBnScaleDiff, CUDNNBnScaleDiff, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
-        checkCudaErrors(cudaMemcpy(m_aCUDNNBnBiasDiff, CUDNNBnBiasDiff, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
+        // checkCudaErrors(cudaMemcpy(m_aCUDNNDx, CUDNNDx, m_inputBytes, cudaMemcpyDeviceToHost));
+        // checkCudaErrors(cudaMemcpy(m_aCUDNNBnScaleDiff, CUDNNBnScaleDiff, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
+        // checkCudaErrors(cudaMemcpy(m_aCUDNNBnBiasDiff, CUDNNBnBiasDiff, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
+        //
+        // checkCudaErrors(cudaFree(CUDNNDx));
+        // checkCudaErrors(cudaFree(CUDNNBnScaleDiff));
+        // checkCudaErrors(cudaFree(CUDNNBnBiasDiff));
+        // CUDNNDx          = NULL;
+        // CUDNNBnScaleDiff = NULL;
+        // CUDNNBnBiasDiff  = NULL;
 
-        checkCudaErrors(cudaFree(CUDNNDx));
-        checkCudaErrors(cudaFree(CUDNNBnScaleDiff));
-        checkCudaErrors(cudaFree(CUDNNBnBiasDiff));
-        CUDNNDx          = NULL;
-        CUDNNBnScaleDiff = NULL;
-        CUDNNBnBiasDiff  = NULL;
-
-        for (int i = 0; i < m_batchSummaryCapacity; i++) {
-            (*m_pTenDerInput)[i] = m_aCUDNNDx[i];
-            (*m_pTenDerScale)[i] = m_aCUDNNBnScaleDiff[i];
-            (*m_pTenDerBias)[i]  = m_aCUDNNBnBiasDiff[i];
-        }
+        // for (int i = 0; i < m_batchSummaryCapacity; i++) {
+        // (*m_pTenDerInput)[i] = m_aCUDNNDx[i];
+        // (*m_pTenDerScale)[i] = m_aCUDNNBnScaleDiff[i];
+        // (*m_pTenDerBias)[i]  = m_aCUDNNBnBiasDiff[i];
+        // }
         return TRUE;
     }
+
+# endif // if __CUDNN__
+
 
     int SetModeTraining() {
         if (m_mode == ACCUMULATING) {
@@ -263,7 +268,6 @@ public:
             return TRUE;
         }
         m_mode = TRAINING;
-
         return TRUE;
     }
 
@@ -299,6 +303,7 @@ public:
             return TRUE;
         }
         m_mode = INFERENCING;
+        return TRUE;
     }
 
 private:
@@ -353,9 +358,8 @@ private:
     float *m_aCUDNNBnBiasDiff;
     float *m_aCUDNNDx;
 
-    void Allocate(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, double pEpsilon) {
-
-        std::cout << "BatchNormalize:: Allocate( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, double)" << '\n';
+    void Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, double pEpsilon) {
+        std::cout << "BatchNormalize:: Alloc( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, double)" << '\n';
 
         m_pTenInput = pInput->GetResult();
         m_pTenScale = pScale->GetResult();
@@ -392,8 +396,7 @@ private:
 
         m_mode = TRAINING;
         // m_numBatch= 0;
-
-        cudnnCreate(&m_CUDNNHandle);
+        m_CUDNNHandle = this->GetCudnnHandle();
 
         checkCUDNN(cudnnCreateTensorDescriptor(&m_CUDNNXDesc));
         checkCUDNN(cudnnCreateTensorDescriptor(&m_CUDNNYDesc));
@@ -444,24 +447,28 @@ private:
 
         if (!(m_aCUDNNX
               && m_aCUDNNBnScale
-              && m_aCUDNNBnBias &&
-
-              m_aCUDNNY
+              && m_aCUDNNBnBias
+              && m_aCUDNNY
               && m_aCUDNNTotalMean
               && m_aCUDNNTotalVariance
               && m_aCUDNNCachedMean
-              && m_aCUDNNCachedInvVariance &&
-
-              m_aCUDNNDy
+              && m_aCUDNNCachedInvVariance
+              && m_aCUDNNDy
               && m_aCUDNNBnScaleDiff
               && m_aCUDNNBnBiasDiff
               && m_aCUDNNDx)) {
-            printf("Failed to allocate memory in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+            printf("Failed to Alloc memory in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
             exit(1);
         }
     }
 
+# ifdef __CUDNN__
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {}
+
+# endif // if __CUDNN__
+
     void Delete() {
+# ifdef __CUDNN__
         checkCUDNN(cudnnDestroyTensorDescriptor(m_CUDNNXDesc));
         checkCUDNN(cudnnDestroyTensorDescriptor(m_CUDNNYDesc));
         checkCUDNN(cudnnDestroyTensorDescriptor(m_CUDNNDxDesc));
@@ -499,6 +506,7 @@ private:
         m_aCUDNNBnScaleDiff = NULL;
         m_aCUDNNBnBiasDiff  = NULL;
         m_aCUDNNDx          = NULL;
+# endif // if __CUDNN__
     }
 
     void CopyTensorToFloat(Tensor<float> *pTensor, float *pFloat) {

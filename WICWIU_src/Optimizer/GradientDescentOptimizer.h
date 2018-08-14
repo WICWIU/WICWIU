@@ -71,8 +71,10 @@ public:
     }
 
     void InitializeAttributeForGPU(unsigned int idOfDevice) {
-        for (int i = 0; i < m_numOfParameter; i++) {
-            (*m_aaVelocity)[i]->SetDeviceGPU(idOfDevice);
+        if (m_momentum != 0.f) {
+            for (int i = 0; i < m_numOfParameter; i++) {
+                (*m_aaVelocity)[i]->SetDeviceGPU(idOfDevice);
+            }
         }
     }
 

@@ -1,33 +1,31 @@
 #include "net/my_Resnet.h"
-#include "ImageNetReader.h"
+#include "net/my_CNN.h"
+#include "CIFAR10Reader.h"
 #include <time.h>
 #include <unistd.h>
 
 #define BATCH             50
 #define EPOCH             1000
-#define LOOP_FOR_TRAIN    (1300000 / BATCH)
-#define LOOP_FOR_TEST     (50000 / BATCH)
+#define LOOP_FOR_TRAIN    (50000 / BATCH)
+#define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             1
 
-
-float ComputeAccuracy(Tensor<float> *result, Tensor<float> *label, int *listOfMaxIndexOfResult, int *listOfMaxIndexOflabel);
-int   GetMax(Tensor<float> *tensor, int *list);
-
-int   main(int argc, char const *argv[]) {
+int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
 
     // create input, label data placeholder -> Tensorholder
-    Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
-    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 1000, "label");
+    Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 3072, "x");
+    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
     // ======================= Select net ===================
+    // NeuralNetwork<float> *net = new my_CNN(x, label);
     NeuralNetwork<float> *net = Resnet14<float>(x, label);
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
-    ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 100, TRUE);
-    ImageNetDataReader<float> *test_data_reader  = new ImageNetDataReader<float>(BATCH, 100, FALSE);
+    CIFAR10Reader<float> *train_data_reader = new CIFAR10Reader<float>(BATCH, 100, TRUE);
+    CIFAR10Reader<float> *test_data_reader  = new CIFAR10Reader<float>(BATCH, 100, FALSE);
 
     train_data_reader->StartProduce();
     test_data_reader->StartProduce();
@@ -40,22 +38,10 @@ int   main(int argc, char const *argv[]) {
 
     float best_acc = 0.f;
 
-    Tensor<float> *result = net->GetResultOperator()->GetResult();
-    // std::cout << result->GetShape() << '\n';
-    Tensor<float> *_label = NULL;
-
-    int *listOfMaxIndexOfResult = new int[BATCH];
-    int *listOfMaxIndexOflabel  = new int[BATCH];
-
-    for (int batchNum = 0; batchNum < BATCH; batchNum++) {
-        listOfMaxIndexOfResult[batchNum] = 0;
-        listOfMaxIndexOflabel[batchNum]  = 0;
-    }
-
-    // @ When load parameters
+    //// @ When load parameters
     // FILE *fp = fopen("parameters.b", "rb");
     // net->Load(fp);
-    // fread(&best_loss, sizeof(float), 1, fp);
+    // fread(&best_acc, sizeof(float), 1, fp);
     // fclose(fp);
 
     for (int i = 0; i < EPOCH; i++) {
@@ -79,10 +65,6 @@ int   main(int argc, char const *argv[]) {
             data[1]->SetDeviceGPU(GPUID);
     #endif  // __CUDNN__
 
-            _label = data[1];
-            // std::cout << _label->GetShape() << '\n';
-            // std::cout << (LOOP_FOR_TRAIN / 20)<< '\n';
-
             // std::cin >> temp;
             net->FeedInputTensor(2, data[0], data[1]);
             delete data;
@@ -90,7 +72,7 @@ int   main(int argc, char const *argv[]) {
             net->ResetParameterGradient();
             net->Training();
             // std::cin >> temp;
-            train_cur_accuracy = net->GetAccuracy(1000);
+            train_cur_accuracy = net->GetAccuracy();
             train_cur_loss     = net->GetLoss();
 
             train_avg_accuracy += train_cur_accuracy;
@@ -112,16 +94,6 @@ int   main(int argc, char const *argv[]) {
             // sleep(30);
             if (j % (LOOP_FOR_TRAIN / 20) == (LOOP_FOR_TRAIN / 20) - 1) {
                 std::cout << '\n';
-
-                if (best_acc < train_cur_accuracy) {
-                    std::cout << "save parameters...";
-                    FILE *fp = fopen("parameters.b", "wb");
-                    net->Save(fp);
-                    best_acc = train_cur_accuracy;
-                    fwrite(&best_acc, sizeof(float), 1, fp);
-                    fclose(fp);
-                    std::cout << "done" << '\n';
-                }
             }
         }
 
@@ -144,19 +116,27 @@ int   main(int argc, char const *argv[]) {
             data = NULL;
             net->Testing();
 
-            test_avg_accuracy = net->GetAccuracy(1000);
-            test_avg_loss     = net->GetLoss();
+            test_avg_accuracy += net->GetAccuracy();
+            test_avg_loss     += net->GetLoss();
 
             printf("\r%d / %d -> avg_loss : %0.3f, avg_acc : %0.3f, ct : %0.3f's / rt : %0.3f'm"  /*(ExcuteTime : %f)*/,
                    j + 1, LOOP_FOR_TEST,
-                   test_avg_accuracy / (j + 1),
                    test_avg_loss / (j + 1),
+                   test_avg_accuracy / (j + 1),
                    nProcessExcuteTime,
                    nProcessExcuteTime * (LOOP_FOR_TEST - j - 1) / 60);
             fflush(stdout);
         }
 
-        std::cout << "\n\n";
+        if (best_acc < test_avg_accuracy) {
+            std::cout << "\nsave parameters...";
+            FILE *fp = fopen("resnet.b", "wb");
+            net->Save(fp);
+            best_acc = test_avg_accuracy;
+            fwrite(&best_acc, sizeof(float), 1, fp);
+            fclose(fp);
+            std::cout << "done" << "\n\n";
+        } else std::cout << "\n\n";
     }
 
 
@@ -168,34 +148,4 @@ int   main(int argc, char const *argv[]) {
     delete net;
 
     return 0;
-}
-
-float ComputeAccuracy(Tensor<float> *result, Tensor<float> *label, int *listOfMaxIndexOfResult, int *listOfMaxIndexOflabel) {
-    float numOfCorrect = 0.f;
-
-    GetMax(result, listOfMaxIndexOfResult);
-    GetMax(label,  listOfMaxIndexOflabel);
-
-    for (int batchNum = 0; batchNum < BATCH; batchNum++) {
-        if (listOfMaxIndexOfResult[batchNum] == listOfMaxIndexOflabel[batchNum]) numOfCorrect++;
-    }
-
-    numOfCorrect /= BATCH;
-
-    return numOfCorrect;
-}
-
-int GetMax(Tensor<float> *tensor, int *list) {
-    for (int batchNum = 0; batchNum < BATCH; batchNum++) {
-        float max = (*tensor)[batchNum * 1000];
-        list[batchNum] = 0;
-
-        for (int curIdx = 1; curIdx < 1000  /*number of class*/; curIdx++) {
-            if ((*tensor)[batchNum * 1000 + curIdx] > max) {
-                max            = (*tensor)[batchNum * 1000 + curIdx];
-                list[batchNum] = curIdx;
-            }
-        }
-    }
-    return TRUE;
 }

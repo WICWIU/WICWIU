@@ -5,9 +5,9 @@ CFLAGS = -O2 -std=c++11
 ENABLE_CUDNN = -D__CUDNN__
 #DFLAGS = -g -D__DEBUG__
 
-LFLAGS = -lcudart -lcudnn -llibjpeg -lpthread
+LFLAGS = -lcudart -lcudnn -lpthread
 
-INCLUDE_PATH = -I../../JpegLib -I/usr/local/cuda/include -I/opt/libjpeg-turbo/include
+INCLUDE_PATH = -I/usr/local/cuda/include
 LIB_PATH = -L. -L/usr/local/cuda/lib64
 
 CC = g++

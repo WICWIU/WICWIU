@@ -11,25 +11,25 @@ public:
 
         Operator<float> *out = NULL;
 
-        out = new ReShape<float>(x, 28, 28, "Flat2Image");
+        out = new ReShape<float>(x, 3, 32, 32, "Flat2Image");
 
         // ======================= layer 1=======================
-        out = new ConvolutionLayer2D<float>(out, 1, 10, 3, 3, 1, 1, 0, TRUE, "Conv_1");
-        // out = new CUDNNBatchNormalizeLayer<float>(out, TRUE, "BN_1");
+        out = new ConvolutionLayer2D<float>(out, 3, 32, 3, 3, 1, 1, 0, TRUE, "Conv_1");
+        out = new CUDNNBatchNormalizeLayer<float>(out, TRUE, "BN_1");
         out = new Relu<float>(out, "Relu_1");
         out = new Maxpooling2D<float>(out, 2, 2, 2, 2, "MaxPool_1");
 
         // ======================= layer 2=======================
-        out = new ConvolutionLayer2D<float>(out, 10, 20, 3, 3, 1, 1, 0, TRUE, "Conv_2");
-        // out = new CUDNNBatchNormalizeLayer<float>(out, TRUE, "BN_2");
+        out = new ConvolutionLayer2D<float>(out, 32, 64, 3, 3, 1, 1, 0, TRUE, "Conv_2");
+        out = new CUDNNBatchNormalizeLayer<float>(out, TRUE, "BN_2");
         out = new Relu<float>(out, "Relu_2");
         out = new Maxpooling2D<float>(out, 2, 2, 2, 2, "MaxPool_2");
 
         // ======================= layer 3=======================
-        out = new ReShape<float>(out, 1, 1, 5 * 5 * 20, "Image2Flat");
+        out = new ReShape<float>(out, 1, 1, 6 * 6 * 64, "Image2Flat");
 
         // ======================= layer 3=======================
-        out = new Linear<float>(out, 5 * 5 * 20, 1024, TRUE, "Fully-Connected_1");
+        out = new Linear<float>(out, 6 * 6 * 64, 1024, TRUE, "Fully-Connected_1");
 
         out = new Relu<float>(out, "Relu_3");
         //
