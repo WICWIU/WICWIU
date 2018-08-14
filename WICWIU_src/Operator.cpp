@@ -449,6 +449,26 @@ template<typename DTYPE> int Operator<DTYPE>::SetGradientOnCPU() {
     return TRUE;
 }
 
+template<typename DTYPE> int Operator<DTYPE>::Save(FILE *fileForSave) {
+    int size = m_aaResult->GetSize();
+
+    for (int i = 0; i < size; i++) {
+        (*m_aaResult)[i]->Save(fileForSave);
+    }
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::Load(FILE *fileForLoad) {
+    int size = m_aaResult->GetSize();
+
+    for (int i = 0; i < size; i++) {
+        (*m_aaResult)[i]->Load(fileForLoad);
+    }
+
+    return TRUE;
+}
+
 #ifdef __CUDNN__
 
 template<typename DTYPE> int Operator<DTYPE>::SetCudnnHandle(cudnnHandle_t& pCudnnHandle) {

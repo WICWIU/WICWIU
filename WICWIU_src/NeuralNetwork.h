@@ -19,7 +19,7 @@ private:
     Optimizer<DTYPE> *m_aOptimizer;
 
     Device m_Device;
-    int m_idOfDevice = -1; // 추후 수정
+    int m_idOfDevice = -1;  // 추후 수정
 
 #ifdef __CUDNN__
     cudnnHandle_t m_cudnnHandle;
@@ -97,6 +97,9 @@ public:
     int                           ResetParameterGradient();
 
     Operator<DTYPE>             * SerchOperator(std::string pName);
+
+    int                           Save(FILE * fileForSave);
+    int                           Load(FILE * fileForLoad);
 
 #ifdef __CUDNN__
     int                           ForwardPropagateOnGPU(int pTime = 0);

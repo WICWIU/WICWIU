@@ -61,6 +61,9 @@ public:
 
 
     void                     SetDeviceCPU();
+
+    int                      Save(FILE *fileForSave);
+    int                      Load(FILE *fileForLoad);
 #ifdef __CUDNN__
     void                     SetDeviceGPU(unsigned int idOfDevice);
 
@@ -68,6 +71,8 @@ public:
     cudnnTensorDescriptor_t& GetDescriptor();
 
     void                     Reset(cudnnHandle_t& pCudnnHandle);
+
+
 #endif  // if __CUDNN__
 
 
