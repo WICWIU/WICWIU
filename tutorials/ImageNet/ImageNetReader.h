@@ -390,7 +390,9 @@ public:
 
         // convert image to tensor
         xOfImage = random_generator(width - lengthLimit);
+        printf("width - lengthLimit %d - %d\n", width, lengthLimit);
         yOfImage = random_generator(height - lengthLimit);
+        printf("height - lengthLimit %d - %d\n", height, lengthLimit);
 
         std::cout << temp->GetShape() << '\n';
 
