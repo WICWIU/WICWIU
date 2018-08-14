@@ -535,6 +535,22 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SerchOperator(st
     return NULL;
 }
 
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Save(FILE *fileForSave) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        (*m_apParameter)[i]->Save(fileForSave);
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(FILE *fileForLoad) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        (*m_apParameter)[i]->Load(fileForLoad);
+    }
+    return TRUE;
+}
+
 #ifdef __CUDNN__
 template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagateOnGPU(int pTime) {
     for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
@@ -557,7 +573,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagateOnGPU(int pTime)
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
     // std::cout << "NeuralNetwork<DTYPE>::SetModeGPU()" << '\n';
     checkCudaErrors(cudaSetDevice(idOfDevice));
-    
+
     m_Device = GPU;
     this->AllocOnGPU();
 

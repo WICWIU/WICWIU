@@ -95,6 +95,9 @@ public:
 
     virtual int                           SetResultOnCPU();
     virtual int                           SetGradientOnCPU();
+
+    int                                   Save(FILE *fileForSave);
+    int                                   Load(FILE *fileForLoad);
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     virtual int                           SetResultOnGPU(unsigned int idOfDevice);
