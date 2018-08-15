@@ -44,6 +44,7 @@ public:
     Operator(std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME");
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME");
     virtual ~Operator();
 
     int                                   AddEdgebetweenOperators(Operator<DTYPE> *pInput);

@@ -166,6 +166,23 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     AddEdgebetweenOperators(2, pInput0, pInput1);
 }
 
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName) {
+    #ifdef __DEBUG__
+    std::cout << "Operator<DTYPE>::Operator()" << '\n';
+    #endif  // __DEBUG__
+    m_apOutput    = NULL;
+    m_apInput     = NULL;
+    m_aaResult    = NULL;
+    m_aaGradient  = NULL;
+    m_name        = pName;
+    m_Device      = CPU;
+    m_Mode        = TRAINING;
+    m_isParameter = FALSE;
+    m_isTrainable = FALSE;
+    Alloc();
+    AddEdgebetweenOperators(3, pInput0, pInput1, pInput2);
+}
+
 template<typename DTYPE> Operator<DTYPE>::~Operator() {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::~Operator()" << '\n';
