@@ -3,7 +3,7 @@
 
 #include "Module/LinearLayer.h"
 #include "Module/ConvoulutionLayer.h"
-// #include "Module/BatchNormalizeLayer.h"
-#include "Module/CUDNNBatchNormalizeLayer.h"
+#include "Module/BatchNormalizeLayer.h"
+// #include "Module/CUDNNBatchNormalizeLayer.h"
 
 #endif // ifndef __MODULE_UTIL_H__

@@ -19,8 +19,8 @@ int main(int argc, char const *argv[]) {
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
     // ======================= Select net ===================
-    // NeuralNetwork<float> *net = new my_CNN(x, label);
-    NeuralNetwork<float> *net = Resnet14<float>(x, label);
+    NeuralNetwork<float> *net = new my_CNN(x, label);
+    // NeuralNetwork<float> *net = Resnet14<float>(x, label);
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
@@ -81,7 +81,7 @@ int main(int argc, char const *argv[]) {
             endTime            = clock();
             nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
 
-            printf("\r%d / %d -> cur_loss : %0.3f, avg_loss : %0.3f, cur_acc : %0.3f, avg_acc : %0.3f, ct : %0.3f's / rt : %0.3f'm"  /*(ExcuteTime : %f)*/,
+            printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.4f, cur_acc : %0.5f, avg_acc : %0.5f, ct : %0.3f's / rt : %0.3f'm"  /*(ExcuteTime : %f)*/,
                    j + 1, LOOP_FOR_TRAIN,
                    train_cur_loss,
                    train_avg_loss / (j + 1),

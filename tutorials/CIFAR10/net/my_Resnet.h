@@ -18,21 +18,21 @@ public:
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv1" + pName);
 #ifdef __CUDNN__
-        out = new CUDNNBatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1" + pName);
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1" + pName);
 #endif  // __CUDNN__
         out = new Relu<DTYPE>(out, "BasicBlock_Relu1" + pName);
 
         // 2
         out = new ConvolutionLayer2D<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 3, 3, 1, 1, 1, FALSE, "BasicBlock_Conv2" + pName);
 #ifdef __CUDNN__
-        out = new CUDNNBatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN2" + pName);
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN2" + pName);
 #endif  // __CUDNN__
 
         // ShortCut
         if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel)) {
             remember = new ConvolutionLayer2D<DTYPE>(remember, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv_Shortcut" + pName);
 #ifdef __CUDNN__
-            remember = new CUDNNBatchNormalizeLayer<DTYPE>(remember, TRUE, "BasicBlock_BN_Shortcut" + pName);
+            remember = new BatchNormalizeLayer<DTYPE>(remember, TRUE, "BasicBlock_BN_Shortcut" + pName);
 #endif  // __CUDNN__
         }
 
@@ -125,7 +125,7 @@ public:
         // 1
         out =new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 3, 3, 1, 1, 1, TRUE, "Conv");
 #ifdef __CUDNN__
-        out =new CUDNNBatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1");
+        out =new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1");
 #endif  // __CUDNN__
 
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 1, "Block1");
