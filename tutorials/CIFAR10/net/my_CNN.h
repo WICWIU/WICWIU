@@ -45,7 +45,7 @@ public:
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
 
         // ======================= Select Optimizer ===================
-        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
+        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.01, 0.9, MINIMIZE));
     }
 
     virtual ~my_CNN() {}
