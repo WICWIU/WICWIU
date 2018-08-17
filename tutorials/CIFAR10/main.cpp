@@ -4,11 +4,12 @@
 #include <time.h>
 #include <unistd.h>
 
-#define BATCH             50
+#define BATCH             100
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (50000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             1
+#define LOG_LENGTH        1
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
@@ -19,13 +20,16 @@ int main(int argc, char const *argv[]) {
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
     // ======================= Select net ===================
-    NeuralNetwork<float> *net = new my_CNN(x, label);
-    // NeuralNetwork<float> *net = Resnet14<float>(x, label);
+    // NeuralNetwork<float> *net = new my_CNN(x, label);
+    NeuralNetwork<float> *net = Resnet14<float>(x, label);
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
-    CIFAR10Reader<float> *train_data_reader = new CIFAR10Reader<float>(BATCH, 100, TRUE);
-    CIFAR10Reader<float> *test_data_reader  = new CIFAR10Reader<float>(BATCH, 100, FALSE);
+    CIFAR10Reader<float> *train_data_reader = new CIFAR10Reader<float>(BATCH, 1000, TRUE);
+    CIFAR10Reader<float> *test_data_reader  = new CIFAR10Reader<float>(BATCH, 1000, FALSE);
+
+    train_data_reader->UseNormalization(TRUE);
+    test_data_reader->UseNormalization(TRUE, train_data_reader);
 
     train_data_reader->StartProduce();
     test_data_reader->StartProduce();
@@ -38,11 +42,13 @@ int main(int argc, char const *argv[]) {
 
     float best_acc = 0.f;
 
-    //// @ When load parameters
-    // FILE *fp = fopen("parameters.b", "rb");
+    // // @ When load parameters
+    // FILE *fp = fopen("resnet2.b", "rb");
     // net->Load(fp);
     // fread(&best_acc, sizeof(float), 1, fp);
     // fclose(fp);
+
+    std::cout << "best_acc : " << best_acc << '\n';
 
     for (int i = 0; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';
@@ -92,7 +98,7 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
 
             // sleep(30);
-            if (j % (LOOP_FOR_TRAIN / 20) == (LOOP_FOR_TRAIN / 20) - 1) {
+            if (j % (LOOP_FOR_TRAIN / LOG_LENGTH) == (LOOP_FOR_TRAIN / LOG_LENGTH) - 1) {
                 std::cout << '\n';
             }
         }
@@ -143,7 +149,7 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
 
             // sleep(30);
-            if (j % (LOOP_FOR_TRAIN / 20) == (LOOP_FOR_TRAIN / 20) - 1) {
+            if (j % (LOOP_FOR_TRAIN / LOG_LENGTH) == (LOOP_FOR_TRAIN / LOG_LENGTH) - 1) {
                 std::cout << '\n';
             }
         }
@@ -182,7 +188,7 @@ int main(int argc, char const *argv[]) {
 
         if (best_acc < test_avg_accuracy) {
             std::cout << "\nsave parameters...";
-            FILE *fp = fopen("resnet.b", "wb");
+            FILE *fp = fopen("resnet2.b", "wb");
             net->Save(fp);
             best_acc = test_avg_accuracy;
             fwrite(&best_acc, sizeof(float), 1, fp);

@@ -15,7 +15,13 @@
 
 #include "../../WICWIU_src/Tensor_utils.h"
 
-#define NUMBER_OF_CLASS    1000
+#define NUMBER_OF_CLASS      1000
+
+#define CAPACITY_OF_IMAGE    3072
+
+#define BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG 3073
+
+#define SIZE_OF_SINGLE_DATA_FILE 30730000
 
 using namespace std;
 
@@ -55,6 +61,22 @@ private:
 
     int m_work;
 
+    /*Data Augmentation*/
+    // Random_crop
+    int m_useRandomCrop;
+    int m_padding;
+    int m_lengthOfWidthAndHeight;
+
+    // for normalization
+    int m_useNormalization;
+    int m_isNormalizePerChannelWise;
+    float *m_aMean;
+    float *m_aStddev;
+
+    // Flip
+    int m_useRandomHorizontalFlip;
+    int m_useVerticalHorizontalFlip;
+
 private:
     int Alloc() {
         if (m_isTrain) {
@@ -73,9 +95,9 @@ private:
 
                 pFile = fopen(cstr, "rb");
 
-                m_aaTrainImageSrcs[i] = (unsigned char *)malloc(sizeof(unsigned char) * 30730000);
+                m_aaTrainImageSrcs[i] = (unsigned char *)malloc(sizeof(unsigned char) * SIZE_OF_SINGLE_DATA_FILE);
 
-                fread(m_aaTrainImageSrcs[i], sizeof(unsigned char), 30730000, pFile);
+                fread(m_aaTrainImageSrcs[i], sizeof(unsigned char), SIZE_OF_SINGLE_DATA_FILE, pFile);
 
                 fclose(pFile);
             }
@@ -89,9 +111,9 @@ private:
 
             pFile = fopen(cstr, "rb");
 
-            m_aTestImageSrc = (unsigned char *)malloc(sizeof(unsigned char) * 30730000);
+            m_aTestImageSrc = (unsigned char *)malloc(sizeof(unsigned char) * SIZE_OF_SINGLE_DATA_FILE);
 
-            fread(m_aTestImageSrc, sizeof(unsigned char), 30730000, pFile);
+            fread(m_aTestImageSrc, sizeof(unsigned char), SIZE_OF_SINGLE_DATA_FILE, pFile);
 
             fclose(pFile);
         }
@@ -167,10 +189,28 @@ private:
             delete m_aaQForData;
             m_aaQForData = NULL;
         }
+
+        if (m_useNormalization) {
+            if (m_aMean) {
+                delete[] m_aMean;
+                m_aMean = NULL;
+            }
+
+            if (m_aStddev) {
+                delete[] m_aStddev;
+                m_aStddev = NULL;
+            }
+        }
     }
 
 public:
     CIFAR10Reader(int batchSize, int bufferSize, int isTrain) {
+        m_aaTrainImageSrcs = NULL;
+        m_aTestImageSrc    = NULL;
+        m_aaSetOfImage     = NULL;
+        m_aaSetOfLabel     = NULL;
+        m_aaQForData       = NULL;
+
         m_batchSize  = batchSize;
         m_isTrain    = isTrain;
         m_recallnum  = 0;
@@ -182,6 +222,18 @@ public:
 
         m_work = 1;
 
+        m_useRandomCrop          = FALSE;
+        m_padding                = 0;
+        m_lengthOfWidthAndHeight = 32;
+
+        m_useNormalization          = FALSE;
+        m_isNormalizePerChannelWise = FALSE;
+        m_aMean                     = NULL;
+        m_aStddev                   = NULL;
+
+        m_useRandomHorizontalFlip   = FALSE;
+        m_useVerticalHorizontalFlip = FALSE;
+
         Alloc();
 
         // prepare data what we need
@@ -192,6 +244,192 @@ public:
 
     virtual ~CIFAR10Reader() {
         Delete();
+    }
+
+    int UseNormalization(int isNormalizePerChannelWise = TRUE, CIFAR10Reader<DTYPE> *src = NULL) {
+        m_useNormalization          = TRUE;
+        m_isNormalizePerChannelWise = isNormalizePerChannelWise;
+
+        if (m_isTrain) {
+            CalculateTrainingDataMeanAndStddev();
+        } else {
+            if (src) {
+                if (m_isNormalizePerChannelWise != src->GetNormalizationMode()) {
+                    std::cout << "caution! m_isNormalizePerChannelWise is different between src!" << '\n';
+                    m_isNormalizePerChannelWise = src->GetNormalizationMode();
+                }
+                float *means   = src->GetSetOfMean();
+                float *stddevs = src->GetSetOfStddev();
+
+                CopyMeanAndStddevFromSrc(means, stddevs);
+            } else {
+                std::cout << "their is no src as input! - CopyMeanAndStddevFromSrc" << '\n';
+            }
+        }
+
+        return TRUE;
+    }
+
+    int CalculateTrainingDataMeanAndStddev() {
+        int imgNum = 0;  // random image of above class
+        int srcNum = 0;
+
+        unsigned char *imgSrc;
+        unsigned char *ip;
+
+        if (m_isNormalizePerChannelWise) {
+            m_aMean   = new float[3];
+            m_aStddev = new float[3];
+
+            for (int channelNum = 0; channelNum < 3; channelNum++) {
+                m_aMean[channelNum]   = 0.f;
+                m_aStddev[channelNum] = 0.f;
+            }
+
+            float tempMean = 0.f;
+
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 10000; j++) {
+                    srcNum = i;
+                    imgNum = j;
+
+                    imgSrc = m_aaTrainImageSrcs[srcNum];
+                    ip     = &imgSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
+
+                    for (int channelNum = 0; channelNum < 3; channelNum++) {
+                        tempMean = 0.f;
+
+                        for (int idx = 0; idx < 1024; idx++, ip++) {
+                            tempMean += (DTYPE)*ip / 255;
+                        }
+                        tempMean            /= 1024;
+                        m_aMean[channelNum] += tempMean;
+                    }
+                }
+            }
+
+            for (int channelNum = 0; channelNum < 3; channelNum++) {
+                m_aMean[channelNum] /= 50000;
+                // printf("m_aMean[%d] : %f\n", channelNum, m_aMean[channelNum]);
+            }
+
+            float preTempStddev = 0.f;
+            float tempStddev    = 0.f;
+
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 10000; j++) {
+                    srcNum = i;
+                    imgNum = j;
+
+                    imgSrc = m_aaTrainImageSrcs[srcNum];
+                    ip     = &imgSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
+
+                    for (int channelNum = 0; channelNum < 3; channelNum++) {
+                        tempStddev = 0.f;
+
+                        for (int idx = 0; idx < 1024; idx++, ip++) {
+                            preTempStddev = ((DTYPE)*ip / 255) - m_aMean[channelNum];
+                            tempStddev   += (preTempStddev * preTempStddev);
+                        }
+                        tempStddev            /= 1024;
+                        m_aStddev[channelNum] += tempStddev;
+                    }
+                }
+            }
+
+            for (int channelNum = 0; channelNum < 3; channelNum++) {
+                m_aStddev[channelNum] /= 50000;
+                m_aStddev[channelNum]  = sqrt(m_aStddev[channelNum]);
+                // printf("m_aStddev[%d] : %f\n", channelNum, m_aStddev[channelNum]);
+            }
+        } else {
+            m_aMean   = new float[CAPACITY_OF_IMAGE];
+            m_aStddev = new float[CAPACITY_OF_IMAGE];
+
+            for (int elementNum = 0; elementNum < CAPACITY_OF_IMAGE; elementNum++) {
+                m_aMean[elementNum]   = 0.f;
+                m_aStddev[elementNum] = 0.f;
+            }
+
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 10000; j++) {
+                    srcNum = i;
+                    imgNum = j;
+
+                    imgSrc = m_aaTrainImageSrcs[srcNum];
+                    ip     = &imgSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
+
+                    for (int elementNum = 0; elementNum < CAPACITY_OF_IMAGE; elementNum++, ip++) {
+                        m_aMean[elementNum] += (DTYPE)*ip / 255;
+                    }
+                }
+            }
+
+            for (int elementNum = 0; elementNum < CAPACITY_OF_IMAGE; elementNum++) {
+                m_aMean[elementNum] /= 50000;
+                // printf("%f, ", m_aMean[elementNum]);
+            }
+
+            float preTempStddev = 0.f;
+
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 10000; j++) {
+                    srcNum = i;
+                    imgNum = j;
+
+                    imgSrc = m_aaTrainImageSrcs[srcNum];
+                    ip     = &imgSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
+
+                    for (int elementNum = 0; elementNum < CAPACITY_OF_IMAGE; elementNum++, ip++) {
+                        preTempStddev          = ((DTYPE)*ip / 255) - m_aMean[elementNum];
+                        m_aStddev[elementNum] += (preTempStddev * preTempStddev);
+                    }
+                }
+            }
+
+            for (int elementNum = 0; elementNum < CAPACITY_OF_IMAGE; elementNum++) {
+                m_aStddev[elementNum] /= 50000;
+                m_aStddev[elementNum]  = sqrt(m_aStddev[elementNum]);
+                // printf("%f, ", m_aStddev[elementNum]);
+            }
+        }
+
+        return TRUE;
+    }
+
+    int CopyMeanAndStddevFromSrc(float *mean, float *stddev) {
+        if (m_isNormalizePerChannelWise) {
+            m_aMean   = new float[3];
+            m_aStddev = new float[3];
+
+            for (int channelNum = 0; channelNum < 3; channelNum++) {
+                m_aMean[channelNum]   = mean[channelNum];
+                m_aStddev[channelNum] = stddev[channelNum];
+            }
+        } else {
+            m_aMean   = new float[CAPACITY_OF_IMAGE];
+            m_aStddev = new float[CAPACITY_OF_IMAGE];
+
+            for (int elementNum = 0; elementNum < CAPACITY_OF_IMAGE; elementNum++) {
+                m_aMean[elementNum]   = mean[elementNum];
+                m_aStddev[elementNum] = stddev[elementNum];
+            }
+        }
+
+
+        return TRUE;
+    }
+
+    int GetNormalizationMode() {
+        return m_isNormalizePerChannelWise;
+    }
+
+    float* GetSetOfMean() {
+        return m_aMean;
+    }
+
+    float* GetSetOfStddev() {
+        return m_aStddev;
     }
 
     int StartProduce() {
@@ -349,16 +587,20 @@ public:
         int width   = 32;
 
         unsigned char *imgSrc = m_aaTrainImageSrcs[srcNum];
-        unsigned char *ip     = &imgSrc[imgNum * 3073 + 1];
+        unsigned char *ip     = &imgSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
 
         // std::cout << (int)*ip << '\n';
 
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, channel * height * width);
 
-        for (int idx = 0; idx < 3072; idx++, ip++) {
+        for (int idx = 0; idx < CAPACITY_OF_IMAGE; idx++, ip++) {
             // std::cout << idx << '\n';
             (*temp)[idx] = (DTYPE)*ip / 255;
             // std::cout << (*temp)[idx] << '\n';
+        }
+
+        if (m_useNormalization) {
+            temp = Normalization(temp);
         }
 
         return temp;
@@ -366,7 +608,7 @@ public:
 
     Tensor<DTYPE>* Label2Tensor(int srcNum, int imgNum  /*Address of Label*/) {
         unsigned char *imgSrc = m_aaTrainImageSrcs[srcNum];
-        unsigned char *ip     = &imgSrc[imgNum * 3073];
+        unsigned char *ip     = &imgSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG];
 
         // std::cout << (int)*ip << '\n';
 
@@ -381,19 +623,23 @@ public:
         int height  = 32;
         int width   = 32;
 
-        unsigned char *ip = &m_aTestImageSrc[imgNum * 3073 + 1];
+        unsigned char *ip = &m_aTestImageSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
 
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, channel * height * width);
 
-        for (int idx = 0; idx < 3072; idx++, ip++) {
+        for (int idx = 0; idx < CAPACITY_OF_IMAGE; idx++, ip++) {
             (*temp)[idx] = (DTYPE)*ip / 255;
+        }
+
+        if (m_useNormalization) {
+            temp = Normalization(temp);
         }
 
         return temp;
     }
 
     Tensor<DTYPE>* Label2Tensor(int imgNum  /*Address of Label*/) {
-        unsigned char *ip = &m_aTestImageSrc[imgNum * 3073];
+        unsigned char *ip = &m_aTestImageSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG];
 
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, 10);
         (*temp)[*ip] = (DTYPE)1;
@@ -450,6 +696,31 @@ public:
         // setOfLabel->clear();
 
         return result;
+    }
+
+    Tensor<DTYPE>* Normalization(Tensor<DTYPE> *images) {
+        int singleImageSize = CAPACITY_OF_IMAGE;
+
+        if (m_isNormalizePerChannelWise) {
+            int numOfChannel        = 3;
+            int imageSizePerChannel = singleImageSize / numOfChannel;
+            int idxOfResult         = 0;
+
+            for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+                for (int idxOfImage = 0; idxOfImage < imageSizePerChannel; idxOfImage++) {
+                    idxOfResult             = channelNum * imageSizePerChannel + idxOfImage;
+                    (*images)[idxOfResult] -= m_aMean[channelNum];
+                    (*images)[idxOfResult] /= m_aStddev[channelNum];
+                }
+            }
+        } else {
+            for (int idxOfImage = 0; idxOfImage < singleImageSize; idxOfImage++) {
+                (*images)[idxOfImage] -= m_aMean[idxOfImage];
+                (*images)[idxOfImage] /= m_aStddev[idxOfImage];
+            }
+        }
+
+        return images;
     }
 
     int AddData2Buffer(Tensor<DTYPE> *setOfImage, Tensor<DTYPE> *setOfLabel) {
