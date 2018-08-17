@@ -127,6 +127,8 @@ public:
 
 #ifdef __CUDNN__
     void InitializeAttributeForGPU(unsigned int idOfDevice) {
+        checkCudaErrors(cudaSetDevice(idOfDevice));
+
         if (m_isChannelwise) {
             m_CUDNNMode = CUDNN_BATCHNORM_SPATIAL;
         } else {

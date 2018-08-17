@@ -140,7 +140,7 @@ public:
                                               batchsizeOfWeight, channelsizeOfWeight, rowsizeOfWeight, colsizeOfWeight));
 
         checkCUDNN(cudnnSetConvolution2dDescriptor(convDesc, m_padding[0], m_padding[1], m_stride[0], m_stride[1],
-                                                   1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+                                                   1, 1, CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
 
         checkCUDNN(cudnnGetConvolutionForwardAlgorithm(this->GetCudnnHandle(), inputTensorDesc, filterDesc, convDesc, outputTensorDesc,
                                                        CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, 0, &m_algo));
