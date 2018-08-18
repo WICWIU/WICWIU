@@ -12,6 +12,7 @@ template<typename DTYPE> class Optimizer {
 private:
     float m_LearningRate;
     int m_OptimizeDirection;  // 1 or -1
+    float m_weightDecayRate;
 
     Container<Operator<DTYPE> *> *m_ppTrainableTensors;
     int m_TrainableTensorDegree;
@@ -25,10 +26,12 @@ private:
 public:
     Optimizer(Operator<DTYPE> **pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection);
     Optimizer(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection);
+    Optimizer(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, float pWeightDecayRate, OptimizeDirection pOptimizeDirection);
 
     virtual ~Optimizer();
 
     int                           Alloc(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, OptimizeDirection pOptimizeDirection);
+    int                           Alloc(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, float pWeightDecayRate, OptimizeDirection pOptimizeDirection);
     int                           Delete();
 
     virtual int                   UpdateParameter();
@@ -36,11 +39,13 @@ public:
 
     void                          SetLearningRate(float pLearningRate);
     void                          SetTrainableTensorDegree(int pTrainableTensorDegree);
+    void                          SetWeightDecayRate(int pWeightDecayRate);
 
     float                         GetLearningRate() const;
     int                           GetOptimizeDirection() const;
     Container<Operator<DTYPE> *>* GetTrainableTensor();
     int                           GetTrainableTensorDegree() const;
+    float                         GetWeightDecayRate() const;
 
     int                           ResetParameterGradient();
 

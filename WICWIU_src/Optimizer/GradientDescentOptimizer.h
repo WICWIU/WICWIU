@@ -36,6 +36,18 @@ public:
         Alloc(momentum);
     }
 
+    GradientDescentOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float momentum, float weightDecayRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, weightDecayRate, pOptimizeDirection) {
+        #ifdef __DEBUG__
+        std::cout << "GradientDescentOptimizer::GradientDescentOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
+        #endif  // __DEBUG__
+        m_ppParameter    = NULL;
+        m_aaVelocity     = NULL;
+        m_numOfParameter = 0;
+        m_momentum       = 0.f;
+
+        Alloc(momentum);
+    }
+
     ~GradientDescentOptimizer() {
         #ifdef __DEBUG__
         std::cout << "GradientDescentOptimizer::~GradientDescentOptimizer()" << '\n';
@@ -96,12 +108,13 @@ public:
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
-        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+        float learning_rate   = this->GetOptimizeDirection() * this->GetLearningRate();
+        float weightDecayRate = this->GetWeightDecayRate();
 
         int capacity = trainable_data->GetCapacity();
 
         for (int i = 0; i < capacity; i++) {
-            (*trainable_data)[i] += learning_rate * (*gradient)[i];
+            (*trainable_data)[i] += (learning_rate * (*gradient)[i] + weightDecayRate * (*trainable_data)[i]);
         }
 
         return TRUE;
@@ -111,13 +124,14 @@ public:
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
-        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+        float learning_rate   = this->GetOptimizeDirection() * this->GetLearningRate();
+        float weightDecayRate = this->GetWeightDecayRate();
 
         int capacity = trainable_data->GetCapacity();
 
         for (int i = 0; i < capacity; i++) {
-            (*pVelocity)[i]       = m_momentum * (*pVelocity)[i] - learning_rate * (*gradient)[i];
-            (*trainable_data)[i] += (*pVelocity)[i];
+            (*pVelocity)[i]      = m_momentum * (*pVelocity)[i] + learning_rate * (*gradient)[i];
+            (*trainable_data)[i] += ((*pVelocity)[i] + weightDecayRate * (*trainable_data)[i]);
         }
 
         return TRUE;
@@ -150,9 +164,10 @@ public:
         DTYPE *m_pDevData = trainable_data->GetGPUData();
         DTYPE *m_pDevGrad = gradient->GetGPUData();
 
-        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+        float learning_rate   = this->GetOptimizeDirection() * this->GetLearningRate();
+        float weightDecayRate = this->GetWeightDecayRate();
 
-        float alpha = 1.f;
+        float alpha = 1.f + learning_rate * weightDecayRate;
         float beta  = learning_rate;
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
@@ -174,9 +189,12 @@ public:
         DTYPE *m_pDevGrad = gradient->GetGPUData();
         DTYPE *m_pDevVelo = pVelocity->GetGPUData();
 
-        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+        float learning_rate   = this->GetOptimizeDirection() * this->GetLearningRate();
+        float weightDecayRate = this->GetWeightDecayRate();
 
-        float alpha = 1.f;
+        float alpha = 1.f + learning_rate * weightDecayRate;
+        // std::cout << "weight decay  : "<< weightDecayRate << '\n';
+        // std::cout << "alpha : " << alpha << '\n';
         float beta  = learning_rate;
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
