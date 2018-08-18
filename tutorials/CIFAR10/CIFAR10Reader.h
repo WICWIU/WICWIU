@@ -15,13 +15,15 @@
 
 #include "../../WICWIU_src/Tensor_utils.h"
 
-#define NUMBER_OF_CLASS      1000
+#define NUMBER_OF_CLASS                        1000
 
-#define CAPACITY_OF_IMAGE    3072
+#define CAPACITY_OF_IMAGE                      3072
 
-#define BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG 3073
+#define BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG    3073
 
-#define SIZE_OF_SINGLE_DATA_FILE 30730000
+#define SIZE_OF_SINGLE_DATA_FILE               30730000
+
+#define LEGNTH_OF_WIDTH_AND_HEIGHT             32
 
 using namespace std;
 
@@ -62,20 +64,21 @@ private:
     int m_work;
 
     /*Data Augmentation*/
-    // Random_crop
-    int m_useRandomCrop;
-    int m_padding;
-    int m_lengthOfWidthAndHeight;
-
     // for normalization
     int m_useNormalization;
     int m_isNormalizePerChannelWise;
     float *m_aMean;
     float *m_aStddev;
 
+    // Random_crop
+    int m_useRandomCrop;
+    int m_padding;
+    int m_lengthOfWidthAndHeight;
+    vector<int> m_shuffledListForCrop;
+
     // Flip
     int m_useRandomHorizontalFlip;
-    int m_useVerticalHorizontalFlip;
+    vector<int> m_shuffledListForFlip;
 
 private:
     int Alloc() {
@@ -224,15 +227,14 @@ public:
 
         m_useRandomCrop          = FALSE;
         m_padding                = 0;
-        m_lengthOfWidthAndHeight = 32;
+        m_lengthOfWidthAndHeight = LEGNTH_OF_WIDTH_AND_HEIGHT;
 
         m_useNormalization          = FALSE;
         m_isNormalizePerChannelWise = FALSE;
         m_aMean                     = NULL;
         m_aStddev                   = NULL;
 
-        m_useRandomHorizontalFlip   = FALSE;
-        m_useVerticalHorizontalFlip = FALSE;
+        m_useRandomHorizontalFlip = FALSE;
 
         Alloc();
 
@@ -416,7 +418,6 @@ public:
             }
         }
 
-
         return TRUE;
     }
 
@@ -430,6 +431,61 @@ public:
 
     float* GetSetOfStddev() {
         return m_aStddev;
+    }
+
+    int UseRandomHorizontalFlip() {
+        if (m_isTrain) {
+            m_useRandomHorizontalFlip = TRUE;
+        } else {
+            std::cout << "test set cannot use data augmentation function : UseRandomHorizontalFlip" << '\n';
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    int FillshuffledListForFlip() {
+        int halfOfBatchSize = m_batchSize / 2;
+
+        // std::cout << "halfOfBatchSize : " << halfOfBatchSize << '\n';
+
+        for (int i = 0; i < halfOfBatchSize; i++) {
+            m_shuffledListForFlip.push_back(0);
+            m_shuffledListForFlip.push_back(1);
+        }
+
+        if (m_batchSize % 2 == 1) m_shuffledListForFlip.push_back(0);
+        // std::cout << m_shuffledListForFlip.size() << '\n';
+
+        return TRUE;
+    }
+
+    int UseRandomCrop(int padding, int lengthOfWidthAndHeight = LEGNTH_OF_WIDTH_AND_HEIGHT) {
+        if (m_isTrain) {
+            m_useRandomCrop          = TRUE;
+            m_padding                = padding;
+            m_lengthOfWidthAndHeight = lengthOfWidthAndHeight;
+        } else {
+            std::cout << "test set cannot use data augmentation function : UseRandomCrop" << '\n';
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    int FillshuffledListForCrop() {
+        int limitOfCropPos      = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding) - m_lengthOfWidthAndHeight;
+        int twoTimesOfBatchSize = m_batchSize * 2;
+
+        // std::cout << "limitOfCropPos : " << limitOfCropPos << '\n';
+        // std::cout << "twoTimesOfBatchSize : " << twoTimesOfBatchSize << '\n';
+
+        for (int cntNum = 0; cntNum < twoTimesOfBatchSize; cntNum++) {
+            m_shuffledListForCrop.push_back(cntNum % limitOfCropPos);
+            // std::cout << m_shuffledListForFlip.back() << '\n';
+        }
+
+        // std::cout << "check" << '\n';
+
+        return TRUE;
     }
 
     int StartProduce() {
@@ -501,8 +557,19 @@ public:
                     this->ShuffleClassNum();
                     m_recallnum = 0;
                 }
-
                 // std::cout << "m_recallnum : " << m_recallnum << '\n';
+
+                if (m_useRandomCrop) {
+                    FillshuffledListForCrop();
+                    srand(unsigned(time(0)));
+                    random_shuffle(m_shuffledListForCrop.begin(), m_shuffledListForCrop.end(), CIFAR10Reader<DTYPE>::random_generator);
+                }
+
+                if (m_useRandomHorizontalFlip) {
+                    FillshuffledListForFlip();
+                    srand(unsigned(time(0)));
+                    random_shuffle(m_shuffledListForFlip.begin(), m_shuffledListForFlip.end(), CIFAR10Reader<DTYPE>::random_generator);
+                }
 
                 for (int i = 0; i < m_batchSize; i++) {
                     imgNum = m_shuffledList[i + m_recallnum * m_batchSize];
@@ -573,34 +640,68 @@ public:
     }
 
     static int random_generator(int upperbound) {
+        srand(time(NULL));
         return rand() % upperbound;
     }
 
     void ShuffleClassNum() {
-        srand(unsigned(time(0)));
         random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), CIFAR10Reader<DTYPE>::random_generator);
     }
 
     Tensor<DTYPE>* Image2Tensor(int srcNum, int imgNum  /*Address of Image*/) {
-        int channel = 3;
-        int height  = 32;
-        int width   = 32;
+        int numOfChannel = 3;
+        int heightOfImg  = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int widthOfImg   = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int padding      = 0;
+
+        if (m_useRandomCrop) padding = m_padding;
+        int heightOfTensor    = heightOfImg + (2 * padding);
+        int widthOfTensor     = widthOfImg + (2 * padding);
+        int planeSizeOfTensor = heightOfTensor * widthOfTensor;
 
         unsigned char *imgSrc = m_aaTrainImageSrcs[srcNum];
         unsigned char *ip     = &imgSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
 
-        // std::cout << (int)*ip << '\n';
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, numOfChannel * heightOfTensor * widthOfTensor);
 
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, channel * height * width);
+        int idx = 0;
 
-        for (int idx = 0; idx < CAPACITY_OF_IMAGE; idx++, ip++) {
-            // std::cout << idx << '\n';
-            (*temp)[idx] = (DTYPE)*ip / 255;
-            // std::cout << (*temp)[idx] << '\n';
+        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+            for (int heightIdx = 0; heightIdx < heightOfImg; heightIdx++) {
+                for (int widthIdx = 0; widthIdx < widthOfImg; widthIdx++, ip++) {
+                    idx          = channelNum * planeSizeOfTensor + (heightIdx + padding) * widthOfTensor + (widthIdx + padding);
+                    (*temp)[idx] = (DTYPE)*ip / 255;
+                    // printf("%d = %d * %d + (%d + %d) * %d + (%d + %d) = ", idx, channelNum, planeSizeOfTensor, heightIdx, padding, widthOfTensor, widthIdx, padding);
+                    // std::cout << "idx : " << idx << '\n';
+                    // int temp_;
+                    // std::cin >> temp_;
+                }
+            }
         }
+
+        // std::cout << temp->GetShape() << '\n';
+
+        // for (int idx = 0; idx < CAPACITY_OF_IMAGE; idx++, ip++) {
+        //// std::cout << idx << '\n';
+        // (*temp)[idx] = (DTYPE)*ip / 255;
+        //// std::cout << (*temp)[idx] << '\n';
+        // }
 
         if (m_useNormalization) {
             temp = Normalization(temp);
+        }
+
+        if (m_useRandomCrop) {
+            // std::cout << temp->GetShape() << '\n';
+            temp = RandomCrop(temp);
+        }
+
+        if (m_useRandomHorizontalFlip) {
+            int random = m_shuffledListForFlip.back();
+            m_shuffledListForFlip.pop_back();
+            // std::cout << random << '\n';
+
+            if (random) HorizontalFlip(temp);
         }
 
         return temp;
@@ -620,8 +721,8 @@ public:
 
     Tensor<DTYPE>* Image2Tensor(int imgNum  /*Address of Image*/) {
         int channel = 3;
-        int height  = 32;
-        int width   = 32;
+        int height  = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int width   = LEGNTH_OF_WIDTH_AND_HEIGHT;
 
         unsigned char *ip = &m_aTestImageSrc[imgNum * BASE_SIZE_OF_BYTE_FOR_TO_DIVIDE_IMG + 1];
 
@@ -668,7 +769,6 @@ public:
             singleImage = NULL;
         }
 
-
         // setOfImage->clear();
 
         return result;
@@ -698,29 +798,118 @@ public:
         return result;
     }
 
-    Tensor<DTYPE>* Normalization(Tensor<DTYPE> *images) {
-        int singleImageSize = CAPACITY_OF_IMAGE;
+    Tensor<DTYPE>* Normalization(Tensor<DTYPE> *image) {
+        int numOfChannel = 3;
+        int heightOfImg  = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int widthOfImg   = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int padding      = 0;
+
+        if (m_useRandomCrop) padding = m_padding;
+        int heightOfTensor    = heightOfImg + (2 * padding);
+        int widthOfTensor     = widthOfImg + (2 * padding);
+        int planeSizeOfTensor = heightOfTensor * widthOfTensor;
 
         if (m_isNormalizePerChannelWise) {
-            int numOfChannel        = 3;
-            int imageSizePerChannel = singleImageSize / numOfChannel;
-            int idxOfResult         = 0;
+            int idx = 0;
 
             for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
-                for (int idxOfImage = 0; idxOfImage < imageSizePerChannel; idxOfImage++) {
-                    idxOfResult             = channelNum * imageSizePerChannel + idxOfImage;
-                    (*images)[idxOfResult] -= m_aMean[channelNum];
-                    (*images)[idxOfResult] /= m_aStddev[channelNum];
+                for (int heightIdx = 0; heightIdx < heightOfImg; heightIdx++) {
+                    for (int widthIdx = 0; widthIdx < widthOfImg; widthIdx++) {
+                        idx            = channelNum * planeSizeOfTensor + (heightIdx + padding) * widthOfTensor + (widthIdx + padding);
+                        (*image)[idx] -= m_aMean[channelNum];
+                        (*image)[idx] /= m_aStddev[channelNum];
+                    }
                 }
             }
         } else {
-            for (int idxOfImage = 0; idxOfImage < singleImageSize; idxOfImage++) {
-                (*images)[idxOfImage] -= m_aMean[idxOfImage];
-                (*images)[idxOfImage] /= m_aStddev[idxOfImage];
+            int idx                = 0;
+            int idxOfMeanAdnStddev = 0;
+
+            for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+                for (int heightIdx = 0; heightIdx < heightOfImg; heightIdx++) {
+                    for (int widthIdx = 0; widthIdx < widthOfImg; widthIdx++) {
+                        idx                = channelNum * planeSizeOfTensor + (heightIdx + padding) * widthOfTensor + (widthIdx + padding);
+                        idxOfMeanAdnStddev = heightIdx * widthOfImg + widthIdx;
+                        (*image)[idx]     -= m_aMean[idxOfMeanAdnStddev];
+                        (*image)[idx]     /= m_aStddev[idxOfMeanAdnStddev];
+                    }
+                }
             }
         }
 
-        return images;
+        return image;
+    }
+
+    Tensor<DTYPE>* HorizontalFlip(Tensor<DTYPE> *image) {
+        int numOfChannel        = 3;
+        int imageSizePerChannel = m_lengthOfWidthAndHeight * m_lengthOfWidthAndHeight;
+        int rowSizePerPlane     = m_lengthOfWidthAndHeight;
+        int colSizePerPlane     = m_lengthOfWidthAndHeight;
+        int halfColSizePerPlane = colSizePerPlane / 2;
+
+        DTYPE temp          = 0;
+        int   idx           = 0;
+        int   idxOfOpposite = 0;
+
+        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+            for (int rowNum = 0; rowNum < rowSizePerPlane; rowNum++) {
+                for (int colNum = 0; colNum < halfColSizePerPlane; colNum++) {
+                    idx           = channelNum * imageSizePerChannel + rowNum * colSizePerPlane + colNum;
+                    idxOfOpposite = channelNum * imageSizePerChannel + rowNum * colSizePerPlane + (colSizePerPlane - colNum - 1);
+                    // std::cout << "idx : " << idx << " idxOfOpposite : " << idxOfOpposite << '\n';
+                    temp                    = (*image)[idx];
+                    (*image)[idx]           = (*image)[idxOfOpposite];
+                    (*image)[idxOfOpposite] = temp;
+                    // std::cin >> temp;
+                }
+            }
+        }
+
+        return image;
+    }
+
+    Tensor<DTYPE>* RandomCrop(Tensor<DTYPE> *srcImage) {
+        int numOfChannel           = 3;
+        int heightOfSrcImg         = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding);
+        int widthOfSrcImg          = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding);
+        int srcImageSizePerChannel = heightOfSrcImg * widthOfSrcImg;
+        int heightOfImg            = m_lengthOfWidthAndHeight;
+        int widthOfImg             = m_lengthOfWidthAndHeight;
+        int imageSizePerChannel    = heightOfImg * widthOfImg;
+
+        Tensor<DTYPE> *cropedImg = Tensor<DTYPE>::Zeros(1, 1, 1, 1, numOfChannel * heightOfImg * widthOfImg);
+
+        // std::cout << cropedImg->GetShape() << '\n';
+
+        int startPosW = m_shuffledListForCrop.back();
+        m_shuffledListForCrop.pop_back();
+        int startPosH = m_shuffledListForCrop.back();
+        m_shuffledListForCrop.pop_back();
+
+        // printf("startPosW : %d, startPosH: %d , rsize : %d\n", startPosW, startPosH, m_shuffledListForCrop.size());
+
+        int srcIdx = 0;
+        int idx    = 0;
+
+        // std::cout << srcImage->GetShape()  << '\n';
+
+        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+            for (int rowNum = 0; rowNum < heightOfImg; rowNum++) {
+                for (int colNum = 0; colNum < widthOfImg; colNum++) {
+                    srcIdx = channelNum * srcImageSizePerChannel + (startPosH + rowNum) * widthOfSrcImg + (startPosW + colNum);
+                    idx    = channelNum * imageSizePerChannel + rowNum * widthOfImg + colNum;
+                    // std::cout << "srcImage : " << srcImage->GetShape() << "srcidx : " << srcIdx << '\n';
+                    // std::cout << "cropedImg : " << cropedImg->GetShape() << "idx : " << idx << '\n';
+                    (*cropedImg)[idx] = (*srcImage)[srcIdx];
+                }
+            }
+        }
+
+        // std::cout << "check" << '\n';
+
+        delete srcImage;
+
+        return cropedImg;
     }
 
     int AddData2Buffer(Tensor<DTYPE> *setOfImage, Tensor<DTYPE> *setOfLabel) {

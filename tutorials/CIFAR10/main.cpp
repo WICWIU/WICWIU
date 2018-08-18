@@ -8,7 +8,7 @@
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (50000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             1
+#define GPUID             0
 #define LOG_LENGTH        1
 
 int main(int argc, char const *argv[]) {
@@ -26,12 +26,13 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     CIFAR10Reader<float> *train_data_reader = new CIFAR10Reader<float>(BATCH, 1000, TRUE);
-    CIFAR10Reader<float> *test_data_reader  = new CIFAR10Reader<float>(BATCH, 1000, FALSE);
-
     train_data_reader->UseNormalization(TRUE);
-    test_data_reader->UseNormalization(TRUE, train_data_reader);
-
+    train_data_reader->UseRandomHorizontalFlip();
+    train_data_reader->UseRandomCrop(4, 32);
     train_data_reader->StartProduce();
+
+    CIFAR10Reader<float> *test_data_reader  = new CIFAR10Reader<float>(BATCH, 1000, FALSE);
+    test_data_reader->UseNormalization(TRUE, train_data_reader);
     test_data_reader->StartProduce();
 
     Tensor<float> **data = NULL;
@@ -42,7 +43,7 @@ int main(int argc, char const *argv[]) {
 
     float best_acc = 0.f;
 
-    // // @ When load parameters
+    //// @ When load parameters
     // FILE *fp = fopen("resnet2.b", "rb");
     // net->Load(fp);
     // fread(&best_acc, sizeof(float), 1, fp);

@@ -78,7 +78,9 @@ public:
     }
 
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, double pEpsilon = 0.01) {
+#if __DEBUG__
         std::cout << "BatchNormalize:: Alloc( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, double)" << '\n';
+#endif  // __DEBUG__
 
         m_pTenInput = pInput->GetResult();
         m_pTenScale = pScale->GetResult();
