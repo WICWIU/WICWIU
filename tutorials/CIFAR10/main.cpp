@@ -31,7 +31,7 @@ int main(int argc, char const *argv[]) {
     train_data_reader->UseRandomCrop(4, 32);
     train_data_reader->StartProduce();
 
-    CIFAR10Reader<float> *test_data_reader  = new CIFAR10Reader<float>(BATCH, 1000, FALSE);
+    CIFAR10Reader<float> *test_data_reader = new CIFAR10Reader<float>(BATCH, 1000, FALSE);
     test_data_reader->UseNormalization(TRUE, train_data_reader);
     test_data_reader->StartProduce();
 
@@ -42,18 +42,26 @@ int main(int argc, char const *argv[]) {
     #endif  // __CUDNN__
 
     float best_acc = 0.f;
+    int   epoch    = 0;
 
     //// @ When load parameters
-    // FILE *fp = fopen("resnet2.b", "rb");
+    // FILE *fp = fopen("param.b", "rb");
     // net->Load(fp);
     // fread(&best_acc, sizeof(float), 1, fp);
+    // fread(&epoch,    sizeof(int),   1, fp);
     // fclose(fp);
 
     std::cout << "best_acc : " << best_acc << '\n';
+    std::cout << "epoch : " << best_acc << '\n';
 
-    for (int i = 0; i < EPOCH; i++) {
+    for (int i = epoch + 1; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';
 
+        if ((i + 1) % 50 == 0) {
+            std::cout << "Change learning rate!" << '\n';
+            float lr = net->GetOptimizer()->GetLearningRate();
+            net->GetOptimizer()->SetLearningRate(lr / 10);
+        }
         // ======================= Training =======================
         float train_avg_accuracy = 0.f;
         float train_cur_accuracy = 0.f;
@@ -187,12 +195,13 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
         }
 
-        if (best_acc < test_avg_accuracy) {
+        if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
             std::cout << "\nsave parameters...";
-            FILE *fp = fopen("resnet2.b", "wb");
+            FILE *fp = fopen("param.b", "wb");
             net->Save(fp);
-            best_acc = test_avg_accuracy;
+            best_acc = test_avg_accuracy / LOOP_FOR_TEST;
             fwrite(&best_acc, sizeof(float), 1, fp);
+            fwrite(&epoch,    sizeof(int),   1, fp);
             fclose(fp);
             std::cout << "done" << "\n\n";
         } else std::cout << "\n\n";
