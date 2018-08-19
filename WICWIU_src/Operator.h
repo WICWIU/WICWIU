@@ -44,6 +44,7 @@ public:
     Operator(std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME");
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME");
     virtual ~Operator();
 
     int                                   AddEdgebetweenOperators(Operator<DTYPE> *pInput);
@@ -95,6 +96,9 @@ public:
 
     virtual int                           SetResultOnCPU();
     virtual int                           SetGradientOnCPU();
+
+    int                                   Save(FILE *fileForSave);
+    int                                   Load(FILE *fileForLoad);
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     virtual int                           SetResultOnGPU(unsigned int idOfDevice);
