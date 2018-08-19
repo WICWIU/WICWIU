@@ -1,3 +1,4 @@
+
 #include "Operator.h"
 
 template class Operator<int>;
@@ -24,27 +25,35 @@ template<typename DTYPE> int Operator<DTYPE>::Alloc(int numInput, ...) {
     va_list ap;
     va_start(ap, numInput);
 
+    int null_count = 0;
+
     for (int i = 0; i < numInput; i++) {
-        temp = va_arg(ap, Operator<DTYPE> *);
+         temp = va_arg(ap, Operator<DTYPE> *);
 
-        if (temp) {
-            this->AddEdgebetweenOperators(temp);
-        } else {
-            for (int j = i - 1; j > -1; j--) {
-                delete (*m_apInput)[j];
-            }
-            delete m_apInput;
-            m_apInput = NULL;
-
-            printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
-            return FALSE;
-        }
+         if (!temp) {
+           null_count++;
+         } else{
+           this->AddEdgebetweenOperators(temp);
+         }
     }
 
     va_end(ap);
 
+    if(null_count){
+      numInput = numInput - null_count;
+      for (int i = 0; i < numInput; i++) {
+          delete (*m_apInput)[i];
+      }
+      delete m_apInput;
+      m_apInput = NULL;
+
+      printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+      return FALSE;
+    }
+
     return TRUE;
 }
+
 
 template<typename DTYPE> void Operator<DTYPE>::Delete() {
     #ifdef __DEBUG__
@@ -188,24 +197,31 @@ template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(int numInp
     va_list ap;
     va_start(ap, numInput);
 
+    int null_count = 0;
+
     for (int i = 0; i < numInput; i++) {
-        temp = va_arg(ap, Operator<DTYPE> *);
+         temp = va_arg(ap, Operator<DTYPE> *);
 
-        if (temp) {
-            this->AddEdgebetweenOperators(temp);
-        } else {
-            for (int j = i - 1; j > -1; j--) {
-                delete (*m_apInput)[j];
-            }
-            delete m_apInput;
-            m_apInput = NULL;
-
-            printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
-            return FALSE;
-        }
+         if (!temp) {
+           null_count++;
+         } else{
+           this->AddEdgebetweenOperators(temp);
+         }
     }
 
     va_end(ap);
+
+    if(null_count){
+      numInput = numInput - null_count;
+      for (int i = 0; i < numInput; i++) {
+          delete (*m_apInput)[i];
+      }
+      delete m_apInput;
+      m_apInput = NULL;
+
+      printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+      return FALSE;
+    }
 
     return TRUE;
 }
