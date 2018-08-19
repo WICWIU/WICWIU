@@ -54,7 +54,7 @@ public:
         AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================
-        SetLossFunction(new MSE<float>(out, label, "MSE"));
+        SetLossFunction(new MSE_backup<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
         SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.00005, MINIMIZE));

@@ -27,10 +27,10 @@
 //     }
 // };
 
-template<typename DTYPE> class TransposedConvolutionLayer2D : public Layer<DTYPE>{
+template<typename DTYPE> class TransposedConvolutionLayer2D : public Module<DTYPE>{
 private:
 public:
-    TransposedConvolutionLayer2D(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pNumKernelRow, int pNumKernelCol, int pStrideRow, int pStrideCol, int pPadding, int use_bias = FALSE, std::string pName = "NO NAME") : Layer<DTYPE>(pName){
+    TransposedConvolutionLayer2D(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pNumKernelRow, int pNumKernelCol, int pStrideRow, int pStrideCol, int pPadding, int use_bias = FALSE, std::string pName = "NO NAME") : Module<DTYPE>(pName){
         Alloc(pInput, pNumInputChannel, pNumOutputChannel, pNumKernelRow, pNumKernelCol, pStrideRow, pStrideCol, pPadding, pPadding, use_bias, pName);
     }
 

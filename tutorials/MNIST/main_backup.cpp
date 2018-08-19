@@ -1,3 +1,4 @@
+#include "net/my_CNN_backup.h"
 #include "net/my_CNN.h"
 #include "net/my_NN.h"
 #include "net/TransposedConv_Test.h"
@@ -9,6 +10,7 @@
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
+#define GPUID             0
 
 int main(int argc, char const *argv[]) {
     //FILE *fptr;
@@ -24,7 +26,8 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Select net ===================
     //NeuralNetwork<float> *net = new TransposedConv_Test(x, label);
-    NeuralNetwork<float> *net = new my_CNN(x, label);
+    NeuralNetwork<float> *net = new my_CNN_backup(x, label);
+    // NeuralNetwork<float> *net = new my_CNN(x, label);
     // NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
     // NeuralNetwork<float> *net = new my_NN(x, label, isMLP);
     // NeuralNetwork<float> *net = Resnet14<float>(x, label);
@@ -33,9 +36,9 @@ int main(int argc, char const *argv[]) {
     MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
 
 #ifdef __CUDNN__
-    x->SetDeviceGPU();
-    label->SetDeviceGPU();
-    net->SetDeviceGPU();
+    // x->SetDeviceGPU(GPUID);
+    // label->SetDeviceGPU(GPUID);
+    net->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
 
     net->PrintGraphInformation();
@@ -59,22 +62,18 @@ int main(int argc, char const *argv[]) {
             Tensor<float> *l_t = dataset->GetTrainFeedLabel();
 
 #ifdef __CUDNN__
-            x_t->SetDeviceGPU();
-            l_t->SetDeviceGPU();
+            x_t->SetDeviceGPU(GPUID);
+            l_t->SetDeviceGPU(GPUID);
             //x_copy->SetDeviceGPU();
 
 #endif  // __CUDNN__
 
             net->FeedInputTensor(2, x_t, l_t);
             //net->FeedInputTensor(2, x_t, x_copy);
-
-
             net->ResetParameterGradient();
-
             net->Training();
 
             train_accuracy    += net->GetAccuracy();
-
             train_avg_loss    += net->GetLoss();
 
             printf("\rTraining complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
@@ -104,8 +103,8 @@ int main(int argc, char const *argv[]) {
             //Tensor<float> *x_copy = new Tensor<float>(x_t);
 
 #ifdef __CUDNN__
-            x_t->SetDeviceGPU();
-            l_t->SetDeviceGPU();
+            x_t->SetDeviceGPU(GPUID);
+            l_t->SetDeviceGPU(GPUID);
             //x_copy->SetDeviceGPU();
 
 #endif  // __CUDNN__

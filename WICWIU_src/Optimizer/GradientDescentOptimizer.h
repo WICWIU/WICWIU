@@ -71,9 +71,15 @@ public:
     }
 
     void InitializeAttributeForGPU(unsigned int idOfDevice) {
+
+      if(m_momentum != 0.f){
         for (int i = 0; i < m_numOfParameter; i++) {
+            std::cout<<i<<std::endl;
             (*m_aaVelocity)[i]->SetDeviceGPU(idOfDevice);
+
         }
+      }
+
     }
 
     virtual int UpdateParameter() {

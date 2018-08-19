@@ -64,7 +64,7 @@ public:
     }
 
 #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Operator<DTYPE> *pInput = this->GetInput()[0];
 
         int batchsize   = pInput->GetResult()->GetBatchSize();
@@ -143,7 +143,7 @@ public:
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
-        int numOfThread = this->GetNumOfThread();
+        //int numOfThread = this->GetNumOfThread();
 
 		    /*
         for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
@@ -193,7 +193,7 @@ public:
 
 		    //  improved version 3
 		    int index = 0;
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
@@ -257,10 +257,10 @@ public:
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
-        int numOfThread = this->GetNumOfThread();
+        //int numOfThread = this->GetNumOfThread();
 
         int index = 0;
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {

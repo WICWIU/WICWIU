@@ -65,7 +65,7 @@ public:
 
 /*
 #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Operator<DTYPE> *pInput = this->GetInput()[0];
         //perator<DTYPE> *pWeight = this->GetInput()[1];
 
@@ -128,7 +128,7 @@ public:
     }
 
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight  = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
@@ -142,10 +142,9 @@ public:
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
-        int numOfThread = this->GetNumOfThread();
 
         int index = 0;
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
@@ -178,7 +177,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight  = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *result      = this->GetResult();
@@ -196,11 +195,10 @@ public:
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
-        int numOfThread = this->GetNumOfThread();
         int x;
 
         int index = 0;
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
@@ -214,30 +212,33 @@ public:
 
                             (*input_delta)[index] += (*weight)[index]*(*this_delta)[index];
                             (*weight_delta)[index] += (*input)[index]*(*this_delta)[index];
-                            //std::cout<<"index: "<<index << "  input_delta: "<<(*input_delta)[index]<<"  weight_delta: " << (*weight_delta)[index] <<std::endl;
+                            //std::cout<<"index: "<<index << " weight: "<< (*weight)[index] << "  input_delta: "<<(*input_delta)[index]<<"  weight_delta: " << (*weight_delta)[index] <<std::endl;
                         }
-/*
+
+                        /*if(std::isnan((*this_delta)[index])){
+                            (*this_delta)[index] = 0.00000001f;
+                        }*/
+
+
                         if(std::isnan((*weight)[index]))
                         {
                           std::cout<<"\n weight" <<std::endl;
-                          std::cin >> x;
                         }
                         if(std::isnan((*this_delta)[index]))
                         {
                           std::cout<<"\n this_delta" <<std::endl;
-                          std::cin >> x;
                         }
                         if(std::isnan((*input_delta)[index]))
                         {
                           std::cout<<"\n input_delta" <<std::endl;
-                          std::cin >> x;
                         }
                         if(std::isnan((*weight_delta)[index]))
                         {
                           std::cout<<"\n weight_delta"<<std::endl;
+                        }
+                        if(std::isnan((*weight)[index]) || std::isnan((*this_delta)[index]) || std::isnan((*input_delta)[index]) || std::isnan((*weight_delta)[index])){
                           std::cin >> x;
                         }
-*/
                     }
                 }
             }

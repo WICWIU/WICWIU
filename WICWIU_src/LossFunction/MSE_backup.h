@@ -1,20 +1,20 @@
-#ifndef MSE_H_
-#define MSE_H_    value
+#ifndef MSE_BACKUP_H_
+#define MSE_BACKUP_H_    value
 
 #include "../LossFunction.h"
 #include <cmath>
 
 template<typename DTYPE>
-class MSE : public LossFunction<DTYPE>{
+class MSE_backup : public LossFunction<DTYPE>{
 public:
-    MSE(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName) {
+    MSE_backup(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName) {
         #ifdef __DEBUG__
         std::cout << "MSE::MSE(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pOperator);
     }
 
-    virtual ~MSE() {
+    virtual ~MSE_backup() {
         #ifdef __DEBUG__
         std::cout << "MSE::~MSE()" << '\n';
         #endif  // __DEBUG__
@@ -53,11 +53,11 @@ public:
         int capacity    = channelsize * rowsize * colsize;
 
         int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+      //  int numOfThread = this->GetNumOfThread();
 
 
-
-        for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0, i = 0; ba < batchsize; ba++) {
+        //for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
             i = ti * batchsize + ba;
 
             for (int j = 0, index = 0; j < capacity; j++) {
@@ -119,9 +119,10 @@ public:
         int capacity    = channelsize * rowsize * colsize;
 
         int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
+        //int numOfThread = this->GetNumOfThread();
 
-        for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0, i = 0; ba < batchsize; ba++) {
+        //for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
             i = ti * batchsize + ba;
 
             for (int j = 0, index = 0; j < capacity; j++) {
@@ -155,4 +156,4 @@ public:
     }
 };
 
-#endif  // MSE_H_
+#endif  // MSE_BACKUP_H_
