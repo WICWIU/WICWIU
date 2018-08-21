@@ -17,23 +17,17 @@ public:
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv1" + pName);
-#ifdef __CUDNN__
-        // out = new CUDNNBatchNormalizeLayer2D<DTYPE>(out, pNumOutputChannel, "BasicBlock_BN1" + pName);
-#endif  // __CUDNN__
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, FALSE, "BasicBlock_BN1" + pName);
         out = new Relu<DTYPE>(out, "BasicBlock_Relu1" + pName);
 
         // 2
         out = new ConvolutionLayer2D<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 3, 3, 1, 1, 1, FALSE, "BasicBlock_Conv2" + pName);
-#ifdef __CUDNN__
-        // out = new CUDNNBatchNormalizeLayer2D<DTYPE>(out, pNumOutputChannel, "BasicBlock_BN2" + pName);
-#endif  // __CUDNN__
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, FALSE, "BasicBlock_BN2" + pName);
 
         // ShortCut
         if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel)) {
             remember = new ConvolutionLayer2D<DTYPE>(remember, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv_Shortcut" + pName);
-#ifdef __CUDNN__
-            // remember = new CUDNNBatchNormalizeLayer2D<DTYPE>(remember, pNumOutputChannel, "BasicBlock_BN_Shortcut" + pName);
-#endif  // __CUDNN__
+            out      = new BatchNormalizeLayer<DTYPE>(out, TRUE, FALSE, "BasicBlock_BN3" + pName);
         }
 
         // Add (for skip Connection)
@@ -111,33 +105,28 @@ public:
     int Alloc(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2, int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass) {
         this->SetInput(2, pInput, pLabel);
 
-        m_numInputChannel = 10;
+        m_numInputChannel = 64;
 
         Operator<DTYPE> *out = pInput;
 
         // ReShape
-        out =new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
-
-#ifdef __CUDNN__
-        // out =new CUDNNBatchNormalizeLayer2D<DTYPE>(out, 1, "1");
-#endif  // __CUDNN
+        out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, FALSE, "BN0");
 
         // 1
-        out =new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 1, 1, 1, 1, 0, TRUE, "Conv");
-#ifdef __CUDNN__
-        // out =new CUDNNBatchNormalizeLayer2D<DTYPE>(out, m_numInputChannel, "BasicBlock_BN1");
-#endif  // __CUDNN__
+        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, TRUE, "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, FALSE, "BN1");
 
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 2, "Block1");
-        out = this->MakeLayer(out, 20, pBlockType, pNumOfBlock2, 2, "Block2");
-        out = this->MakeLayer(out, 40, pBlockType, pNumOfBlock3, 2, "Block3");
-        out = this->MakeLayer(out, 80, pBlockType, pNumOfBlock3, 2, "Block4");
+        out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 2, "Block2");
+        out = this->MakeLayer(out, 256, pBlockType, pNumOfBlock3, 2, "Block3");
+        out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock3, 2, "Block4");
 
-        out =new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
+        out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
 
-        out =new ReShape<DTYPE>(out, 1, 1, 80, "ReShape");
+        out = new ReShape<DTYPE>(out, 1, 1, 512, "ReShape");
 
-        out =new Linear<DTYPE>(out, 80, pNumOfClass, TRUE, "Classification");
+        out = new Linear<DTYPE>(out, 512, pNumOfClass, TRUE, "Classification");
 
         this->AnalyzeGraph(out);
 
@@ -146,7 +135,7 @@ public:
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
-        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, MINIMIZE));
+        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.01, 0.9, 5e-4, MINIMIZE));
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, MINIMIZE));
 
         return TRUE;
@@ -159,11 +148,11 @@ public:
             Operator<DTYPE> *out = pInput;
 
             // Test of effect of the Max pool
-            if (pStride > 1) {
-                out =new Maxpooling2D<float>(out, pStride, pStride, 2, 2, "MaxPool_2");
-            }
+            // if (pStride > 1) {
+            // out = new Maxpooling2D<float>(out, pStride, pStride, 2, 2, "MaxPool_2");
+            // }
 
-            out =new BasicBlock<DTYPE>(out, m_numInputChannel, pNumOfChannel, 1, pName);
+            out = new BasicBlock<DTYPE>(out, m_numInputChannel, pNumOfChannel, pStride, pName);
 
             int pNumOutputChannel = pNumOfChannel;
 
@@ -172,7 +161,7 @@ public:
             // out =new BasicBlock<DTYPE>(out, m_numInputChannel, pNumOutputChannel, pStride, pName);
 
             for (int i = 1; i < pNumOfBlock; i++) {
-                out =new BasicBlock<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 1, pName);
+                out = new BasicBlock<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 1, pName);
             }
 
             m_numInputChannel = pNumOutputChannel;
