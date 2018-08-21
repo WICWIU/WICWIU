@@ -31,6 +31,7 @@ private:
     int m_numInputColumn;
 
     int m_isChannelwise;
+    int m_isUseAccumulate;
     Mode m_mode;
 
     int m_inputCapacity;
@@ -61,12 +62,13 @@ public:
         Alloc(pInput, pScale, pBias, pIsChannelwise);
     }
 
-    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, float pEpsilon, std::string pName) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
+    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, int pIsUseAccumulate, std::string pName) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
 #if __DEBUG__
-        std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, float, std:: string)" << '\n';
+        std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__
+        m_isUseAccumulate = pIsUseAccumulate;
 
-        Alloc(pInput, pScale, pBias, pIsChannelwise, pEpsilon);
+        Alloc(pInput, pScale, pBias, pIsChannelwise);
     }
 
     ~BatchNormalize() {
@@ -187,37 +189,71 @@ public:
 
         float temp = 0.f;
 
-        switch (m_mode) {
-            case TRAINING:
-                // CUDNNCachedMean        = m_aTenCachedMean->GetGPUData(0);
-                // CUDNNCachedInvVariance = m_aTenCachedInvVariance->GetGPUData(0);
-                checkCUDNN(cudnnBatchNormalizationForwardTraining(
-                               this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
-                               m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
-                               m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
-                               0.f, NULL, NULL,  /* CUDNNTotalMean, CUDNNTotalVariance,*/
-                               m_CUDNNEpsilon, NULL, NULL  /* CUDNNCachedMean, CUDNNCachedInvVariance*/));
-                break;
-            case ACCUMULATING:
-                checkCUDNN(cudnnBatchNormalizationForwardTraining(
-                               this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
-                               m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
-                               m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
-                               m_CUDNNExponentialAverageFactor, CUDNNTotalMean, CUDNNTotalVariance,
-                               m_CUDNNEpsilon, NULL, NULL)
-                           );
-                m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));
-                break;
-            case INFERENCING:
-                checkCUDNN(cudnnBatchNormalizationForwardInference(
-                               this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
-                               m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
-                               m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
-                               CUDNNTotalMean, CUDNNTotalVariance, m_CUDNNEpsilon));
-                break;
-            default:
-                break;
+        if (m_isUseAccumulate) {
+            switch (m_mode) {
+                case TRAINING:
+                    m_aTenCachedMean->Reset(this->GetCudnnHandle());
+                    m_aTenCachedInvVariance->Reset(this->GetCudnnHandle());
+                    CUDNNCachedMean        = m_aTenCachedMean->GetGPUData(0);
+                    CUDNNCachedInvVariance = m_aTenCachedInvVariance->GetGPUData(0);
+                    checkCUDNN(cudnnBatchNormalizationForwardTraining(
+                                   this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
+                                   m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
+                                   m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
+                                   0.f, NULL, NULL,  /* CUDNNTotalMean, CUDNNTotalVariance,*/
+                                   // m_CUDNNExponentialAverageFactor, CUDNNTotalMean, CUDNNTotalVariance,  /* CUDNNTotalMean, CUDNNTotalVariance,*/
+                                   m_CUDNNEpsilon, CUDNNCachedMean, CUDNNCachedInvVariance  /* CUDNNCachedMean, CUDNNCachedInvVariance*/));
+                    // m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));
+                    break;
+                case ACCUMULATING:
+                    checkCUDNN(cudnnBatchNormalizationForwardTraining(
+                                   this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
+                                   m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
+                                   m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
+                                   m_CUDNNExponentialAverageFactor, CUDNNTotalMean, CUDNNTotalVariance,
+                                   m_CUDNNEpsilon, NULL, NULL)
+                               );
+                    m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));
+                    break;
+                case INFERENCING:
+                    checkCUDNN(cudnnBatchNormalizationForwardInference(
+                                   this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
+                                   m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
+                                   m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
+                                   CUDNNTotalMean, CUDNNTotalVariance, m_CUDNNEpsilon));
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            // std::cout << "check" << '\n';
+            switch (m_mode) {
+                case TRAINING:
+                    m_aTenCachedMean->Reset(this->GetCudnnHandle());
+                    m_aTenCachedInvVariance->Reset(this->GetCudnnHandle());
+                    CUDNNCachedMean        = m_aTenCachedMean->GetGPUData(0);
+                    CUDNNCachedInvVariance = m_aTenCachedInvVariance->GetGPUData(0);
+                    checkCUDNN(cudnnBatchNormalizationForwardTraining(
+                                   this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
+                                   m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
+                                   m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
+                                   // 0.f, NULL, NULL,  /* CUDNNTotalMean, CUDNNTotalVariance,*/
+                                   1.f, CUDNNTotalMean, CUDNNTotalVariance,  /* CUDNNTotalMean, CUDNNTotalVariance,*/
+                                   m_CUDNNEpsilon, CUDNNCachedMean, CUDNNCachedInvVariance  /* CUDNNCachedMean, CUDNNCachedInvVariance*/));
+                    // m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));
+                    break;
+                case INFERENCING:
+                    checkCUDNN(cudnnBatchNormalizationForwardInference(
+                                   this->GetCudnnHandle(), m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
+                                   m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
+                                   m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
+                                   CUDNNTotalMean, CUDNNTotalVariance, m_CUDNNEpsilon));
+                    break;
+                default:
+                    break;
+            }
         }
+
         checkCudaErrors(cudaDeviceSynchronize());
 
 
@@ -239,10 +275,10 @@ public:
 
         checkCUDNN(cudnnBatchNormalizationBackward(
                        this->GetCudnnHandle(), m_CUDNNMode,
-                       &m_CUDNNAlpha, &m_CUDNNBeta, &m_CUDNNAlpha, &m_CUDNNBeta,
+                       &m_CUDNNAlpha, &m_CUDNNAlpha, &m_CUDNNAlpha, &m_CUDNNAlpha,
                        m_CUDNNXDesc, CUDNNX, m_CUDNNDyDesc, CUDNNDy, m_CUDNNDxDesc, CUDNNDx,
                        m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnScaleDiff, CUDNNBnBiasDiff,
-                       m_CUDNNEpsilon, NULL, NULL  /* CUDNNCachedMean, CUDNNCachedInvVariance*/));
+                       m_CUDNNEpsilon, CUDNNCachedMean, CUDNNCachedInvVariance  /* CUDNNCachedMean, CUDNNCachedInvVariance*/));
 
         checkCudaErrors(cudaDeviceSynchronize());
 
@@ -255,47 +291,59 @@ public:
         if (m_mode == ACCUMULATING) {
             ;
         } else if (m_mode == INFERENCING) {
-            ;
+#ifdef __CUDNN__
+            m_CUDNNExponentialAverageFactor = 1.0;
+#endif  // ifdef __CUDNN__
+            m_aTenTotalMean->Reset();
+            m_aTenTotalVariance->Reset();
         } else {
+#ifdef __CUDNN__
+            // m_CUDNNExponentialAverageFactor = 1.0;
+#endif  // ifdef __CUDNN__
             return TRUE;
         }
+#ifdef __CUDNN__
+        // m_CUDNNExponentialAverageFactor = 1.0;
+        // m_aTenTotalMean->Reset();
+        // m_aTenTotalVariance->Reset();
+#endif  // ifdef __CUDNN__
         m_mode = TRAINING;
 
         return TRUE;
     }
 
     int SetModeAccumulating() {
-        if (m_mode == TRAINING) {
-#ifdef __CUDNN__
-            m_CUDNNExponentialAverageFactor = 1.0;
-#endif  // ifdef __CUDNN__
-            m_aTenTotalMean->Reset();
-            m_aTenTotalVariance->Reset();
-        } else if (m_mode == INFERENCING) {
-            ;
-        } else {
+        if (m_isUseAccumulate) {
+            if (m_mode == TRAINING) {
+    #ifdef __CUDNN__
+                m_CUDNNExponentialAverageFactor = 1.0;
+    #endif  // ifdef __CUDNN__
+                m_aTenTotalMean->Reset();
+                m_aTenTotalVariance->Reset();
+            } else if (m_mode == INFERENCING) {
+                ;
+            } else {
+                return TRUE;
+            }
+            m_mode = ACCUMULATING;
             return TRUE;
+        } else {
+            std::cout << "you cannot use accumulating mode" << '\n';
         }
-        m_mode = ACCUMULATING;
-        return TRUE;
     }
 
     int SetModeInferencing() {
 #ifdef __CUDNN__
         // std::cout << "SetModeInferencing() : " << m_CUDNNExponentialAverageFactor << '\n';
 
-        if (m_CUDNNExponentialAverageFactor < 1.0) {
-            if (m_mode == TRAINING) {
-                ;
-            } else if (m_mode == ACCUMULATING) {
-                ;
-            } else {
-                return TRUE;
-            }
+        if (m_mode == TRAINING) {
+            ;
+        } else if (m_mode == ACCUMULATING) {
+            ;
         } else {
-            std::cout << "failed to set to inference: nothing accumulated." << std::endl;
             return TRUE;
         }
+
 #endif  // ifdef __CUDNN__
 
         m_mode = INFERENCING;

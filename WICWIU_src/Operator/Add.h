@@ -204,11 +204,11 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
-                                  &m_beta, leftDeltaDesc, m_pDevLeftDelta));
+                                  &m_alpha, leftDeltaDesc, m_pDevLeftDelta));
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
-                                  &m_beta, rightDeltaDesc, m_pDevRightDelta));
+                                  &m_alpha, rightDeltaDesc, m_pDevRightDelta));
 
 
         return TRUE;

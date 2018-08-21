@@ -215,7 +215,7 @@ public:
         checkCUDNN(cudnnActivationBackward(this->GetCudnnHandle(), actDesc, &m_alpha,
                                            m_aOutputTensorDesc, m_pDevOutput,
                                            m_aDeltaDesc, m_pDevDelta,
-                                           m_aInputTensorDesc, m_pDevInput, &m_beta,
+                                           m_aInputTensorDesc, m_pDevInput, &m_alpha,
                                            m_aInputTensorDesc, m_pDevInputDelta));
 
         checkCudaErrors(cudaDeviceSynchronize());
