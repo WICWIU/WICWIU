@@ -6,6 +6,7 @@
 #define BATCH             50
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (1300000 / BATCH)
+#define LOOP_FOR_ACCUM    (1000 / BATCH) * 10
 #define LOOP_FOR_TEST     (50000 / BATCH)
 #define GPUID             0
 
@@ -43,12 +44,12 @@ int   main(int argc, char const *argv[]) {
     float best_acc = 0.f;
     int   epoch    = 0;
 
-    // //// @ When load parameters
-    // FILE *fp = fopen(filename, "rb");
-    // net->Load(fp);
-    // fread(&best_acc, sizeof(float), 1, fp);
-    // fread(&epoch,    sizeof(int),   1, fp);
-    // fclose(fp);
+    //// @ When load parameters
+    FILE *fp = fopen(filename, "rb");
+    net->Load(fp);
+    fread(&best_acc, sizeof(float), 1, fp);
+    fread(&epoch,    sizeof(int),   1, fp);
+    fclose(fp);
 
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
@@ -113,55 +114,55 @@ int   main(int argc, char const *argv[]) {
         std::cout << '\n';
 
         // ======================= Accumulating =======================
-    //     train_avg_accuracy = 0.f;
-    //     train_cur_accuracy = 0.f;
-    //     train_avg_loss     = 0.f;
-    //     train_cur_loss     = 0.f;
-    //
-    //     net->SetModeAccumulating();
-    //
-    //     for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-    //         startTime = clock();
-    //
-    //         data = train_data_reader->GetDataFromBuffer();
-    //
-    // #ifdef __CUDNN__
-    //         data[0]->SetDeviceGPU(GPUID);  // 추후 자동화 필요
-    //         data[1]->SetDeviceGPU(GPUID);
-    // #endif  // __CUDNN__
-    //
-    //         // std::cin >> temp;
-    //         net->FeedInputTensor(2, data[0], data[1]);
-    //         delete data;
-    //         data = NULL;
-    //         net->ResetParameterGradient();
-    //         net->Testing();
-    //         // std::cin >> temp;
-    //         train_cur_accuracy = net->GetAccuracy(1000);
-    //         train_cur_loss     = net->GetLoss();
-    //
-    //         train_avg_accuracy += train_cur_accuracy;
-    //         train_avg_loss     += train_cur_loss;
-    //
-    //         endTime            = clock();
-    //         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
-    //
-    //         printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.4f, cur_acc : %0.5f, avg_acc : %0.5f, ct : %0.3f's / rt : %0.3f'm"  /*(ExcuteTime : %f)*/,
-    //                j + 1, LOOP_FOR_TRAIN,
-    //                train_cur_loss,
-    //                train_avg_loss / (j + 1),
-    //                train_cur_accuracy,
-    //                train_avg_accuracy / (j + 1),
-    //                nProcessExcuteTime,
-    //                nProcessExcuteTime * (LOOP_FOR_TRAIN - j - 1) / 60);
-    //         fflush(stdout);
-    //
-    //         // sleep(30);
-    //         if (j % (LOOP_FOR_TRAIN / LOG_LENGTH) == (LOOP_FOR_TRAIN / LOG_LENGTH) - 1) {
-    //             std::cout << '\n';
-    //         }
-    //     }
-    //     std::cout << '\n';
+        train_avg_accuracy = 0.f;
+        train_cur_accuracy = 0.f;
+        train_avg_loss     = 0.f;
+        train_cur_loss     = 0.f;
+
+        net->SetModeAccumulating();
+
+        for (int j = 0; j < LOOP_FOR_ACCUM; j++) {
+            startTime = clock();
+
+            data = train_data_reader->GetDataFromBuffer();
+
+    #ifdef __CUDNN__
+            data[0]->SetDeviceGPU(GPUID);  // 추후 자동화 필요
+            data[1]->SetDeviceGPU(GPUID);
+    #endif  // __CUDNN__
+
+            // std::cin >> temp;
+            net->FeedInputTensor(2, data[0], data[1]);
+            delete data;
+            data = NULL;
+            net->ResetParameterGradient();
+            net->Testing();
+            // std::cin >> temp;
+            train_cur_accuracy = net->GetAccuracy(1000);
+            train_cur_loss     = net->GetLoss();
+
+            train_avg_accuracy += train_cur_accuracy;
+            train_avg_loss     += train_cur_loss;
+
+            endTime            = clock();
+            nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
+
+            printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.4f, cur_acc : %0.5f, avg_acc : %0.5f, ct : %0.3f's / rt : %0.3f'm"  /*(ExcuteTime : %f)*/,
+                   j + 1, LOOP_FOR_ACCUM,
+                   train_cur_loss,
+                   train_avg_loss / (j + 1),
+                   train_cur_accuracy,
+                   train_avg_accuracy / (j + 1),
+                   nProcessExcuteTime,
+                   nProcessExcuteTime * (LOOP_FOR_ACCUM - j - 1) / 60);
+            fflush(stdout);
+
+            // sleep(30);
+            if (j % (LOOP_FOR_ACCUM / LOG_LENGTH) == (LOOP_FOR_ACCUM / LOG_LENGTH) - 1) {
+                std::cout << '\n';
+            }
+        }
+        std::cout << '\n';
 
         // ======================= Testing ======================
         float test_avg_accuracy = 0.f;
