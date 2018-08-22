@@ -10,13 +10,21 @@ ENABLE_CUDNN = -D__CUDNN__
 #	uncomment the following to debug
 #DFLAGS = -g -D__DEBUG__
 
-LFLAGS = -lcudart -lcudnn -lpthread
 
 INCLUDE_PATH = -I/usr/local/cuda/include
 LIB_PATH = -L. -L/usr/local/cuda/lib64
 
 CC = g++
-NVCC = nvcc
+
+ifdef	ENABLE_CUDNN
+	LINKER = nvcc
+	LFLAGS = -lcudart -lcudnn -lpthread
+#	LFLAGS = -lpthread
+else
+	LINKER = g++
+	LFLAGS = -lpthread
+endif
+
 AR = ar
 
 WICWIU_SRCS = \
@@ -42,7 +50,7 @@ $(WICWIU_LIB): $(WICWIU_OBJS)
 	$(AR) rcs $@ $(WICWIU_OBJS)
 
 #main: $(WICWIU_OBJS) main.o
-#	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) main.o
+#	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) main.o
 
 clean:
 	rm -rf *.o $(WICWIU_OBJS) $(WICWIU_LIB)
