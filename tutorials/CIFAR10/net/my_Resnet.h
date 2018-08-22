@@ -1,13 +1,13 @@
 #include "../../../WICWIU_src/NeuralNetwork.h"
 
-template<typename DTYPE> class ResNetBasicBlock : public Module<DTYPE>{
+template<typename DTYPE> class ResnetBasicBlock : public Module<DTYPE>{
 private:
 public:
-    ResNetBasicBlock(Operator<DTYPE> *input, int numOfInputChannel, int numOfOutputChannel, int stride = 1, std::string name = NULL) {
+    ResnetBasicBlock(Operator<DTYPE> *input, int numOfInputChannel, int numOfOutputChannel, int stride = 1, std::string name = NULL) {
         Alloc(input, numOfInputChannel, numOfOutputChannel, stride, name);
     }
 
-    virtual ~ResNetBasicBlock() {}
+    virtual ~ResnetBasicBlock() {}
 
     int Alloc(Operator<DTYPE> *input, int numOfInputChannel, int numOfOutputChannel, int stride, std::string name) {
         this->SetInput(input);
@@ -42,16 +42,16 @@ public:
     }
 };
 
-template<typename DTYPE> class ResNetBottleneckBlock : public Module<DTYPE>{
+template<typename DTYPE> class ResnetBottleneckBlock : public Module<DTYPE>{
 private:
     int m_expansion;
 
 public:
-    ResNetBottleneckBlock(Operator<DTYPE> *input, int numOfInputChannel, int numOfOutputChannel, int stride = 1, int expansion = 1, std::string name = NULL) {
+    ResnetBottleneckBlock(Operator<DTYPE> *input, int numOfInputChannel, int numOfOutputChannel, int stride = 1, int expansion = 1, std::string name = NULL) {
         Alloc(input, numOfInputChannel, numOfOutputChannel, stride, expansion, name);
     }
 
-    virtual ~ResNetBottleneckBlock() {}
+    virtual ~ResnetBottleneckBlock() {}
 
     int Alloc(Operator<DTYPE> *input, int numOfInputChannel, int numOfOutputChannel, int stride, int expansion, std::string name) {
         m_expansion = expansion;
@@ -138,25 +138,25 @@ public:
     Operator<DTYPE>* MakeLayer(Operator<DTYPE> *input, int numOfOutputChannel, std::string typeOfBlock, int numOfBlock, int stride, std::string name = NULL) {
         if (numOfBlock == 0) {
             return input;
-        } else if ((typeOfBlock == "ResNetBasicBlock") && (numOfBlock > 0)) {
+        } else if ((typeOfBlock == "ResnetBasicBlock") && (numOfBlock > 0)) {
             Operator<DTYPE> *out = input;
 
-            out = new ResNetBasicBlock<DTYPE>(out, m_numOfInputChannel, numOfOutputChannel, stride, name);
+            out = new ResnetBasicBlock<DTYPE>(out, m_numOfInputChannel, numOfOutputChannel, stride, name);
 
             for (int i = 1; i < numOfBlock; i++) {
-                out = new ResNetBasicBlock<DTYPE>(out, numOfOutputChannel, numOfOutputChannel, 1, name);
+                out = new ResnetBasicBlock<DTYPE>(out, numOfOutputChannel, numOfOutputChannel, 1, name);
             }
 
             m_numOfInputChannel = numOfOutputChannel;
 
             return out;
-        } else if ((typeOfBlock == "ResNetBottleneckBlock") && (numOfBlock > 0)) {
+        } else if ((typeOfBlock == "ResnetBottleneckBlock") && (numOfBlock > 0)) {
             Operator<DTYPE> *out = input;
 
-            out = new ResNetBottleneckBlock<DTYPE>(out, m_numOfInputChannel, numOfOutputChannel, stride, name);
+            out = new ResnetBottleneckBlock<DTYPE>(out, m_numOfInputChannel, numOfOutputChannel, stride, name);
 
             for (int i = 1; i < numOfBlock; i++) {
-                out = new ResNetBottleneckBlock<DTYPE>(out, numOfOutputChannel, numOfOutputChannel, 1, name);
+                out = new ResnetBottleneckBlock<DTYPE>(out, numOfOutputChannel, numOfOutputChannel, 1, name);
             }
 
             m_numOfInputChannel = numOfOutputChannel;
