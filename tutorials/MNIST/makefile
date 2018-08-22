@@ -1,6 +1,8 @@
 .SUFFIXES = .cpp .o
 
 CFLAGS = -O2 -std=c++11
+
+# if cuda device, cuda lib, or cuDNN is not installed, disable the following line
 ENABLE_CUDNN = -D__CUDNN__
 #DFLAGS = -g -D__DEBUG__
 
