@@ -17,12 +17,12 @@ public:
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv1" + pName);
-        // out = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_1");
+        out = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_1");
         out = new Relu<DTYPE>(out, "BasicBlock_Relu1" + pName);
 
         // 2
         out = new ConvolutionLayer2D<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 3, 3, 1, 1, 1, FALSE, "BasicBlock_Conv2" + pName);
-        // out = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_2");
+        out = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_2");
 
         // ShortCut
         if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel)) {
@@ -116,7 +116,7 @@ public:
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 1, m_numInputChannel, 1, 1, 1, 1, 0, TRUE, "Conv");
-        // out = new BatchNormalizeLayer<float>(out, TRUE, "BN_1");
+        out = new BatchNormalizeLayer<float>(out, TRUE, "BN_1");
 
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 1, "Block1");
         out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 1, "Block2");
@@ -138,7 +138,7 @@ public:
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
-        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, 0.9, 5e-4, MINIMIZE));
+        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.1, 0.9, 5e-4, MINIMIZE));
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, MINIMIZE));
 
         return TRUE;

@@ -7,12 +7,12 @@ template<typename DTYPE> class BatchNormalizeLayer : public Module<DTYPE>{
 private:
 public:
     BatchNormalizeLayer(Operator<DTYPE> *pInput, int pIsChannelwise = FALSE, std::string pName = "NO NAME") {
-        Alloc(pInput, pIsChannelwise, FALSE, pName);
+        Alloc(pInput, pIsChannelwise, pName);
     }
 
     virtual ~BatchNormalizeLayer() {}
 
-    int Alloc(Operator<DTYPE> *pInput, int pIsChannelwise, int pIsUseAccumulate, std::string pName) {
+    int Alloc(Operator<DTYPE> *pInput, int pIsChannelwise, std::string pName) {
         this->SetInput(pInput);
         Operator<DTYPE> *out = pInput;
         Shape *pInputShape   = out->GetResult()->GetShape();
@@ -32,7 +32,7 @@ public:
         // std::cout << pGamma->GetResult()->GetShape() << '\n';
         // std::cout << pBeta->GetResult()->GetShape() << '\n';
 
-        out = new BatchNormalize<DTYPE>(out, pGamma, pBeta, pIsChannelwise, pIsUseAccumulate, "BatchNormalize_BatchNormalize_" + pName);
+        out = new BatchNormalize<DTYPE>(out, pGamma, pBeta, pIsChannelwise, "BatchNormalize_BatchNormalize_" + pName);
 
         this->AnalyzeGraph(out);
 

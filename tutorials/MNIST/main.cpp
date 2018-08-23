@@ -167,7 +167,7 @@ int main(int argc, char const *argv[]) {
 
         if ((best_acc < (test_accuracy / LOOP_FOR_TEST))) {
             std::cout << "save parameters...";
-            FILE *fp = fopen("parameters2.b", "wb");
+            FILE *fp = fopen("parameters.b", "wb");
             net->Save(fp);
             best_acc = (test_accuracy / LOOP_FOR_TEST);
             fwrite(&best_acc, sizeof(float), 1, fp);
