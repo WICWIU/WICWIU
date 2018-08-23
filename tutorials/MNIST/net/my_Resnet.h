@@ -27,7 +27,7 @@ public:
         // ShortCut
         if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel)) {
             remember = new ConvolutionLayer2D<DTYPE>(remember, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv_Shortcut" + pName);
-            // out      = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_shortcut");
+            out      = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_shortcut");
         }
 
         // Add (for skip Connection)
@@ -112,7 +112,7 @@ public:
         // ReShape
         out = new ReShape<DTYPE>(out, 28, 28, "ReShape");
 
-        out = new BatchNormalizeLayer<float>(out, TRUE, "BN_0");
+        // out = new BatchNormalizeLayer<float>(out, TRUE, "BN_0");
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 1, m_numInputChannel, 1, 1, 1, 1, 0, TRUE, "Conv");

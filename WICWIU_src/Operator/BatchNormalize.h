@@ -37,6 +37,7 @@ private:
     int m_batchSummaryCapacity;
 
     float m_epsilon;
+    float m_momentum;
     double m_exponentialAverageFactor;
 
 #ifdef __CUDNN__
@@ -55,12 +56,20 @@ private:
 #endif  // _CUDNN__
 
 public:
-    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, std::string pName) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
+    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__
 
         Alloc(pInput, pScale, pBias, pIsChannelwise);
+    }
+
+    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, float pMomentum = 0.1, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
+#if __DEBUG__
+        std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
+#endif  // __DEBUG__
+
+        Alloc(pInput, pScale, pBias, pIsChannelwise, pMomentum);
     }
 
     ~BatchNormalize() {
@@ -71,7 +80,7 @@ public:
         Delete();
     }
 
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, double pEpsilon = 0.01) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, float pMomentum = 0.1, double pEpsilon = 0.01) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: Alloc( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, double)" << '\n';
 #endif  // __DEBUG__
@@ -95,6 +104,7 @@ public:
         m_numInputColumn = m_pTenInput->GetColSize();
 
         m_isChannelwise = pIsChannelwise;
+        m_momentum      = pMomentum;
 
         if (m_isChannelwise) {
             m_batchSummaryCapacity  = m_numChannel;
@@ -144,10 +154,12 @@ public:
         m_aTenCachedMean->SetDeviceGPU(idOfDevice);
         m_aTenCachedInvVariance->SetDeviceGPU(idOfDevice);
 
-        m_CUDNNAlpha                    = 1.f;
-        m_CUDNNBeta                     = 0.f;
-        m_CUDNNEpsilon                  = CUDNN_BN_MIN_EPSILON;
-        m_CUDNNExponentialAverageFactor = 1.0;
+        m_CUDNNAlpha   = 1.f;
+        m_CUDNNBeta    = 0.f;
+        m_CUDNNEpsilon = CUDNN_BN_MIN_EPSILON;
+
+        if (m_momentum != 0) m_CUDNNExponentialAverageFactor = m_momentum;
+        else m_CUDNNExponentialAverageFactor = 1.0;
     }
 
 #endif  // if __CUDNN__
@@ -193,7 +205,8 @@ public:
                                m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnBias,
                                m_CUDNNExponentialAverageFactor, CUDNNTotalMean, CUDNNTotalVariance,
                                m_CUDNNEpsilon, CUDNNCachedMean, CUDNNCachedInvVariance));
-                m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));
+
+                if (m_momentum == 0) m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));  // for exponential
                 break;
             case ACCUMULATING:
                 checkCUDNN(cudnnBatchNormalizationForwardTraining(
@@ -252,13 +265,15 @@ public:
     int SetModeTraining() {
         if (m_mode == ACCUMULATING) {
 #ifdef __CUDNN__
-            m_CUDNNExponentialAverageFactor = 1.0;
+
+            if (m_momentum == 0) m_CUDNNExponentialAverageFactor = 1.0;
             m_aTenTotalMean->Reset(m_CUDNNHandle);
             m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
         } else if (m_mode == INFERENCING) {
 #ifdef __CUDNN__
-            m_CUDNNExponentialAverageFactor = 1.0;
+
+            if (m_momentum == 0) m_CUDNNExponentialAverageFactor = 1.0;
             m_aTenTotalMean->Reset(m_CUDNNHandle);
             m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
@@ -271,6 +286,9 @@ public:
     }
 
     int SetModeAccumulating() {
+        // std::cout << m_aTenTotalMean << '\n';
+        // std::cout << m_aTenTotalVariance << '\n';
+
         if (m_mode == TRAINING) {
 #ifdef __CUDNN__
             m_CUDNNExponentialAverageFactor = 1.0;
@@ -286,11 +304,16 @@ public:
         } else {
             return TRUE;
         }
+        // std::cout << m_aTenTotalMean << '\n';
+        // std::cout << m_aTenTotalVariance << '\n';
+
         m_mode = ACCUMULATING;
         return TRUE;
     }
 
     int SetModeInferencing() {
+        // std::cout << m_aTenTotalMean << '\n';
+        // std::cout << m_aTenTotalVariance << '\n';
         if (m_mode == TRAINING) {
             ;
         } else if (m_mode == ACCUMULATING) {

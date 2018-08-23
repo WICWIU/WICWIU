@@ -15,13 +15,13 @@ public:
 
         // ======================= layer 1=======================
         out = new ConvolutionLayer2D<float>(out, 3, 32, 3, 3, 1, 1, 0, TRUE, "Conv_1");
-        out = new BatchNormalizeLayer<float>(out, TRUE, FALSE, "BN_1");
+        out = new BatchNormalizeLayer<float>(out, TRUE, "BN_1");
         out = new Relu<float>(out, "Relu_1");
         out = new Maxpooling2D<float>(out, 2, 2, 2, 2, "MaxPool_1");
 
         // ======================= layer 2=======================
         out = new ConvolutionLayer2D<float>(out, 32, 64, 3, 3, 1, 1, 0, TRUE, "Conv_2");
-        out = new BatchNormalizeLayer<float>(out, TRUE, FALSE, "BN_2");
+        out = new BatchNormalizeLayer<float>(out, TRUE, "BN_2");
         out = new Relu<float>(out, "Relu_2");
         out = new Maxpooling2D<float>(out, 2, 2, 2, 2, "MaxPool_2");
 

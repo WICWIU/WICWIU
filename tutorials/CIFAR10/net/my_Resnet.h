@@ -152,14 +152,14 @@ public:
             return out;
         } else if ((typeOfBlock == "ResnetBottleneckBlock") && (numOfBlock > 0)) {
             Operator<DTYPE> *out = input;
-
-            out = new ResnetBottleneckBlock<DTYPE>(out, m_numOfInputChannel, numOfOutputChannel, stride, name);
-
-            for (int i = 1; i < numOfBlock; i++) {
-                out = new ResnetBottleneckBlock<DTYPE>(out, numOfOutputChannel, numOfOutputChannel, 1, name);
-            }
-
-            m_numOfInputChannel = numOfOutputChannel;
+            //
+            // out = new ResnetBottleneckBlock<DTYPE>(out, m_numOfInputChannel, numOfOutputChannel, stride, name);
+            //
+            // for (int i = 1; i < numOfBlock; i++) {
+            //     out = new ResnetBottleneckBlock<DTYPE>(out, numOfOutputChannel, numOfOutputChannel, 1, name);
+            // }
+            //
+            // m_numOfInputChannel = numOfOutputChannel;
 
             return out;
         } else return NULL;
@@ -167,9 +167,9 @@ public:
 };
 
 template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet18(Tensorholder<DTYPE> *input, Tensorholder<DTYPE> *label) {
-    return new ResNet<DTYPE>(input, label, "BasicBlock", 2, 2, 2, 2, 10);
+    return new ResNet<DTYPE>(input, label, "ResnetBasicBlock", 2, 2, 2, 2, 10);
 }
 
 template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet34(Tensorholder<DTYPE> *input, Tensorholder<DTYPE> *label) {
-    return new ResNet<DTYPE>(input, label, "BasicBlock", 3, 4, 6, 3, 10);
+    return new ResNet<DTYPE>(input, label, "ResnetBasicBlock", 3, 4, 6, 3, 10);
 }
