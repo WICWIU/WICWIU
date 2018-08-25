@@ -482,6 +482,8 @@ public:
 
         const char *cstr = filePath.c_str();
 
+        const char *FILENAME = imgName.c_str();
+
         // std::cout << "filePath : " << filePath << '\n';
 
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
@@ -537,14 +539,16 @@ public:
         // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
-        for (ch = 0; ch < colorDim; ch++) {
-            for (ro = yOfImage; ro < lengthLimit; ro++) {
-                for (co = xOfImage; co < lengthLimit; co++) {
-                    if (imgReshapeBuf == NULL) (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
-                    else (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgReshapeBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+        for (ro = 0; ro < lengthLimit; ro++) {
+            for (co = 0; co < lengthLimit; co++) {
+                for (ch = 0; ch < colorDim; ch++) {
+                    if (imgReshapeBuf == NULL) (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
+                    else (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
                 }
             }
         }
+
+        ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
 
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
@@ -581,6 +585,7 @@ public:
 
         const char *cstr = filePath.c_str();
 
+        const char * FILENAME = imgName.c_str();
         // std::cout << "filePath : " << filePath << '\n';
 
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
@@ -636,14 +641,16 @@ public:
         // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
-        for (ch = 0; ch < colorDim; ch++) {
-            for (ro = yOfImage; ro < lengthLimit; ro++) {
-                for (co = xOfImage; co < lengthLimit; co++) {
-                    if (imgReshapeBuf == NULL) (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
-                    else (*temp)[Index3D(temp->GetShape(), ch, ro, co)] = imgReshapeBuf[ro * lengthLimit * colorDim + co * colorDim + ch] / 255.0;
+        for (ro = 0; ro < lengthLimit; ro++) {
+            for (co = 0; co < lengthLimit; co++) {
+                for (ch = 0; ch < colorDim; ch++) {
+                    if (imgReshapeBuf == NULL) (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
+                    else (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
                 }
             }
         }
+
+        ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
 
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
@@ -654,6 +661,45 @@ public:
 
         return temp;
     }
+
+    void Tensor2Image(Tensor<DTYPE>* temp, const char * FILENAME, int colorDim, int height, int width){
+        unsigned char *imgBuf = new unsigned char[colorDim * height * width];
+        int pixelFormat = TJPF_RGB;
+        unsigned char *jpegBuf = NULL;   /* Dynamically allocate the JPEG buffer */
+        unsigned long jpegSize = 0;
+        FILE *jpegFile = NULL;
+        tjhandle tjInstance = NULL;
+
+        if(!temp){
+            printf("Invalid Tensor pointer");
+            exit(-1);
+        }
+
+        for (int ro = 0; ro < height; ro++) {
+            for (int co = 0; co < width; co++) {
+                for (int ch = 0; ch < colorDim; ch++){
+                    imgBuf[ro * width * colorDim + co * colorDim + ch] = (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] * 255.0;
+                }
+            }
+        }
+
+        tjInstance = tjInitCompress();
+        tjCompress2(tjInstance, imgBuf, width, 0, height, pixelFormat,
+           &jpegBuf, &jpegSize, /*outSubsamp =*/ TJSAMP_444, /*outQual =*/ 100, /*flags =*/ 0);
+        tjDestroy(tjInstance);
+        tjInstance = NULL;
+        delete imgBuf;
+
+        if (!(jpegFile = fopen(FILENAME, "wb"))) {
+            printf("file open fail\n");
+            exit(-1);
+        }
+
+        fwrite(jpegBuf, jpegSize, 1, jpegFile);
+        fclose(jpegFile); jpegFile = NULL;
+        tjFree(jpegBuf); jpegBuf = NULL;
+    }
+
 
     Tensor<DTYPE>* Label2Tensor(int classNum  /*Address of Label*/) {
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, NUMBER_OF_CLASS);
