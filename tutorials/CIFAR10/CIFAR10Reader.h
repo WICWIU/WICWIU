@@ -15,7 +15,7 @@
 
 #include "../../WICWIU_src/Tensor_utils.h"
 
-#define NUMBER_OF_CLASS                        1000
+#define NUMBER_OF_CLASS                        10
 
 #define CAPACITY_OF_IMAGE                      3072
 
@@ -472,7 +472,7 @@ public:
     }
 
     int FillshuffledListForCrop() {
-        int limitOfCropPos      = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding) - m_lengthOfWidthAndHeight;
+        int limitOfCropPos      = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding) - m_lengthOfWidthAndHeight + 1;
         int twoTimesOfBatchSize = m_batchSize * 2;
 
         // std::cout << "limitOfCropPos : " << limitOfCropPos << '\n';
@@ -829,9 +829,9 @@ public:
                 for (int heightIdx = 0; heightIdx < heightOfImg; heightIdx++) {
                     for (int widthIdx = 0; widthIdx < widthOfImg; widthIdx++) {
                         idx                = channelNum * planeSizeOfTensor + (heightIdx + padding) * widthOfTensor + (widthIdx + padding);
-                        idxOfMeanAdnStddev = heightIdx * widthOfImg + widthIdx;
-                        (*image)[idx]     -= m_aMean[idxOfMeanAdnStddev];
-                        (*image)[idx]     /= m_aStddev[idxOfMeanAdnStddev];
+                        idxOfMeanAdnStddev = channelNum * planeSizeOfTensor + heightIdx * widthOfImg + widthIdx;
+                        (*image)[idx] -= m_aMean[channelNum];
+                        (*image)[idx] /= m_aStddev[channelNum];
                     }
                 }
             }
