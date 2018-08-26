@@ -114,10 +114,11 @@ public:
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
 
         // 1
-        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, TRUE, "Conv");
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
+        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, FALSE, "Conv");
+        out = new Maxpooling2D<float>(out, 2, 2, 2, 2, "MaxPool_2");
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
 
-        out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 2, "Block1");
+        out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 1, "Block1");
         out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 2, "Block2");
         out = this->MakeLayer(out, 256, pBlockType, pNumOfBlock3, 2, "Block3");
         out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock3, 2, "Block4");

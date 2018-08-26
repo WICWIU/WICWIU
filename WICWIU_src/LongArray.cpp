@@ -3,6 +3,7 @@
 template class LongArray<int>;
 template class LongArray<float>;
 template class LongArray<double>;
+template class LongArray<unsigned char>;
 
 template<typename DTYPE> int LongArray<DTYPE>::Alloc(unsigned int pTimeSize, unsigned int pCapacityPerTime) {
     #ifdef __DEBUG__
