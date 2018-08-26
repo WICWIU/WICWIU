@@ -12,18 +12,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+// #ifdef __TURBOJPEG__
 #include <turbojpeg.h>
+// #endif  // ifdef __TURBOJPEG__
 
 #include "../../WICWIU_src/Tensor_utils.h"
 
-// #define _throw(action, message) { \
-//   printf("ERROR in line %d while %s:\n%s\n", __LINE__, action, message); \
-//   retval = -1;  goto bailout; \
-// }
-// #define _throwtj(action)  _throw(action, tjGetErrorStr2(tjInstance))
-// #define _throwunix(action)  _throw(action, strerror(errno))
-
-#define NUMBER_OF_CLASS    1000
+#define NUMBER_OF_CLASS               1000
+#define NUMBER_OF_CHANNEL             3
+#define LEGNTH_OF_WIDTH_AND_HEIGHT    224
+#define CAPACITY_OF_PLANE             50176
+#define CAPACITY_OF_IMAGE             150528
 
 using namespace std;
 
@@ -69,6 +69,27 @@ private:
     sem_t m_mutex;
 
     int m_work;
+
+    /*Data Preprocessing*/
+    // for normalization
+    int m_useNormalization;
+    int m_isNormalizePerChannelWise;
+    float *m_aMean;
+    float *m_aStddev;
+
+    /*Data Augmentation*/
+    // Random_crop
+    int m_useRandomCrop;
+    int m_padding;
+    vector<int> m_shuffledListForCrop;
+
+    // Horizontal Flip
+    int m_useRandomHorizontalFlip;
+    vector<int> m_shuffledListForHorizontalFlip;
+
+    // Vetical Flip
+    int m_useRandomVerticalFlip;
+    vector<int> m_shuffledListForVerticalFlip;
 
 private:
     int Alloc() {
@@ -148,9 +169,9 @@ public:
     ImageNetDataReader(int batchSize, int bufferSize, int isTrain) {
         m_numOfTestImage = 0;
 
-        m_batchSize = batchSize;
-        m_isTrain   = isTrain;
-        m_recallnum = 0;
+        m_batchSize  = batchSize;
+        m_isTrain    = isTrain;
+        m_recallnum  = 0;
         m_bufferSize = bufferSize;
 
         sem_init(&m_full,  0, 0);
@@ -168,14 +189,13 @@ public:
         // start data preprocessing with above information
         // It works with thread
         // it will be end when receive "STOP" signal
-
     }
 
     virtual ~ImageNetDataReader() {
         Delete();
     }
 
-    int StartProduce(){
+    int StartProduce() {
         sem_init(&m_full,  0, 0);
         sem_init(&m_empty, 0, m_bufferSize);
         sem_init(&m_mutex, 0, 1);
@@ -295,7 +315,6 @@ public:
                 }
 
                 fclose(pFile);
-
             }
         } else {
             for (int classNum = 0; classNum < NUMBER_OF_CLASS; classNum++) {
@@ -396,6 +415,24 @@ public:
                     m_recallnum = 0;
                 }
 
+                if (m_useRandomCrop) {
+                    FillshuffledListForCrop();
+                    srand(unsigned(time(0)));
+                    random_shuffle(m_shuffledListForCrop.begin(), m_shuffledListForCrop.end(), ImageNetDataReader<DTYPE>::random_generator);
+                }
+
+                if (m_useRandomHorizontalFlip) {
+                    FillshuffledListForHorizontalFlip();
+                    srand(unsigned(time(0)));
+                    random_shuffle(m_shuffledListForHorizontalFlip.begin(), m_shuffledListForHorizontalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
+                }
+
+                if (m_useRandomVerticalFlip) {
+                    FillshuffledListForVerticalFlip();
+                    srand(unsigned(time(0)));
+                    random_shuffle(m_shuffledListForVerticalFlip.begin(), m_shuffledListForVerticalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
+                }
+
                 // std::cout << "m_recallnum : " << m_recallnum << '\n';
 
                 for (int i = 0; i < m_batchSize; i++) {
@@ -419,21 +456,19 @@ public:
                 sem_post(&m_mutex);
                 sem_post(&m_full);
 
-                int empty_value = 0;
-                int full_value  = 0;
-
-                sem_getvalue(&m_empty, &empty_value);
-                sem_getvalue(&m_full,  &full_value);
-
-                printf("full : %d, empty : %d \n", full_value, empty_value);
+                // int empty_value = 0;
+                // int full_value  = 0;
+                //
+                // sem_getvalue(&m_empty, &empty_value);
+                // sem_getvalue(&m_full,  &full_value);
+                //
+                // printf("full : %d, empty : %d \n", full_value, empty_value);
 
                 m_recallnum++;
             } while (m_work);
         } else {
             do {
                 if (((m_recallnum + 1) * m_batchSize) > m_numOfTestImage) {
-                    // std::cout << "end" << '\n';
-                    break;
                     m_recallnum = 0;
                 }
 
@@ -458,13 +493,13 @@ public:
                 sem_post(&m_mutex);
                 sem_post(&m_full);
 
-                int empty_value = 0;
-                int full_value  = 0;
-
-                sem_getvalue(&m_empty, &empty_value);
-                sem_getvalue(&m_full,  &full_value);
-
-                printf("full : %d, empty : %d \n", full_value, empty_value);
+                // int empty_value = 0;
+                // int full_value  = 0;
+                //
+                // sem_getvalue(&m_empty, &empty_value);
+                // sem_getvalue(&m_full,  &full_value);
+                //
+                // printf("full : %d, empty : %d \n", full_value, empty_value);
 
                 m_recallnum++;
             } while (m_work);
@@ -530,7 +565,8 @@ public:
 
         const char *cstr = filePath.c_str();
 
-        const char *FILENAME = imgName.c_str();
+        string _FILENAME     = "temp/" + imgName;
+        const char *FILENAME = _FILENAME.c_str();
 
         // std::cout << "filePath : " << filePath << '\n';
 
@@ -594,6 +630,27 @@ public:
                     else (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
                 }
             }
+        }
+
+        if (m_useNormalization) {
+            temp = Normalization(temp);
+        }
+
+        if (m_useRandomCrop) {
+            temp = Padding(temp);
+            temp = RandomCrop(temp);
+        }
+
+        if (m_useRandomHorizontalFlip) {
+            if (m_shuffledListForHorizontalFlip.back()) {
+                temp = HorizontalFlip(temp);
+            }
+            m_shuffledListForHorizontalFlip.pop_back();
+        }
+
+        if (m_useRandomVerticalFlip) {
+            if (m_shuffledListForVerticalFlip.back()) temp = VerticalFlip(temp);
+            m_shuffledListForVerticalFlip.pop_back();
         }
 
         ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
@@ -633,7 +690,9 @@ public:
 
         const char *cstr = filePath.c_str();
 
-        const char * FILENAME = imgName.c_str();
+        // string _FILENAME     = "temp/" + imgName;
+        // const char *FILENAME = _FILENAME.c_str();
+
         // std::cout << "filePath : " << filePath << '\n';
 
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
@@ -698,7 +757,7 @@ public:
             }
         }
 
-        ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
+        // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
 
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
@@ -710,22 +769,22 @@ public:
         return temp;
     }
 
-    void Tensor2Image(Tensor<DTYPE>* temp, const char * FILENAME, int colorDim, int height, int width){
-        unsigned char *imgBuf = new unsigned char[colorDim * height * width];
-        int pixelFormat = TJPF_RGB;
-        unsigned char *jpegBuf = NULL;   /* Dynamically allocate the JPEG buffer */
-        unsigned long jpegSize = 0;
-        FILE *jpegFile = NULL;
-        tjhandle tjInstance = NULL;
+    void Tensor2Image(Tensor<DTYPE> *temp, const char *FILENAME, int colorDim, int height, int width) {
+        unsigned char *imgBuf   = new unsigned char[colorDim * height * width];
+        int pixelFormat         = TJPF_RGB;
+        unsigned char *jpegBuf  = NULL;  /* Dynamically allocate the JPEG buffer */
+        unsigned long  jpegSize = 0;
+        FILE *jpegFile          = NULL;
+        tjhandle tjInstance     = NULL;
 
-        if(!temp){
+        if (!temp) {
             printf("Invalid Tensor pointer");
             exit(-1);
         }
 
         for (int ro = 0; ro < height; ro++) {
             for (int co = 0; co < width; co++) {
-                for (int ch = 0; ch < colorDim; ch++){
+                for (int ch = 0; ch < colorDim; ch++) {
                     imgBuf[ro * width * colorDim + co * colorDim + ch] = (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] * 255.0;
                 }
             }
@@ -733,7 +792,7 @@ public:
 
         tjInstance = tjInitCompress();
         tjCompress2(tjInstance, imgBuf, width, 0, height, pixelFormat,
-           &jpegBuf, &jpegSize, /*outSubsamp =*/ TJSAMP_444, /*outQual =*/ 100, /*flags =*/ 0);
+                    &jpegBuf, &jpegSize,  /*outSubsamp =*/ TJSAMP_444,  /*outQual =*/ 100,  /*flags =*/ 0);
         tjDestroy(tjInstance);
         tjInstance = NULL;
         delete imgBuf;
@@ -745,9 +804,10 @@ public:
 
         fwrite(jpegBuf, jpegSize, 1, jpegFile);
         fclose(jpegFile); jpegFile = NULL;
-        tjFree(jpegBuf); jpegBuf = NULL;
+        tjFree(jpegBuf); jpegBuf   = NULL;
     }
 
+    // #endif  // ifdef __TURBOJPEG__
 
     Tensor<DTYPE>* Label2Tensor(int classNum  /*Address of Label*/) {
         Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, NUMBER_OF_CLASS);
@@ -806,6 +866,209 @@ public:
         return result;
     }
 
+    /////////////////////////////////////////////////////////////////////////////Data Preprocessing
+    int UseNormalization(int isNormalizePerChannelWise, float *mean, float *stddev) {
+        m_useNormalization          = TRUE;
+        m_isNormalizePerChannelWise = isNormalizePerChannelWise;
+
+        if (m_isNormalizePerChannelWise) {
+            m_aMean   = new float[NUMBER_OF_CHANNEL];
+            m_aStddev = new float[NUMBER_OF_CHANNEL];
+
+            for (int channelNum = 0; channelNum < NUMBER_OF_CHANNEL; channelNum++) {
+                m_aMean[channelNum]   = mean[channelNum];
+                m_aStddev[channelNum] = stddev[channelNum];
+            }
+        } else {
+            m_aMean   = new float[CAPACITY_OF_IMAGE];
+            m_aStddev = new float[CAPACITY_OF_IMAGE];
+
+            for (int elementNum = 0; elementNum < CAPACITY_OF_IMAGE; elementNum++) {
+                m_aMean[elementNum]   = mean[elementNum];
+                m_aStddev[elementNum] = stddev[elementNum];
+            }
+        }
+
+        return TRUE;
+    }
+
+    Tensor<DTYPE>* Normalization(Tensor<DTYPE> *image) {
+        int numOfChannel     = NUMBER_OF_CHANNEL;
+        int heightOfImg      = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int widthOfImg       = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int planeSizeOfImage = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
+
+        int heightOfTensor    = heightOfImg;
+        int widthOfTensor     = widthOfImg;
+        int planeSizeOfTensor = heightOfTensor * widthOfTensor;
+
+        if (m_isNormalizePerChannelWise) {
+            int idx = 0;
+
+            for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+                for (int heightIdx = 0; heightIdx < heightOfImg; heightIdx++) {
+                    for (int widthIdx = 0; widthIdx < widthOfImg; widthIdx++) {
+                        idx            = channelNum * planeSizeOfTensor + (heightIdx) * widthOfTensor + (widthIdx);
+                        (*image)[idx] -= m_aMean[channelNum];
+                        (*image)[idx] /= m_aStddev[channelNum];
+                    }
+                }
+            }
+        } else {
+            int idx                = 0;
+            int idxOfMeanAdnStddev = 0;
+
+            for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+                for (int heightIdx = 0; heightIdx < heightOfImg; heightIdx++) {
+                    for (int widthIdx = 0; widthIdx < widthOfImg; widthIdx++) {
+                        idx                = channelNum * planeSizeOfTensor + (heightIdx) * widthOfTensor + (widthIdx);
+                        idxOfMeanAdnStddev = channelNum * planeSizeOfImage + heightIdx * widthOfImg + widthIdx;
+                        (*image)[idx]     -= m_aMean[channelNum];
+                        (*image)[idx]     /= m_aStddev[channelNum];
+                    }
+                }
+            }
+        }
+
+        return image;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////Data Augmentation
+    int UseRandomCrop(int padding) {
+        m_useRandomCrop = TRUE;
+        m_padding       = padding;
+        return TRUE;
+    }
+
+    int FillshuffledListForCrop() {
+        int limitOfCropPos      = (2 * m_padding) + 1;
+        int twoTimesOfBatchSize = m_batchSize * 2;  // for x and y
+
+        for (int cntNum = 0; cntNum < twoTimesOfBatchSize; cntNum++) {
+            m_shuffledListForCrop.push_back(cntNum % limitOfCropPos);
+        }
+        return TRUE;
+    }
+
+    Tensor<DTYPE>* Padding(Tensor<DTYPE> *srcImage) {
+        int numOfChannel     = NUMBER_OF_CHANNEL;
+        int heightOfImg      = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int widthOfImg       = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int planeSizeOfImage = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
+
+        int padding           = m_padding;
+        int heightOfTensor    = heightOfImg + (2 * padding);
+        int widthOfTensor     = widthOfImg + (2 * padding);
+        int planeSizeOfTensor = heightOfTensor * widthOfTensor;
+
+        Tensor<DTYPE> *padedImg = Tensor<DTYPE>::Zeros(1, 1, numOfChannel, heightOfTensor, widthOfTensor);
+
+        int srcIdx = 0;
+        int idx    = 0;
+
+        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+            for (int rowNum = 0; rowNum < heightOfImg; rowNum++) {
+                for (int colNum = 0; colNum < widthOfImg; colNum++) {
+                    srcIdx           = channelNum * planeSizeOfImage + rowNum * widthOfImg + colNum;
+                    idx              = channelNum * planeSizeOfTensor + (padding + rowNum) * widthOfTensor + (padding + colNum);
+                    (*padedImg)[idx] = (*srcImage)[srcIdx];
+                }
+            }
+        }
+
+        delete srcImage;
+
+        return padedImg;
+    }
+
+    Tensor<DTYPE>* RandomCrop(Tensor<DTYPE> *srcImage) {
+        int numOfChannel           = NUMBER_OF_CHANNEL;
+        int heightOfSrcImg         = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding);
+        int widthOfSrcImg          = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding);
+        int srcImageSizePerChannel = heightOfSrcImg * widthOfSrcImg;
+        int heightOfImg            = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int widthOfImg             = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int imageSizePerChannel    = heightOfImg * widthOfImg;
+
+        Tensor<DTYPE> *cropedImg = Tensor<DTYPE>::Zeros(1, 1, numOfChannel, heightOfImg, widthOfImg);
+
+        int startPosW = m_shuffledListForCrop.back();
+        m_shuffledListForCrop.pop_back();
+        int startPosH = m_shuffledListForCrop.back();
+        m_shuffledListForCrop.pop_back();
+
+        int srcIdx = 0;
+        int idx    = 0;
+
+        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+            for (int rowNum = 0; rowNum < heightOfImg; rowNum++) {
+                for (int colNum = 0; colNum < widthOfImg; colNum++) {
+                    srcIdx            = channelNum * srcImageSizePerChannel + (startPosH + rowNum) * widthOfSrcImg + (startPosW + colNum);
+                    idx               = channelNum * imageSizePerChannel + rowNum * widthOfImg + colNum;
+                    (*cropedImg)[idx] = (*srcImage)[srcIdx];
+                }
+            }
+        }
+
+        delete srcImage;
+
+        return cropedImg;
+    }
+
+    int UseRandomHorizontalFlip() {
+        m_useRandomHorizontalFlip = TRUE;
+        return TRUE;
+    }
+
+    int FillshuffledListForHorizontalFlip() {
+        for (int cntNum = 0; cntNum < m_batchSize; cntNum++) {
+            m_shuffledListForHorizontalFlip.push_back(cntNum % 2);
+        }
+        return TRUE;
+    }
+
+    Tensor<DTYPE>* HorizontalFlip(Tensor<DTYPE> *image) {
+        int numOfChannel        = 3;
+        int imageSizePerChannel = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int rowSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int colSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
+        int halfColSizePerPlane = colSizePerPlane / 2;
+
+        DTYPE temp          = 0;
+        int   idx           = 0;
+        int   idxOfOpposite = 0;
+
+        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
+            for (int rowNum = 0; rowNum < rowSizePerPlane; rowNum++) {
+                for (int colNum = 0; colNum < halfColSizePerPlane; colNum++) {
+                    idx                     = channelNum * imageSizePerChannel + rowNum * colSizePerPlane + colNum;
+                    idxOfOpposite           = channelNum * imageSizePerChannel + rowNum * colSizePerPlane + (colSizePerPlane - colNum - 1);
+                    temp                    = (*image)[idx];
+                    (*image)[idx]           = (*image)[idxOfOpposite];
+                    (*image)[idxOfOpposite] = temp;
+                }
+            }
+        }
+
+        return image;
+    }
+
+    int UseRandomVerticalFlip() {
+        m_useRandomVerticalFlip = TRUE;
+        return TRUE;
+    }
+
+    int FillshuffledListForVerticalFlip() {
+        for (int cntNum = 0; cntNum < m_batchSize; cntNum++) {
+            m_shuffledListForVerticalFlip.push_back(cntNum % 2);
+        }
+        return TRUE;
+    }
+
+    Tensor<DTYPE>* VerticalFlip(Tensor<DTYPE> *image) {
+        return NULL;
+    }
+
     int AddData2Buffer(Tensor<DTYPE> *setOfImage, Tensor<DTYPE> *setOfLabel) {
         Tensor<DTYPE> **result = new Tensor<DTYPE> *[2];
 
@@ -827,16 +1090,14 @@ public:
         sem_post(&m_mutex);
         sem_post(&m_empty);
 
-        int empty_value = 0;
-        int full_value  = 0;
-
-        sem_getvalue(&m_empty, &empty_value);
-        sem_getvalue(&m_full,  &full_value);
-
-        printf("full : %d, empty : %d \n", full_value, empty_value);
+        // int empty_value = 0;
+        // int full_value  = 0;
+        //
+        // sem_getvalue(&m_empty, &empty_value);
+        // sem_getvalue(&m_full,  &full_value);
+        //
+        // printf("full : %d, empty : %d \n", full_value, empty_value);
 
         return result;
     }
-
-
 };
