@@ -8,7 +8,7 @@
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             1
+#define GPUID             0
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;

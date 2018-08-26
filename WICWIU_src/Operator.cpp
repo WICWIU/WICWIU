@@ -37,6 +37,7 @@ template<typename DTYPE> int Operator<DTYPE>::Alloc(int numInput, ...) {
             m_apInput = NULL;
 
             printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+            va_end(ap);
             return FALSE;
         }
     }
@@ -218,6 +219,7 @@ template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(int numInp
             m_apInput = NULL;
 
             printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+            va_end(ap);
             return FALSE;
         }
     }

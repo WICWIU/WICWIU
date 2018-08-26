@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
 
     sleep(3);
 
-    for (int i = 0; i < 251; i++) {
+    for(int i = 0; i < 250; i++){
         std::cout << "i : " << i << '\n';
         data = data_reader->GetDataFromBuffer();
 
@@ -25,7 +25,7 @@ int main(int argc, char const *argv[]) {
         delete data;
     }
 
-    data_reader->StopProduce();
+    data_reader->StopDataPreprocess();
 
     sleep(3);
 
