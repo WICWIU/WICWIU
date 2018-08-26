@@ -1,5 +1,5 @@
 #include "net/my_Resnet.h"
-#include "ImageNetReader.h"
+#include "ImageNetReader_.h"
 #include <time.h>
 #include <unistd.h>
 
@@ -8,7 +8,7 @@
 #define LOOP_FOR_TRAIN    (1300000 / BATCH)
 #define LOOP_FOR_ACCUM    (1000 / BATCH) * 10
 #define LOOP_FOR_TEST     (50000 / BATCH)
-#define GPUID             0
+#define GPUID             1
 #define LOG_LENGTH        1
 
 // float ComputeAccuracy(Tensor<float> *result, Tensor<float> *label, int *listOfMaxIndexOfResult, int *listOfMaxIndexOflabel);
@@ -17,7 +17,7 @@
 int   main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
-    char filename[] = "2018-08-25-04:33-resnet";
+    char filename[] = "2018-08-26-21:18-resnet18";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
@@ -29,8 +29,8 @@ int   main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 100, TRUE);
-    // train_data_reader->UseRandomCrop(4);
-    // train_data_reader->UseRandomHorizontalFlip();
+    train_data_reader->UseRandomCrop(30);
+    train_data_reader->UseRandomHorizontalFlip();
 
     ImageNetDataReader<float> *test_data_reader  = new ImageNetDataReader<float>(BATCH, 100, FALSE);
 
