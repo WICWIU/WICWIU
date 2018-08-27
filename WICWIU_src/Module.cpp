@@ -205,6 +205,28 @@ template<typename DTYPE> Container<Tensor<DTYPE> *> *Module<DTYPE>::GetDeltaCont
     return m_pLastOperator->GetDeltaContainer();
 }
 
+template<typename DTYPE> int Module<DTYPE>::SetModeTraining() {
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetModeTraining();
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::SetModeAccumulating() {
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetModeAccumulating();
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::SetModeInferencing() {
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetModeInferencing();
+    }
+    return TRUE;
+}
+
+
 template<typename DTYPE> int Module<DTYPE>::ForwardPropagate(int pTime) {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->ForwardPropagate(pTime);

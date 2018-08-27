@@ -12,8 +12,22 @@ template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Operator<DTYPE> *
     m_OptimizeDirection     = 1;
     m_ppTrainableTensors    = NULL;
     m_TrainableTensorDegree = 0;
+    m_weightDecayRate       = 0.f;
 
     Alloc(pTrainableTensors, pLearningRate, pOptimizeDirection);
+}
+
+template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, float pWeightDecayRate, OptimizeDirection pOptimizeDirection) {
+    #ifdef __DEBUG__
+    std::cout << "Optimizer::Optimizer(Operator<DTYPE> *, float, OptimizeDirection)" << '\n';
+    #endif  // __DEBUG__
+    m_LearningRate          = 0.f;
+    m_OptimizeDirection     = 1;
+    m_ppTrainableTensors    = NULL;
+    m_TrainableTensorDegree = 0;
+    m_weightDecayRate       = 0.f;
+
+    Alloc(pTrainableTensors, pLearningRate, pWeightDecayRate, pOptimizeDirection);
 }
 
 template<typename DTYPE> Optimizer<DTYPE>::~Optimizer() {
@@ -35,6 +49,24 @@ template<typename DTYPE> int Optimizer<DTYPE>::Alloc(Container<Operator<DTYPE> *
 
     if (pOptimizeDirection == MAXIMIZE) m_OptimizeDirection = 1;
     else if (pOptimizeDirection == MINIMIZE) m_OptimizeDirection = -1;
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Optimizer<DTYPE>::Alloc(Container<Operator<DTYPE> *> *pTrainableTensors, float pLearningRate, float pWeightDecayRate, OptimizeDirection pOptimizeDirection) {
+    #ifdef __DEBUG__
+    std::cout << "Optimizer::Alloc(Container<Operator<DTYPE> *> *, float , OptimizeDirection )" << '\n';
+    #endif  // __DEBUG__
+    m_ppTrainableTensors    = pTrainableTensors;
+    m_TrainableTensorDegree = pTrainableTensors->GetSize();
+
+    m_LearningRate = pLearningRate;
+
+    if (pOptimizeDirection == MAXIMIZE) m_OptimizeDirection = 1;
+    else if (pOptimizeDirection == MINIMIZE) m_OptimizeDirection = -1;
+
+    m_weightDecayRate = pWeightDecayRate;
+    // std::cout << "m_weightDecayRate" << m_weightDecayRate << '\n';
 
     return TRUE;
 }
@@ -88,12 +120,20 @@ template<typename DTYPE> void Optimizer<DTYPE>::SetTrainableTensorDegree(int pTr
     m_TrainableTensorDegree = pTrainableTensorDegree;
 }
 
+template<typename DTYPE> void Optimizer<DTYPE>::SetWeightDecayRate(int pWeightDecayRate) {
+    m_weightDecayRate = pWeightDecayRate;
+}
+
 template<typename DTYPE> float Optimizer<DTYPE>::GetLearningRate()  const {
     return m_LearningRate;
 }
 
 template<typename DTYPE> int Optimizer<DTYPE>::GetOptimizeDirection() const {
     return m_OptimizeDirection;
+}
+
+template<typename DTYPE> float Optimizer<DTYPE>::GetWeightDecayRate() const {
+    return m_weightDecayRate;
 }
 
 template<typename DTYPE> Container<Operator<DTYPE> *> *Optimizer<DTYPE>::GetTrainableTensor() {

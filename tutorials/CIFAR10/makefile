@@ -1,26 +1,16 @@
 .SUFFIXES = .cpp .o
 
 CFLAGS = -O2 -std=c++11
-
-# if cuda device, cuda lib, or cuDNN is not installed, disable the following line
 ENABLE_CUDNN = -D__CUDNN__
-
 #DFLAGS = -g -D__DEBUG__
 
+LFLAGS = -lcudart -lcudnn -lpthread
 
 INCLUDE_PATH = -I/usr/local/cuda/include
 LIB_PATH = -L. -L/usr/local/cuda/lib64
 
-
 CC = g++
-ifdef ENABLE_CUDNN
-	LINKER = nvcc
-	LFLAGS = -lcudart -lcudnn -lpthread
-else
-	LINKER = g++
-	LFLAGS = -lpthread
-endif
-
+NVCC = nvcc
 
 WICWIU_LIB = ../../lib/libwicwiu.a
 
@@ -42,11 +32,11 @@ all: main
 .cpp.o:
 	$(CC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) $(LIB_PATH) -c $< -o $@
 
-main: $(WICWIU_OBJS) main.o
-	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) main.o
+#main: $(WICWIU_OBJS) main.o
+#	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) main.o
 
-#main: main.o $(WICWIU_LIB)
-#	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) main.o
+main: main.o $(WICWIU_LIB)
+	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) main.o
 
 
 $(WICWIU_LIB): $(WICWIU_SRC)

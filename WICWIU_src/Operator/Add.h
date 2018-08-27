@@ -182,7 +182,7 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, leftTensorDesc, m_pDevLeft,
-                                  &m_beta, outputTensorDesc, m_pDevOutput));
+                                  &m_alpha, outputTensorDesc, m_pDevOutput));
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, rightTensorDesc, m_pDevRight,
@@ -204,11 +204,11 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
-                                  &m_beta, leftDeltaDesc, m_pDevLeftDelta));
+                                  &m_alpha, leftDeltaDesc, m_pDevLeftDelta));
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
-                                  &m_beta, rightDeltaDesc, m_pDevRightDelta));
+                                  &m_alpha, rightDeltaDesc, m_pDevRightDelta));
 
 
         return TRUE;
@@ -410,7 +410,7 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, inputTensorDesc, m_pDevInput,
-                                  &m_beta, outputTensorDesc, m_pDevOutput));
+                                  &m_alpha, outputTensorDesc, m_pDevOutput));
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, biasTensorDesc, m_pDevBias,
@@ -432,11 +432,11 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
-                                  &m_beta, inputDeltaDesc, m_pDevInputDelta));
+                                  &m_alpha, inputDeltaDesc, m_pDevInputDelta));
 
         checkCUDNN(cudnnConvolutionBackwardBias(this->GetCudnnHandle(),
                                                 &m_alpha, deltaDesc, m_pDevDelta,
-                                                &m_beta, biasDeltaDesc, m_pDevBiasDelta))
+                                                &m_alpha, biasDeltaDesc, m_pDevBiasDelta))
 
 
         return TRUE;
@@ -659,11 +659,11 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &m_alpha, deltaDesc, m_pDevDelta,
-                                  &m_beta, inputDeltaDesc, m_pDevInputDelta));
+                                  &m_alpha, inputDeltaDesc, m_pDevInputDelta));
 
         checkCUDNN(cudnnConvolutionBackwardBias(this->GetCudnnHandle(),
                                                 &m_alpha, deltaDesc, m_pDevDelta,
-                                                &m_beta, biasDeltaDesc, m_pDevBiasDelta))
+                                                &m_alpha, biasDeltaDesc, m_pDevBiasDelta))
 
         // this->BackPropagate();
 

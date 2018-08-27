@@ -8,6 +8,7 @@ int main(int argc, char const *argv[]) {
     ImageNetDataReader<float> *data_reader = new ImageNetDataReader<float>(200, 10, FALSE);
 
     Tensor<float> **data = NULL;
+    data_reader->StartProduce();
 
     sleep(3);
 

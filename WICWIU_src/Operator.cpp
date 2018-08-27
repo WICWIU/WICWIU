@@ -530,9 +530,9 @@ template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudn
     this->SetCudnnHandle(pCudnnHandle);
     this->SetDevice(GPU);
     this->SetDeviceID(idOfDevice);
-    this->InitializeAttributeForGPU(idOfDevice);
     this->SetResultOnGPU(idOfDevice);
     this->SetGradientOnGPU(idOfDevice);
+    this->InitializeAttributeForGPU(idOfDevice);
 }
 
 template<typename DTYPE> cudnnHandle_t& Operator<DTYPE>::GetCudnnHandle() {

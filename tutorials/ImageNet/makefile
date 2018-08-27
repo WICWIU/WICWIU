@@ -6,11 +6,9 @@ ENABLE_CUDNN = -D__CUDNN__
 
 LFLAGS = -lcudart -lcudnn -lpthread -ljpeg -lturbojpeg
 
-INCLUDE_PATH = -I/usr/local/cuda/include -I../../../../JpegLib
-LIB_PATH = -L. -L/usr/local/cuda/lib64 -I../../../../JpegLib
-
-# INCLUDE_PATH = -I/usr/local/cuda/include -I/opt/libjpeg-turbo/include
-# LIB_PATH = -L. -L/usr/local/cuda/lib64 -L/opt/libjpeg-turbo/lib64
+INCLUDE_PATH = -I/usr/local/cuda/include -I/opt/libjpeg-turbo/include
+LIB_PATH = -L. -L/usr/local/cuda/lib64 -I/opt/libjpeg-turbo/lib64 # for deep05
+# LIB_PATH = -L. -L/usr/local/cuda/lib64 -I/opt/libjpeg-turbo/lib64 # for deep300
 
 CC = g++
 NVCC = nvcc

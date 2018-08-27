@@ -3,6 +3,7 @@
 template class Tensor<int>;
 template class Tensor<float>;
 template class Tensor<double>;
+template class Tensor<unsigned char>;
 
 //////////////////////////////////////////////////////////////////////////////// for private method
 
