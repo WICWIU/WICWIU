@@ -13,7 +13,7 @@
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
-
+    
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");

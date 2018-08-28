@@ -156,7 +156,9 @@ public:
 
         checkCUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(this->GetCudnnHandle(), filterDesc, deltaDesc, convDesc, inputDeltaDesc, m_dataAlgo, &m_dataSizeInBytes));
 
-        checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), inputTensorDesc, deltaDesc, convDesc, filterDesc, m_filterAlgo, &m_filterSizeInBytes));
+        checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), inputTensorDesc, deltaDesc, convDesc, filterDeltaDesc, m_filterAlgo, &m_filterSizeInBytes));
+        //checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), inputTensorDesc, deltaDesc, convDesc, filterDesc, m_filterAlgo, &m_filterSizeInBytes));
+
 
         if (m_sizeInBytes != 0) {
             checkCudaErrors(cudaMalloc(&m_devWorkSpace, m_sizeInBytes));
@@ -341,7 +343,15 @@ public:
         m_pDevInput  = input->GetGPUData(pTime);
         m_pDevFilter = weight->GetGPUData(0);
         m_pDevOutput = result->GetGPUData(pTime);
-
+        //std::cout<< "m_alpha "<< m_alpha << std::endl;
+        //std::cout<< "inputTensorDesc "<< inputTensorDesc << std::endl;
+        //std::cout<< "filterDesc "<< filterDesc << std::endl;
+        //std::cout<< "convDesc "<< convDesc << std::endl;
+        //std::cout<< "m_algo "<< m_dataAlgo << std::endl;
+        //std::cout<< "m_devWorkSpace "<< m_dataDevWorkSpace << std::endl;
+        //std::cout<< "m_sizeInBytes "<< m_dataSizeInBytes << std::endl;
+        //std::cout<< "m_beta "<< m_beta << std::endl;
+        //std::cout<< "outputTensorDesc "<< outputTensorDesc << std::endl;
         checkCUDNN(cudnnConvolutionForward(this->GetCudnnHandle(), &m_alpha, inputTensorDesc, m_pDevInput, filterDesc, m_pDevFilter, convDesc,
                                            m_algo, m_devWorkSpace, m_sizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));
 

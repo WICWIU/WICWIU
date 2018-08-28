@@ -80,7 +80,7 @@ public:
 
 
 #ifdef __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Operator<DTYPE> *pInput  = this->GetInput()[0];
         Operator<DTYPE> *pWeight = this->GetInput()[1];
 
@@ -158,7 +158,8 @@ public:
 
         checkCUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(this->GetCudnnHandle(), filterDesc, inputDeltaDesc, convDesc, deltaDesc, m_dataAlgo, &m_dataSizeInBytes));
 
-        checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), deltaDesc, inputTensorDesc, convDesc, filterDesc, m_filterAlgo, &m_filterSizeInBytes));
+        //checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), deltaDesc, inputTensorDesc, convDesc, filterDesc, m_filterAlgo, &m_filterSizeInBytes));
+        checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), deltaDesc, inputTensorDesc, convDesc, filterDeltaDesc, m_filterAlgo, &m_filterSizeInBytes));
 
         if (m_sizeInBytes != 0) {
             checkCudaErrors(cudaMalloc(&m_devWorkSpace, m_sizeInBytes));
@@ -232,7 +233,7 @@ public:
 #endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
         Shape *shapeOfInput  = input->GetShape();
 
@@ -256,7 +257,6 @@ public:
         int colsizeOfInput = (*shapeOfInput)[4];
 
         int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
 
         int input_index  = 0;
         int weight_index = 0;
@@ -265,7 +265,7 @@ public:
 
         //std::cout<< "ba : " << batchsize << "  I_ch : " << channelsizeOfInput <<  "  ro : " << rowsizeOfInput << "  co : " << colsizeOfInput << "  wch : " << channelsizeOfWeight << "  wro : " << rowsizeOfWeight << "  wco : " << colsizeOfWeight << std::endl;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
           //std::cout<< "ba : " << ba << std::endl;
             //for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
             for (int ch = 0; ch < channelsizeOfInput; ch++) {  // Batchsize of weight kernel
@@ -298,10 +298,9 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
-
         Shape *shapeOfInput        = input->GetShape();
         //std::cout << input->GetShape() << std::endl;
         //std::cout << input_delta->GetShape() << std::endl;
@@ -311,7 +310,6 @@ public:
         Shape *shapeOfWeight           = weight->GetShape();
 
         Tensor<DTYPE> *this_delta = this->GetDelta();
-
         Shape *shapeOfResult      = this_delta->GetShape();
 
         int batchsize   = (*shapeOfResult)[1];
@@ -332,15 +330,11 @@ public:
         int result_index = 0;
 
         int ti          = pTime;
-        int numOfThread = this->GetNumOfThread();
-
-
         //std::cout<< "ba : " << batchsize << "  ch : " << channelsize <<  "  ro : " << rowsizeOfInput << "  co : " << colsizeOfInput << "  wch : " << channelsizeOfWeight << "  wro : " << rowsizeOfWeight << "  wco : " << colsizeOfWeight << std::endl;
 
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
-            //for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
-              for (int ch = 0; ch < channelsizeOfInput; ch++) {  // Batchsize of weight kernel
-
+        for (int ba = 0; ba < batchsize; ba++) {
+          //for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
+            for (int ch = 0; ch < channelsizeOfInput; ch++) {  // Batchsize of weight kernel
                 for (int ro = 0; ro < rowsizeOfInput; ro++) {
                     for (int co = 0; co < colsizeOfInput; co++) {
                         for (int wch = 0; wch < channelsizeOfWeight; wch++) {  // == (*shapeOfInput)[2];
@@ -383,6 +377,8 @@ public:
 
 #ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime = 0) {
+        //this->ForwardPropagate(pTime);
+
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
@@ -390,9 +386,23 @@ public:
         m_pDevInput  = input->GetGPUData(pTime);
         m_pDevFilter = weight->GetGPUData(0);
         m_pDevOutput = result->GetGPUData(pTime);
+        //std::cout<< "\nm_pDevInput  "<< m_pDevInput << std::endl;
+        //std::cout<< "\nm_pDevFilter "<< m_pDevFilter << std::endl;
+        //std::cout<< "\nm_pDevOutput "<< m_pDevOutput << std::endl;
+
+
+        //std::cout<< "m_alpha "<< m_alpha << std::endl;
+        //std::cout<< "filterDesc "<< filterDesc << std::endl;
+        //std::cout<< "inputTensorDesc "<< inputTensorDesc << std::endl;
+        //std::cout<< "convDesc "<< convDesc << std::endl;
+        //std::cout<< "m_dataAlgo "<< m_dataAlgo << std::endl;
+        //std::cout<< "m_dataDevWorkSpace "<< m_dataDevWorkSpace << std::endl;
+        //std::cout<< "m_dataSizeInBytes "<< m_dataSizeInBytes << std::endl;
+        //std::cout<< "m_beta "<< m_beta << std::endl;
+        //std::cout<< "outputTensorDesc "<< outputTensorDesc << std::endl;
 
         checkCUDNN(cudnnConvolutionBackwardData(this->GetCudnnHandle(), &m_alpha, filterDesc, m_pDevFilter, inputTensorDesc, m_pDevInput, convDesc,
-                                               m_dataAlgo, m_dataDevWorkSpace/*얘만 좀 다흠...*/, m_dataSizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));
+                                               m_dataAlgo, m_dataDevWorkSpace, m_dataSizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));//output param 이 잘못들어왔대 왜...?
 
 
         checkCudaErrors(cudaDeviceSynchronize());
@@ -401,6 +411,8 @@ public:
     }
 
     int BackPropagateOnGPU(int pTime = 0) {
+        //his->BackPropagate(pTime);
+
         Tensor<DTYPE> *input           = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input_delta     = this->GetInput()[0]->GetDelta();
         Tensor<DTYPE> *weight          = this->GetInput()[1]->GetResult();
@@ -416,13 +428,12 @@ public:
 
 
         checkCUDNN(cudnnConvolutionForward(this->GetCudnnHandle(), &m_alpha, deltaDesc, m_pDevDelta, filterDesc, m_pDevFilter, convDesc,
-                                           m_algo, m_devWorkSpace/*얘만 좀 다흠...*/, m_sizeInBytes, &m_beta, inputTensorDesc, m_pDevInput));
+                                           m_algo, m_devWorkSpace, m_sizeInBytes, &m_beta, inputDeltaDesc, m_pDevInputDelta));
 
         checkCUDNN(cudnnConvolutionBackwardFilter(this->GetCudnnHandle(), &m_alpha, deltaDesc, m_pDevDelta, inputTensorDesc, m_pDevInput, convDesc,
                                                   m_filterAlgo, m_filterDevWorkSpace, m_filterSizeInBytes, &m_beta, filterDesc, m_pDevFilterDelta));
 
         checkCudaErrors(cudaDeviceSynchronize());
-
         return TRUE;
     }
 

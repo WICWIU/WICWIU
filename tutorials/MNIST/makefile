@@ -13,14 +13,14 @@ CC = g++
 NVCC = nvcc
 
 WICWIU_SRCS = \
-	../../WICWIU_src/Shape.cpp	\
-	../../WICWIU_src/LongArray.cpp	\
-	../../WICWIU_src/Tensor.cpp	\
-	../../WICWIU_src/Operator.cpp	\
-	../../WICWIU_src/LossFunction.cpp	\
-	../../WICWIU_src/Optimizer.cpp	\
-	../../WICWIU_src/Module.cpp	\
-	../../WICWIU_src/NeuralNetwork.cpp
+   ../../WICWIU_src/Shape.cpp   \
+   ../../WICWIU_src/LongArray.cpp   \
+   ../../WICWIU_src/Tensor.cpp   \
+   ../../WICWIU_src/Operator.cpp   \
+   ../../WICWIU_src/LossFunction.cpp   \
+   ../../WICWIU_src/Optimizer.cpp   \
+   ../../WICWIU_src/Module.cpp   \
+   ../../WICWIU_src/NeuralNetwork.cpp
 
 WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}
 

@@ -557,7 +557,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagateOnGPU(int pTime)
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
     // std::cout << "NeuralNetwork<DTYPE>::SetModeGPU()" << '\n';
     checkCudaErrors(cudaSetDevice(idOfDevice));
-    
+
     m_Device = GPU;
     this->AllocOnGPU();
 

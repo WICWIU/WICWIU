@@ -21,12 +21,12 @@ int main(int argc, char const *argv[]) {
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
-    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
-    //Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 784, "label");
+    //Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
+    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 784, "label");
 
     // ======================= Select net ===================
-    //NeuralNetwork<float> *net = new TransposedConv_Test(x, label);
-    NeuralNetwork<float> *net = new my_CNN_backup(x, label);
+    NeuralNetwork<float> *net = new TransposedConv_Test(x, label);
+    //NeuralNetwork<float> *net = new my_CNN_backup(x, label);
     // NeuralNetwork<float> *net = new my_CNN(x, label);
     // NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
     // NeuralNetwork<float> *net = new my_NN(x, label, isMLP);
@@ -58,18 +58,17 @@ int main(int argc, char const *argv[]) {
             dataset->CreateTrainDataPair(BATCH);
 
             Tensor<float> *x_t = dataset->GetTrainFeedImage();
-            //Tensor<float> *x_copy = new Tensor<float>(x_t);
-            Tensor<float> *l_t = dataset->GetTrainFeedLabel();
+            Tensor<float> *x_copy = new Tensor<float>(x_t);
+            //Tensor<float> *l_t = dataset->GetTrainFeedLabel();
 
 #ifdef __CUDNN__
             x_t->SetDeviceGPU(GPUID);
-            l_t->SetDeviceGPU(GPUID);
-            //x_copy->SetDeviceGPU();
-
+            //l_t->SetDeviceGPU(GPUID);
+            x_copy->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
 
-            net->FeedInputTensor(2, x_t, l_t);
-            //net->FeedInputTensor(2, x_t, x_copy);
+            //net->FeedInputTensor(2, x_t, l_t);
+            net->FeedInputTensor(2, x_t, x_copy);
             net->ResetParameterGradient();
             net->Training();
 
@@ -99,18 +98,18 @@ int main(int argc, char const *argv[]) {
             dataset->CreateTestDataPair(BATCH);
 
             Tensor<float> *x_t = dataset->GetTestFeedImage();
-            Tensor<float> *l_t = dataset->GetTestFeedLabel();
-            //Tensor<float> *x_copy = new Tensor<float>(x_t);
+            //Tensor<float> *l_t = dataset->GetTestFeedLabel();
+            Tensor<float> *x_copy = new Tensor<float>(x_t);
 
 #ifdef __CUDNN__
             x_t->SetDeviceGPU(GPUID);
-            l_t->SetDeviceGPU(GPUID);
-            //x_copy->SetDeviceGPU();
+            //l_t->SetDeviceGPU(GPUID);
+            x_copy->SetDeviceGPU(GPUID);
 
 #endif  // __CUDNN__
 
-            net->FeedInputTensor(2, x_t, l_t);
-            //net->FeedInputTensor(2, x_t, x_copy);
+            //net->FeedInputTensor(2, x_t, l_t);
+            net->FeedInputTensor(2, x_t, x_copy);
             net->Testing();
 
             test_accuracy += net->GetAccuracy();
