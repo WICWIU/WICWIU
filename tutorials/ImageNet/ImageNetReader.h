@@ -31,7 +31,7 @@ template<typename DTYPE> class ImageNetDataReader {
 private:
     string m_path             = "../../../../../../mnt/ssd/Data/ImageNet";
     string m_dirOfTrainImage  = "ILSVRC2012_img_train256";
-    string m_dirOfTestImage   = "ILSVRC2012_img_val256/";
+    string m_dirOfTestImage   = "ILSVRC2012_img_val256";
     string m_classInformation = "synset_words.txt";
 
     /*Training image*/
@@ -240,12 +240,15 @@ public:
         // fix class index
 
         // mnt/ssd/Data/ImageNet/synset_words.txt
-        string filePath  = m_path + '/' + m_classInformation;
+        string filePath  = m_path + "/" + m_classInformation;
         const char *cstr = filePath.c_str();
 
         // std::cout << filePath << '\n';
 
         FILE *pFile = NULL;
+
+        // std::cout << filePath << '\n';
+        // printf("%s\n", cstr);
 
         pFile = fopen(cstr, "r");
 
@@ -300,7 +303,7 @@ public:
                         for (int imageNum = 0; imageNum < m_aNumOfImageOfClass[classNum]; imageNum++) {
                             if (fscanf(pFile, "%s", realValue)) {
                                 listOfImage[imageNum] = realValue;
-                                // std::cout << listOfImage[i] << '\n';
+                                // std::cout << listOfImage[imageNum] << '\n';
                             } else {
                                 printf("there is something error\n");
                                 exit(-1);
@@ -565,8 +568,8 @@ public:
 
         const char *cstr = filePath.c_str();
 
-        string _FILENAME     = "temp/" + imgName;
-        const char *FILENAME = _FILENAME.c_str();
+        // string _FILENAME     = "temp/" + imgName;
+        // const char *FILENAME = _FILENAME.c_str();
 
         // std::cout << "filePath : " << filePath << '\n';
 
@@ -653,7 +656,7 @@ public:
             m_shuffledListForVerticalFlip.pop_back();
         }
 
-        ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
+        // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
 
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
@@ -796,6 +799,8 @@ public:
         tjDestroy(tjInstance);
         tjInstance = NULL;
         delete imgBuf;
+
+        // std::cout << FILENAME << '\n';
 
         if (!(jpegFile = fopen(FILENAME, "wb"))) {
             printf("file open fail\n");
