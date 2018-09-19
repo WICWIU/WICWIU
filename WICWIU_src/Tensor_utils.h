@@ -1,3 +1,6 @@
+#ifndef __TENSOR_UTIL_H__
+#define __TENSOR_UTIL_H__    value
+
 #include "Tensor.h"
 
 template<typename DTYPE> std::ostream & operator<<(std::ostream& pOS, Tensor<DTYPE> *pTensor) {
@@ -51,3 +54,5 @@ template<typename DTYPE> std::ostream & operator<<(std::ostream& pOS, Tensor<DTY
 
     return pOS;
 }
+
+#endif  // __TENSOR_UTIL_H__

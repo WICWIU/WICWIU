@@ -271,7 +271,7 @@ public:
         checkCUDNN(cudnnPoolingBackward(this->GetCudnnHandle(), m_aPoolingDesc,
                                         &m_alpha, m_aOutputTensorDesc, m_pDevOutput,
                                         m_aDeltaDesc, m_pDevDelta, m_aInputTensorDesc, m_pDevInput,
-                                        &m_beta, m_aInputDeltaDesc, m_pDevInputDelta));
+                                        &m_alpha, m_aInputDeltaDesc, m_pDevInputDelta));
 
 
         checkCudaErrors(cudaDeviceSynchronize());

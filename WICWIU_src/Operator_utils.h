@@ -1,3 +1,6 @@
+#ifndef __OPERATER_UTIL_H__
+#define __OPERATER_UTIL_H__    value
+
 #include "Operator/Tensorholder.h"
 #include "Operator/ReShape.h"
 
@@ -16,6 +19,8 @@
 #include "Operator/Avgpooling.h"
 
 #include "Operator/BatchNormalize.h"
-#include "Operator/CUDNNBatchNormalize.h"
+// #include "Operator/CUDNNBatchNormalize.h"
 
 #include "Operator/Softmax.h"
+
+#endif  // __OPERATER_UTIL_H__

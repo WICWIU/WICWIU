@@ -46,6 +46,9 @@ public:
     DTYPE* GetCPULongArray(unsigned int pTime = 0);
 
     int    SetDeviceCPU();
+
+    int    Save(FILE *fileForSave);
+    int    Load(FILE *fileForLoad);
 #ifdef __CUDNN__
     int    SetDeviceGPU(unsigned int idOfDevice);
 

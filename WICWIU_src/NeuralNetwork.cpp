@@ -71,10 +71,11 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::AllocOnGPU() {
 }
 
 template<typename DTYPE> void NeuralNetwork<DTYPE>::DeleteOnGPU() {
-    checkCudaErrors(cudaThreadSynchronize());
-    checkCudaErrors(cudaDeviceSynchronize());
-    checkCUDNN(cudnnDestroy(m_cudnnHandle));
+    // checkCudaErrors(cudaThreadSynchronize());
+    // checkCudaErrors(cudaDeviceSynchronize());
+    if(m_cudnnHandle) checkCUDNN(cudnnDestroy(m_cudnnHandle));
 }
+
 
 #endif  // if __CUDNN__
 
@@ -533,6 +534,22 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SerchOperator(st
     }
 
     return NULL;
+}
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Save(FILE *fileForSave) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        (*m_apParameter)[i]->Save(fileForSave);
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(FILE *fileForLoad) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        (*m_apParameter)[i]->Load(fileForLoad);
+    }
+    return TRUE;
 }
 
 #ifdef __CUDNN__

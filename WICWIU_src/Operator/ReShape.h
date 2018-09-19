@@ -140,7 +140,7 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &alpha, pDesc, pDevInput,
-                                  &beta, pDesc, pDevResult));
+                                  &alpha, pDesc, pDevResult));
 
         // this->ForwardPropagate(pTime);
         return TRUE;
@@ -160,7 +160,7 @@ public:
 
         checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
                                   &alpha, pDesc, pDevDelta,
-                                  &beta, pDesc, pDevInputDelta));
+                                  &alpha, pDesc, pDevInputDelta));
 
         // this->BackPropagate(pTime);
 

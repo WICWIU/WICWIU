@@ -1,16 +1,28 @@
 .SUFFIXES = .cpp .o
 
 CFLAGS = -O2 -std=c++11
+
+# if cuda device, cuda lib, or cuDNN is not installed, disable the following line
 ENABLE_CUDNN = -D__CUDNN__
+
 #DFLAGS = -g -D__DEBUG__
 
-LFLAGS = -lcudart -lcudnn -lpthread
 
-INCLUDE_PATH = -I../../JpegLib -I/usr/local/cuda/include
+INCLUDE_PATH = -I/usr/local/cuda/include
 LIB_PATH = -L. -L/usr/local/cuda/lib64
 
+
 CC = g++
-NVCC = nvcc
+ifdef ENABLE_CUDNN
+	LINKER = nvcc
+	LFLAGS = -lcudart -lcudnn -lpthread
+else
+	LINKER = g++
+	LFLAGS = -lpthread
+endif
+
+
+WICWIU_LIB = ../../lib/libwicwiu.a
 
 WICWIU_SRCS = \
    ../../WICWIU_src/Shape.cpp   \

@@ -3,6 +3,7 @@
 template class LongArray<int>;
 template class LongArray<float>;
 template class LongArray<double>;
+template class LongArray<unsigned char>;
 
 template<typename DTYPE> int LongArray<DTYPE>::Alloc(unsigned int pTimeSize, unsigned int pCapacityPerTime) {
     #ifdef __DEBUG__
@@ -279,6 +280,66 @@ template<typename DTYPE> int LongArray<DTYPE>::SetDeviceCPU() {
     return TRUE;
 }
 
+template<typename DTYPE> int LongArray<DTYPE>::Save(FILE *fileForSave) {
+    #ifdef __CUDNN__
+    # if __DEBUG__
+
+    if (m_Device == GPU) {
+        printf("Warning! LongArray is allocated in Device(GPU) latest time\n");
+        printf("Change mode GPU to CPU\n");
+        this->SetDeviceCPU();
+    }
+
+    # else // if __DEBUG__
+
+    if (m_Device == GPU) {
+        this->SetDeviceCPU();
+    }
+
+    # endif // __DEBUG__
+    #endif  // __CUDNN__
+
+    #ifdef __BINARY__
+    std::cout << "save" << '\n';
+    #endif  // __BINARY__
+
+    for (int i = 0; i < m_TimeSize; i++) {
+        fwrite(m_aaHostLongArray[i], sizeof(DTYPE), m_CapacityPerTime, fileForSave);
+    }
+
+    return TRUE;
+}
+
+template<typename DTYPE> int LongArray<DTYPE>::Load(FILE *fileForLoad) {
+    #ifdef __CUDNN__
+    # if __DEBUG__
+
+    if (m_Device == GPU) {
+        printf("Warning! LongArray is allocated in Device(GPU) latest time\n");
+        printf("Change mode GPU to CPU\n");
+        this->SetDeviceCPU();
+    }
+
+    # else // if __DEBUG__
+
+    if (m_Device == GPU) {
+        this->SetDeviceCPU();
+    }
+
+    # endif // __DEBUG__
+    #endif  // __CUDNN__
+
+    #ifdef __BINARY__
+    std::cout << "load" << '\n';
+    #endif  // __BINARY__
+
+    for (int i = 0; i < m_TimeSize; i++) {
+        fread(m_aaHostLongArray[i], sizeof(DTYPE), m_CapacityPerTime, fileForLoad);
+    }
+
+    return TRUE;
+}
+
 #ifdef __CUDNN__
 template<typename DTYPE> int LongArray<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
     # if __DEBUG__
@@ -303,6 +364,7 @@ template<typename DTYPE> DTYPE *LongArray<DTYPE>::GetGPUData(unsigned int pTime)
     if (m_Device == CPU) {
         printf("Warning! LongArray is allocated in Host(CPU) latest time\n");
         printf("Change mode CPU toGPU\n");
+
         if (m_idOfDevice == -1) {
             std::cout << "you need to set device GPU first before : GetGPUData" << '\n';
             exit(-1);
@@ -314,10 +376,10 @@ template<typename DTYPE> DTYPE *LongArray<DTYPE>::GetGPUData(unsigned int pTime)
 #  if __ACCURATE__
 
     if (m_Device == CPU) {
-      if (m_idOfDevice == -1) {
-          std::cout << "you need to set device GPU first before : GetGPUData" << '\n';
-          exit(-1);
-      } else this->SetDeviceGPU(m_idOfDevice);
+        if (m_idOfDevice == -1) {
+            std::cout << "you need to set device GPU first before : GetGPUData" << '\n';
+            exit(-1);
+        } else this->SetDeviceGPU(m_idOfDevice);
     }
 #  endif // __ACCURATE__
 

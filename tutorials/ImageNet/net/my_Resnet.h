@@ -17,17 +17,17 @@ public:
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv1" + pName);
-        out = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_1");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1" + pName);
         out = new Relu<DTYPE>(out, "BasicBlock_Relu1" + pName);
 
         // 2
         out = new ConvolutionLayer2D<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 3, 3, 1, 1, 1, FALSE, "BasicBlock_Conv2" + pName);
-        out = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_2");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN2" + pName);
 
         // ShortCut
         if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel)) {
             remember = new ConvolutionLayer2D<DTYPE>(remember, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv_Shortcut" + pName);
-            out      = new BatchNormalizeLayer<float>(out, TRUE, "BasicBlock_BN_shortcut");
+            out      = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN3" + pName);
         }
 
         // Add (for skip Connection)
@@ -110,16 +110,16 @@ public:
         Operator<DTYPE> *out = pInput;
 
         // ReShape
-        out = new ReShape<DTYPE>(out, 28, 28, "ReShape");
-
-        // out = new BatchNormalizeLayer<float>(out, TRUE, "BN_0");
+        out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
 
         // 1
-        out = new ConvolutionLayer2D<DTYPE>(out, 1, m_numInputChannel, 1, 1, 1, 1, 0, TRUE, "Conv");
-        out = new BatchNormalizeLayer<float>(out, TRUE, "BN_1");
+        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, FALSE, "Conv");
+        out = new Maxpooling2D<float>(out, 2, 2, 2, 2, "MaxPool_2");
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
 
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 1, "Block1");
-        out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 1, "Block2");
+        out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 2, "Block2");
         out = this->MakeLayer(out, 256, pBlockType, pNumOfBlock3, 2, "Block3");
         out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock3, 2, "Block4");
 
@@ -129,8 +129,6 @@ public:
 
         out = new Linear<DTYPE>(out, 512, pNumOfClass, TRUE, "Classification");
 
-        out = new BatchNormalizeLayer<float>(out, FALSE, "BN_0");
-
         this->AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================
@@ -138,7 +136,7 @@ public:
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
-        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.1, 0.9, 5e-4, MINIMIZE));
+        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, 0.9, 5e-4, MINIMIZE));
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, MINIMIZE));
 
         return TRUE;
@@ -151,11 +149,11 @@ public:
             Operator<DTYPE> *out = pInput;
 
             // Test of effect of the Max pool
-            if (pStride > 1) {
-                out = new Maxpooling2D<float>(out, pStride, pStride, 2, 2, "MaxPool_2");
-            }
+            // if (pStride > 1) {
+            // out = new Maxpooling2D<float>(out, pStride, pStride, 2, 2, "MaxPool_2");
+            // }
 
-            out = new BasicBlock<DTYPE>(out, m_numInputChannel, pNumOfChannel, 1, pName);
+            out = new BasicBlock<DTYPE>(out, m_numInputChannel, pNumOfChannel, pStride, pName);
 
             int pNumOutputChannel = pNumOfChannel;
 
@@ -177,5 +175,5 @@ public:
 };
 
 template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet14(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel) {
-    return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 2, 2, 2, 2, 10);
+    return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 2, 2, 2, 2, 1000);
 }

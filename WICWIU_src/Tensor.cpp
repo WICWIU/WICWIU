@@ -3,6 +3,7 @@
 template class Tensor<int>;
 template class Tensor<float>;
 template class Tensor<double>;
+template class Tensor<unsigned char>;
 
 //////////////////////////////////////////////////////////////////////////////// for private method
 
@@ -449,13 +450,64 @@ template<typename DTYPE> void Tensor<DTYPE>::SetDeviceCPU() {
     m_aShape->SetDeviceCPU();
 }
 
+template<typename DTYPE> int Tensor<DTYPE>::Save(FILE *fileForSave) {
+    #ifdef __CUDNN__
+    # if __DEBUG__
+    std::cout << "Tensor<DTYPE>::Save(FILE *fileForSave)" << '\n';
+
+    if (m_Device == GPU) {
+        printf("Warning! Tensor is allocated in Device(GPU) latest time\n");
+        printf("Change mode GPU to CPU\n");
+        this->SetDeviceCPU();
+    }
+
+    # else // if __DEBUG__
+
+    if (m_Device == GPU) {
+        this->SetDeviceCPU();
+    }
+
+    # endif // __DEBUG__
+    #endif  // __CUDNN__
+
+    m_aLongArray->Save(fileForSave);
+
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Tensor<DTYPE>::Load(FILE *fileForLoad) {
+    #ifdef __CUDNN__
+    # if __DEBUG__
+    std::cout << "Tensor<DTYPE>::Load(FILE *fileForSave)" << '\n';
+
+    if (m_Device == GPU) {
+        printf("Warning! Tensor is allocated in Device(GPU) latest time\n");
+        printf("Change mode GPU to CPU\n");
+        this->SetDeviceCPU();
+    }
+
+    # else // if __DEBUG__
+
+    if (m_Device == GPU) {
+        this->SetDeviceCPU();
+    }
+
+    # endif // __DEBUG__
+    #endif  // __CUDNN__
+
+    m_aLongArray->Load(fileForLoad);
+
+    return TRUE;
+}
+
 #ifdef __CUDNN__
 template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
     # if __DEBUG__
     std::cout << "Tensor<DTYPE>::SetDeviceGPU()" << '\n';
     # endif // __DEBUG__
     checkCudaErrors(cudaSetDevice(idOfDevice));
-    
+
     m_Device     = GPU;
     m_idOfDevice = idOfDevice;
     m_aLongArray->SetDeviceGPU(idOfDevice);
