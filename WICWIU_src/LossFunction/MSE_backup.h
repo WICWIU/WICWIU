@@ -53,11 +53,8 @@ public:
         int capacity    = channelsize * rowsize * colsize;
 
         int ti          = pTime;
-      //  int numOfThread = this->GetNumOfThread();
-
 
         for (int ba = 0, i = 0; ba < batchsize; ba++) {
-        //for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
             i = ti * batchsize + ba;
 
             for (int j = 0, index = 0; j < capacity; j++) {
@@ -65,11 +62,11 @@ public:
 
                 if( j % 28 == 0)
                   std::cout<<std::endl;
-                if((*label)[index] >= 0.7)
+                if((*label)[index] >= 0.75)
                   std::cout<<"3";
                 else if( (*label)[index] >= 0.5)
                   std::cout<<"2";
-                else if( (*label)[index] >= 0.3)
+                else if( (*label)[index] >= 0.25)
                   std::cout<<"1";
                 else
                   std::cout<< " ";
@@ -78,28 +75,18 @@ public:
             for (int j = 0, index = 0; j < capacity; j++) {
                 index              = i * capacity + j;
 
-                //std::cout<<"F) capacity(784): "<< j<<"  input: "<<(*input)[index] << "\t label: " << (*label)[index] << "\t result: "<< (*result)[i] <<std::endl;
-                if(std::isnan((*result)[i])){
-                  std::cin>>ti;
-                }
-                //std::cout<<"F) capacity: "<< j<<"   result: "<< (*result)[i] <<std::endl;
-
                 (*result)[i]      += Error((*input)[index], (*label)[index]);
-
 
                 if( j % 28 == 0)
                   std::cout<<std::endl;
-                if( (*input)[index] >= 0.7)
+                if( (*input)[index] >= 0.75)
                   std::cout<<"3";
                 else if( (*input)[index] >= 0.5)
                   std::cout<<"2";
-                else if( (*input)[index] >= 0.3)
+                else if( (*input)[index] >= 0.25)
                   std::cout<<"1";
                 else
                   std::cout<< " ";
-
-
-
             }
         }
 
@@ -122,13 +109,10 @@ public:
         //int numOfThread = this->GetNumOfThread();
 
         for (int ba = 0, i = 0; ba < batchsize; ba++) {
-        //for (int ba = pThreadNum, i = 0; ba < batchsize; ba += numOfThread) {
             i = ti * batchsize + ba;
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index                  = i * capacity + j;
-                //std::cout<<"B) input: "<<(*input)[index] << " label: " << (*label)[index] << "input delta: "<< (*input_delta)[index] <<std::endl;
-
                 (*input_delta)[index] += ((*input)[index] - (*label)[index]) / batchsize;
             }
         }

@@ -6,7 +6,7 @@
 
 template<typename DTYPE> class PRelu : public Operator<DTYPE>{
 private:
-/*
+
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
     cudnnActivationDescriptor_t actDesc;
@@ -20,7 +20,7 @@ private:
     double m_coef;
 
 #endif  // __CUDNN__
-*/
+
 public:
     PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight) : Operator<DTYPE>(pInput, pWeight) {
         #ifdef __DEBUG__
@@ -49,8 +49,6 @@ public:
         std::cout << "PRelu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
-        //std::cout<< "pWeight: "<< pWeight->GetResult() <<std::endl;
-
         int timesize    = pInput->GetResult()->GetTimeSize();
         int batchsize   = pInput->GetResult()->GetBatchSize();
         int channelsize = pInput->GetResult()->GetChannelSize();
@@ -63,11 +61,11 @@ public:
         return TRUE;
     }
 
-/*
+
 #ifdef __CUDNN__
     void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Operator<DTYPE> *pInput = this->GetInput()[0];
-        //perator<DTYPE> *pWeight = this->GetInput()[1];
+        //Operator<DTYPE> *pWeight = this->GetInput()[1];
 
         int batchsize   = pInput->GetResult()->GetBatchSize();
         int channelsize = pInput->GetResult()->GetChannelSize();
@@ -102,11 +100,9 @@ public:
                                               batchsize, channelsize, rowsize, colsize));
     }
 #endif  // if __CUDNN__
-*/
-    void Delete() {
-/*
-#ifdef __CUDNN__
 
+#ifdef __CUDNN__
+    void Delete() {
         if (m_aInputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aInputTensorDesc));
         m_aInputTensorDesc = NULL;
 
@@ -123,9 +119,8 @@ public:
         actDesc = NULL;
 
         checkCudaErrors(cudaThreadSynchronize());
+   }
 #endif  // if __CUDNN__
-*/
-    }
 
 
     int ForwardPropagate(int pTime = 0) {
@@ -154,12 +149,10 @@ public:
                             (*result)[index] = (*input)[index];
                         else
                             (*result)[index] = (*weight)[index] * (*input)[index];
-                            //std::cout << "\t weight: " << (*weight)[index] << std::endl;
                     }
                 }
             }
         }
-
 
         /*int index = Index5D(resultTenShape, 0, 0, 0, 0, 0); //initial index
         DTYPE *input_ptr = &(*input)[index];
@@ -209,41 +202,18 @@ public:
                             (*input_delta)[index] += (*this_delta)[index];
                             (*weight_delta)[index] += 0;
                         } else {
-
                             (*input_delta)[index] += (*weight)[index]*(*this_delta)[index];
                             (*weight_delta)[index] += (*input)[index]*(*this_delta)[index];
-                            //std::cout<<"index: "<<index << " weight: "<< (*weight)[index] << "  input_delta: "<<(*input_delta)[index]<<"  weight_delta: " << (*weight_delta)[index] <<std::endl;
                         }
-
-                        /*if(std::isnan((*this_delta)[index])){
-                            (*this_delta)[index] = 0.00000001f;
-                        }*/
-
-
-                        if(std::isnan((*weight)[index]))
-                        {
-                          std::cout<<"\n weight" <<std::endl;
-                        }
-                        if(std::isnan((*this_delta)[index]))
-                        {
-                          std::cout<<"\n this_delta" <<std::endl;
-                        }
-                        if(std::isnan((*input_delta)[index]))
-                        {
-                          std::cout<<"\n input_delta" <<std::endl;
-                        }
-                        if(std::isnan((*weight_delta)[index]))
-                        {
-                          std::cout<<"\n weight_delta"<<std::endl;
-                        }
+                        /*
                         if(std::isnan((*weight)[index]) || std::isnan((*this_delta)[index]) || std::isnan((*input_delta)[index]) || std::isnan((*weight_delta)[index])){
                           std::cin >> x;
-                        }
+                        }*/
                     }
                 }
             }
         }
-/*
+        /*
         int index = Index5D(resultTenShape, 0, 0, 0, 0, 0); //initial index
         DTYPE *input_delta_ptr = &(*input_delta)[index];
         DTYPE *weight_delta_ptr = &(*weight_delta)[index];
@@ -253,44 +223,19 @@ public:
         DTYPE *result_ptr = &(*result)[index];
         DTYPE *delta_limit = input_delta_ptr + batchsize * channelsize * rowsize * colsize;
         for(; input_delta_ptr < delta_limit; input_delta_ptr++, this_delta_ptr++, input_ptr++, weight_ptr++, result_ptr++){
-
             if(*result_ptr > 0.f)
               *input_delta_ptr += *this_delta_ptr;
             else
               *input_delta_ptr += (*weight_ptr) * (*this_delta_ptr);
               *weight_delta_ptr += (*input_ptr) * (*this_delta_ptr);
         }
-*/
-        return TRUE;
-    }
-/*
-    inline DTYPE MAX(DTYPE data1, DTYPE data2) {
-        if (data1 >= data2) return data1;
-        else return data2;
-    }
-
-    inline DTYPE MIN(DTYPE data1, DTYPE data2) {
-        if (data1 < data2) return data1;
-        else return data2;
-    }
-*/
-
-#ifdef __CUDNN__
-    int ForwardPropagateOnGPU(int pTime) {
-        this->ForwardPropagate(pTime);
+        */
         return TRUE;
     }
 
-    int BackPropagateOnGPU(int pTime) {
-        this->BackPropagate(pTime);
-
-        return TRUE;
-    }
-#endif  // __CUDNN__
-
-/*
 #ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime = 0) {
+        //this->ForwardPropagate(pTime);
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
@@ -306,6 +251,7 @@ public:
     }
 
     int BackPropagateOnGPU(int pTime = 0) {
+        //this->BackPropagate(pTime);
         Tensor<DTYPE> *result      = this->GetResult();
         Tensor<DTYPE> *this_delta  = this->GetGradient();
         Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
@@ -328,7 +274,7 @@ public:
     }
 
 #endif  // if __CUDNN__
-*/
+
 };
 
 

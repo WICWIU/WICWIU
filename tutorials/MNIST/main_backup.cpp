@@ -1,7 +1,7 @@
 #include "net/my_CNN_backup.h"
 #include "net/my_CNN.h"
 #include "net/my_NN.h"
-#include "net/TransposedConv_Test.h"
+#include "net/AutoEncoder.h"
 #include "net/my_Resnet.h"
 #include "MNIST_Reader.h"
 #include <time.h>
@@ -13,9 +13,6 @@
 #define GPUID             0
 
 int main(int argc, char const *argv[]) {
-    //FILE *fptr;
-    //fptr = fopen("relu_result.txt", "w");
-
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
 
@@ -25,7 +22,7 @@ int main(int argc, char const *argv[]) {
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 784, "label");
 
     // ======================= Select net ===================
-    NeuralNetwork<float> *net = new TransposedConv_Test(x, label);
+    NeuralNetwork<float> *net = new AutoEncoder(x, label);
     //NeuralNetwork<float> *net = new my_CNN_backup(x, label);
     // NeuralNetwork<float> *net = new my_CNN(x, label);
     // NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
@@ -120,7 +117,6 @@ int main(int argc, char const *argv[]) {
                    test_avg_loss / (j + 1),
                    test_accuracy / (j + 1));
             fflush(stdout);
-            //fprintf(fptr,"\n\nepoch: %d, loss: %f, accuracy: %f", i, test_avg_loss / (j + 1), test_accuracy / (j + 1));
         }
         std::cout << "\n\n";
     }
@@ -128,6 +124,5 @@ int main(int argc, char const *argv[]) {
     delete dataset;
     delete net;
 
-    //fclose(fptr);
     return 0;
 }

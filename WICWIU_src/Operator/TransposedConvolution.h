@@ -158,7 +158,6 @@ public:
 
         checkCUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(this->GetCudnnHandle(), filterDesc, inputDeltaDesc, convDesc, deltaDesc, m_dataAlgo, &m_dataSizeInBytes));
 
-        //checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), deltaDesc, inputTensorDesc, convDesc, filterDesc, m_filterAlgo, &m_filterSizeInBytes));
         checkCUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(this->GetCudnnHandle(), deltaDesc, inputTensorDesc, convDesc, filterDeltaDesc, m_filterAlgo, &m_filterSizeInBytes));
 
         if (m_sizeInBytes != 0) {
@@ -244,7 +243,7 @@ public:
         Shape *shapeOfResult  = result->GetShape();
 
         int batchsize   = (*shapeOfResult)[1];
-        int channelsize = (*shapeOfResult)[2];  // == shapeOfWeight[2]
+        int channelsize = (*shapeOfResult)[2];
         int rowsize     = (*shapeOfResult)[3];
         int colsize     = (*shapeOfResult)[4];
 
@@ -262,29 +261,17 @@ public:
         int weight_index = 0;
         int result_index = 0;
 
-
-        //std::cout<< "ba : " << batchsize << "  I_ch : " << channelsizeOfInput <<  "  ro : " << rowsizeOfInput << "  co : " << colsizeOfInput << "  wch : " << channelsizeOfWeight << "  wro : " << rowsizeOfWeight << "  wco : " << colsizeOfWeight << std::endl;
-
         for (int ba = 0; ba < batchsize; ba++) {
-          //std::cout<< "ba : " << ba << std::endl;
-            //for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
-            for (int ch = 0; ch < channelsizeOfInput; ch++) {  // Batchsize of weight kernel
-              //std::cout<< "ch : " << ch << std::endl;
+            for (int ch = 0; ch < channelsizeOfInput; ch++) {
                 for (int ro = 0; ro < rowsizeOfInput; ro++) {
-                  //std::cout<< "ro : " << ro << std::endl;
                     for (int co = 0; co < colsizeOfInput; co++) {
-                      //std::cout<< "co : " << co << std::endl;
-                        for (int wch = 0; wch < channelsizeOfWeight; wch++) {  // == (*shapeOfInput)[2];
-                          //std::cout<< "wch : " << wch << std::endl;
+                        for (int wch = 0; wch < channelsizeOfWeight; wch++) {
                             for (int wro = 0; wro < rowsizeOfWeight; wro++) {
                                 for (int wco = 0; wco < colsizeOfWeight; wco++) {
-                                   //std::cout<< "wro : " << wro << "  wco: " << wco << std::endl;
-                                   //std::cout<< "ba : " << ba << "  ch : " << ch <<  "  ro : " << ro << "  co : " << co << "  wch : " << wch << "  wro : " << wro << "  wco : " << wco << std::endl;
 
                                     result_index  = Index5D(shapeOfResult, ti, ba, wch, (ro * m_stride[0]) + wro, (co * m_stride[1]) + wco);
                                     weight_index = Index5D(shapeOfWeight, 0, ch, wch, wro, wco);
                                     input_index = Index5D(shapeOfInput, ti, ba, ch, ro, co);
-                                    //std::cout<<"input "<< input_index << " *  weight "<< weight_index<< "  =  result "<< result_index<< std::endl;;
 
                                     (*result)[result_index] += ((*input)[input_index] * (*weight)[weight_index]);
                                 }
@@ -302,8 +289,6 @@ public:
         Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
         Shape *shapeOfInput        = input->GetShape();
-        //std::cout << input->GetShape() << std::endl;
-        //std::cout << input_delta->GetShape() << std::endl;
 
         Tensor<DTYPE> *weight          = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *weight_gradient = this->GetInput()[1]->GetGradient();
@@ -313,7 +298,7 @@ public:
         Shape *shapeOfResult      = this_delta->GetShape();
 
         int batchsize   = (*shapeOfResult)[1];
-        int channelsize = (*shapeOfResult)[2];  // == shapeOfWeight[1]
+        int channelsize = (*shapeOfResult)[2];
         int rowsize     = (*shapeOfResult)[3];
         int colsize     = (*shapeOfResult)[4];
 
@@ -330,48 +315,31 @@ public:
         int result_index = 0;
 
         int ti          = pTime;
-        //std::cout<< "ba : " << batchsize << "  ch : " << channelsize <<  "  ro : " << rowsizeOfInput << "  co : " << colsizeOfInput << "  wch : " << channelsizeOfWeight << "  wro : " << rowsizeOfWeight << "  wco : " << colsizeOfWeight << std::endl;
 
         for (int ba = 0; ba < batchsize; ba++) {
-          //for (int ch = 0; ch < channelsize; ch++) {  // Batchsize of weight kernel
-            for (int ch = 0; ch < channelsizeOfInput; ch++) {  // Batchsize of weight kernel
-                for (int ro = 0; ro < rowsizeOfInput; ro++) {
-                    for (int co = 0; co < colsizeOfInput; co++) {
-                        for (int wch = 0; wch < channelsizeOfWeight; wch++) {  // == (*shapeOfInput)[2];
-                            for (int wro = 0; wro < rowsizeOfWeight; wro++) {
-                                for (int wco = 0; wco < colsizeOfWeight; wco++) {
-                                  //std::cout<< "ba : " << ba << "  ch : " << ch <<  "  ro : " << ro << "  co : " << co << "  wch : " << wch << "  wro : " << wro << "  wco : " << wco << std::endl;
+          for (int ch = 0; ch < channelsizeOfInput; ch++) {
+            for (int ro = 0; ro < rowsizeOfInput; ro++) {
+              for (int co = 0; co < colsizeOfInput; co++) {
+                for (int wch = 0; wch < channelsizeOfWeight; wch++) {
+                  for (int wro = 0; wro < rowsizeOfWeight; wro++) {
+                    for (int wco = 0; wco < colsizeOfWeight; wco++) {
 
-                                  result_index  = Index5D(shapeOfResult, ti, ba, wch, (ro * m_stride[0]) + wro, (co * m_stride[1]) + wco);
-                                  weight_index = Index5D(shapeOfWeight, 0, ch, wch, wro, wco);
-                                  input_index = Index5D(shapeOfInput, ti, ba, ch, ro, co);
+                      result_index  = Index5D(shapeOfResult, ti, ba, wch, (ro * m_stride[0]) + wro, (co * m_stride[1]) + wco);
+                      weight_index = Index5D(shapeOfWeight, 0, ch, wch, wro, wco);
+                      input_index = Index5D(shapeOfInput, ti, ba, ch, ro, co);
 
-                                  //std::cout<<"input "<< input_index << " =  weight "<< weight_index<< "  *  result "<< result_index<< std::endl;;
-                                  //std::cin>>x>>std::endl;
-                                  //std::cout << result_index << " " << weight_index << " "<< input_index << " "<< std::endl;
-
-
-                                  (*input_delta)[input_index]
-                                        += ((*weight)[weight_index] * (*this_delta)[result_index]);
-                                  (*weight_gradient)[weight_index]
-                                        += ((*input)[input_index] * (*this_delta)[result_index]);
-                                }
-                            }
-                        }
+                      (*input_delta)[input_index]
+                            += ((*weight)[weight_index] * (*this_delta)[result_index]);
+                      (*weight_gradient)[weight_index]
+                            += ((*input)[input_index] * (*this_delta)[result_index]);
                     }
+                  }
                 }
+              }
             }
+          }
         }
 
-          /*int ti = 0;
-            int ba = 12;
-            int ch = 5;
-            int ro = 0;
-            int co = 0;
-            int wco = 0;
-            int wro = 0;
-            int wch = 0;
-*/
         return TRUE;
     }
 
@@ -386,23 +354,9 @@ public:
         m_pDevInput  = input->GetGPUData(pTime);
         m_pDevFilter = weight->GetGPUData(0);
         m_pDevOutput = result->GetGPUData(pTime);
-        //std::cout<< "\nm_pDevInput  "<< m_pDevInput << std::endl;
-        //std::cout<< "\nm_pDevFilter "<< m_pDevFilter << std::endl;
-        //std::cout<< "\nm_pDevOutput "<< m_pDevOutput << std::endl;
-
-
-        //std::cout<< "m_alpha "<< m_alpha << std::endl;
-        //std::cout<< "filterDesc "<< filterDesc << std::endl;
-        //std::cout<< "inputTensorDesc "<< inputTensorDesc << std::endl;
-        //std::cout<< "convDesc "<< convDesc << std::endl;
-        //std::cout<< "m_dataAlgo "<< m_dataAlgo << std::endl;
-        //std::cout<< "m_dataDevWorkSpace "<< m_dataDevWorkSpace << std::endl;
-        //std::cout<< "m_dataSizeInBytes "<< m_dataSizeInBytes << std::endl;
-        //std::cout<< "m_beta "<< m_beta << std::endl;
-        //std::cout<< "outputTensorDesc "<< outputTensorDesc << std::endl;
 
         checkCUDNN(cudnnConvolutionBackwardData(this->GetCudnnHandle(), &m_alpha, filterDesc, m_pDevFilter, inputTensorDesc, m_pDevInput, convDesc,
-                                               m_dataAlgo, m_dataDevWorkSpace, m_dataSizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));//output param 이 잘못들어왔대 왜...?
+                                               m_dataAlgo, m_dataDevWorkSpace, m_dataSizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));
 
 
         checkCudaErrors(cudaDeviceSynchronize());
@@ -411,7 +365,7 @@ public:
     }
 
     int BackPropagateOnGPU(int pTime = 0) {
-        //his->BackPropagate(pTime);
+        //this->BackPropagate(pTime);
 
         Tensor<DTYPE> *input           = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input_delta     = this->GetInput()[0]->GetDelta();
@@ -434,6 +388,7 @@ public:
                                                   m_filterAlgo, m_filterDevWorkSpace, m_filterSizeInBytes, &m_beta, filterDesc, m_pDevFilterDelta));
 
         checkCudaErrors(cudaDeviceSynchronize());
+
         return TRUE;
     }
 

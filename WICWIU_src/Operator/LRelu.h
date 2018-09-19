@@ -77,7 +77,8 @@ public:
 
         m_alpha = 1.f;
         m_beta  = 0.f;
-        m_coef  = m_negativeSlope;
+        m_coef  = 0.f;
+        //m_coef  = m_negativeSlope;
 
         checkCUDNN(cudnnCreateTensorDescriptor(&m_aInputTensorDesc));
         checkCUDNN(cudnnCreateTensorDescriptor(&m_aOutputTensorDesc));
@@ -130,7 +131,7 @@ public:
 #endif  // if __CUDNN__
     }
 
-    int ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
@@ -143,29 +144,15 @@ public:
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
-        //int numOfThread = this->GetNumOfThread();
 
-		    /*
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
-            for (int ch = 0; ch < channelsize; ch++) {
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
-
-                        (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                            = this->MAX((*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)], 0.f) + m_negativeSlope*this->MIN(0.f, (*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)]);
-                    }
-                }
-            }
-        }
-		    */
 
 		    /* 	improved version 1
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
-            						int idx = Index5D(resultTenShape, ti, ba, ch, ro, co);
-            						if((*input)[idx] >= 0.f)
+                        int idx = Index5D(resultTenShape, ti, ba, ch, ro, co);
+                        if((*input)[idx] >= 0.f)
             							(*result)[idx] = (*input)[idx];
             						else
             							(*result)[idx] = m_negativeSlope * (*input)[idx];
@@ -177,7 +164,7 @@ public:
 
 		    /*  improved version 2
 		    int idx = Index5D(resultTenShape, 0, 0, 0, 0, 0);
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++, idx++) {
@@ -212,8 +199,7 @@ public:
     		int idx = Index5D(resultTenShape, 0, 0, 0, 0, 0);
     		DTYPE* ip = &(*input)[idx];
     		DTYPE* op = &(*result)[idx];
-
-        for (int ba = pThreadNum; ba < batchsize; ba += numOfThread) {
+        for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++, ip++, op++) {
@@ -243,7 +229,7 @@ public:
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *result      = this->GetResult();
         Tensor<DTYPE> *this_delta  = this->GetGradient();
         Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
@@ -257,9 +243,8 @@ public:
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
-        //int numOfThread = this->GetNumOfThread();
-
         int index = 0;
+
         for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
@@ -271,8 +256,6 @@ public:
                             (*input_delta)[index] += (*this_delta)[index];
                         else
                             (*input_delta)[index] += m_negativeSlope * (*this_delta)[index];
-
-                        //std::cout << "input_delta: " << (*input_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)] << std::endl;
                     }
                 }
             }
@@ -299,6 +282,7 @@ public:
 
 #ifdef __CUDNN__
     int ForwardPropagateOnGPU(int pTime = 0) {
+        //this->ForwardPropagate(pTime);
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
@@ -309,11 +293,14 @@ public:
                                           &m_alpha, m_aInputTensorDesc, m_pDevInput,
                                           &m_beta, m_aOutputTensorDesc, m_pDevOutput));
 
+
         checkCudaErrors(cudaDeviceSynchronize());
         return TRUE;
     }
 
     int BackPropagateOnGPU(int pTime = 0) {
+        //this->BackPropagate(pTime);
+
         Tensor<DTYPE> *result      = this->GetResult();
         Tensor<DTYPE> *this_delta  = this->GetGradient();
         Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
@@ -323,6 +310,11 @@ public:
         m_pDevOutput     = result->GetGPUData(pTime);
         m_pDevDelta      = this_delta->GetGPUData(pTime);
         m_pDevInputDelta = input_delta->GetGPUData(pTime);
+
+        if(m_pDevInput < 0 )
+          m_alpha = m_negativeSlope;
+        else
+          m_alpha = 1.f;
 
         checkCUDNN(cudnnActivationBackward(this->GetCudnnHandle(), actDesc, &m_alpha,
                                            m_aOutputTensorDesc, m_pDevOutput,
@@ -336,23 +328,6 @@ public:
     }
 
 #endif  // if __CUDNN__
-/*
-#ifdef __CUDNN__
-    int ForwardPropagateOnGPU(int pTime) {
-        this->ForwardPropagate(pTime);
-        return TRUE;
-    }
-
-    int BackPropagateOnGPU(int pTime) {
-        this->BackPropagate(pTime);
-
-        return TRUE;
-    }
-
-#endif  // __CUDNN__
-*/
-
 };
-
 
 #endif  // LRELU_H_
