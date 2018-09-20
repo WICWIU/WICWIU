@@ -84,6 +84,8 @@ public:
 
     float                         GetAccuracy(int numOfClass = 10);
     int                           GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
+    float                         GetTop5Accuracy(int numOfClass);
+    void                          GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
     float                         GetLoss();
 
     void                          PrintGraphInformation();
@@ -98,8 +100,8 @@ public:
 
     Operator<DTYPE>             * SerchOperator(std::string pName);
 
-    int                           Save(FILE * fileForSave);
-    int                           Load(FILE * fileForLoad);
+    int                           Save(FILE *fileForSave);
+    int                           Load(FILE *fileForLoad);
 
 #ifdef __CUDNN__
     int                           ForwardPropagateOnGPU(int pTime = 0);
