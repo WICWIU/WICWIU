@@ -40,7 +40,7 @@ public:
         return TRUE;
     }
 
-    Tensor<DTYPE>* ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    Tensor<DTYPE>* ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input    = this->GetTensor();
         Tensor<DTYPE> *label    = this->GetLabel()->GetResult();
         Tensor<DTYPE> *result   = this->GetResult();
@@ -59,7 +59,7 @@ public:
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index              = i * capacity + j;
-
+                //check MNIST label image
                 if( j % 28 == 0)
                   std::cout<<std::endl;
                 if((*label)[index] >= 0.75)
@@ -76,7 +76,7 @@ public:
                 index              = i * capacity + j;
 
                 (*result)[i]      += Error((*input)[index], (*label)[index]);
-
+                //check MNIST output image
                 if( j % 28 == 0)
                   std::cout<<std::endl;
                 if( (*input)[index] >= 0.75)

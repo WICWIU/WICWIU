@@ -88,8 +88,6 @@ public:
                 (*m_aaVelocity)[i]->SetDeviceGPU(idOfDevice);
             }
         }
-      }
-
     }
 
     virtual int UpdateParameter() {
