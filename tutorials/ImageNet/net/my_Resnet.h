@@ -115,7 +115,7 @@ public:
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, FALSE, "Conv");
-        out = new Maxpooling2D<float>(out, 2, 2, 2, 2, "MaxPool_2");
+        out = new Maxpooling2D<float>(out, 2, 2, 3, 3, 1, "MaxPool_2");
         // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
 
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 1, "Block1");
@@ -136,7 +136,7 @@ public:
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
 
         // ======================= Select Optimizer ===================
-        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, 0.9, 5e-4, MINIMIZE));
+        this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.000001, 0.9, 5e-4, MINIMIZE));
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, MINIMIZE));
 
         return TRUE;
@@ -174,6 +174,6 @@ public:
     }
 };
 
-template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet14(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel) {
-    return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 2, 2, 2, 2, 1000);
+template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet18(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
+    return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 2, 2, 2, 2, pNumOfClass);
 }
