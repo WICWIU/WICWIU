@@ -5,5 +5,6 @@
 #include "Module/ConvoulutionLayer.h"
 #include "Module/BatchNormalizeLayer.h"
 // #include "Module/CUDNNBatchNormalizeLayer.h"
+#include "Module/TransposedConvoulutionLayer.h"
 
 #endif // ifndef __MODULE_UTIL_H__
