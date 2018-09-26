@@ -69,18 +69,18 @@ public:
 
     void                          SetDeviceCPU();
 
-    void                          SetModeTraining();
-    void                          SetModeAccumulating();
-    void                          SetModeInferencing();
+    void                          SetModeTrain();
+    void                          SetModeAccumulate();
+    void                          SetModeInference();
 
-    int                           Training();
-    int                           Testing();
+    int                           Train();
+    int                           Test();
 
-    int                           TrainingOnCPU();
-    int                           TestingOnCPU();
+    int                           TrainOnCPU();
+    int                           TestOnCPU();
 
-    int                           TrainingOnGPU();
-    int                           TestingOnGPU();
+    int                           TrainOnGPU();
+    int                           TestOnGPU();
 
     float                         GetAccuracy(int numOfClass = 10);
     int                           GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);

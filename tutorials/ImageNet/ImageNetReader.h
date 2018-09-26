@@ -36,7 +36,7 @@ private:
     string m_dirOfTestImage   = "ILSVRC2012_img_val256";
     string m_classInformation = "synset_words.txt";
 
-    /*Training image*/
+    /*Train image*/
     // list of Class
     string m_className[NUMBER_OF_CLASS];
     // for shuffle class index
@@ -46,7 +46,7 @@ private:
     // image set of each class
     string **m_aaImagesOfClass;
 
-    /*Testing image*/
+    /*Test image*/
     int m_numOfTestImage;
     int *m_classNumOfEachImage;
     string *m_listOfTestImage;

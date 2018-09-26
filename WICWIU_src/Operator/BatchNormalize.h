@@ -126,7 +126,7 @@ public:
         m_pTenResult    = this->GetResult();
         m_pTenDerResult = this->GetGradient();
 
-        m_mode = TRAINING;
+        m_mode = Train;
 
         return TRUE;
     }
@@ -194,7 +194,7 @@ public:
         float temp = 0.f;
 
         switch (m_mode) {
-            case TRAINING:
+            case Train:
                 m_aTenCachedMean->Reset(m_CUDNNHandle);
                 m_aTenCachedInvVariance->Reset(m_CUDNNHandle);
                 CUDNNCachedMean        = m_aTenCachedMean->GetGPUData(0);
@@ -262,7 +262,7 @@ public:
 
 #endif  // if __CUDNN__
 
-    int SetModeTraining() {
+    int SetModeTrain() {
         if (m_mode == ACCUMULATING) {
 #ifdef __CUDNN__
 
@@ -280,16 +280,16 @@ public:
         } else {
             return TRUE;
         }
-        m_mode = TRAINING;
+        m_mode = Train;
 
         return TRUE;
     }
 
-    int SetModeAccumulating() {
+    int SetModeAccumulate() {
         // std::cout << m_aTenTotalMean << '\n';
         // std::cout << m_aTenTotalVariance << '\n';
 
-        if (m_mode == TRAINING) {
+        if (m_mode == Train) {
 #ifdef __CUDNN__
             m_CUDNNExponentialAverageFactor = 1.0;
             m_aTenTotalMean->Reset(m_CUDNNHandle);
@@ -311,10 +311,10 @@ public:
         return TRUE;
     }
 
-    int SetModeInferencing() {
+    int SetModeInference() {
         // std::cout << m_aTenTotalMean << '\n';
         // std::cout << m_aTenTotalVariance << '\n';
-        if (m_mode == TRAINING) {
+        if (m_mode == Train) {
             ;
         } else if (m_mode == ACCUMULATING) {
             ;

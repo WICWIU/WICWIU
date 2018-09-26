@@ -67,10 +67,10 @@ public:
         checkCudaErrors(cudaMemcpy(CUDNNTotalVariance, m_aCUDNNTotalVariance, m_batchSummaryBytes, cudaMemcpyHostToDevice));
 
         switch (m_mode) {
-            case TRAINING:
+            case Train:
                 checkCudaErrors(cudaMalloc(&CUDNNCachedMean, (m_batchSummaryBytes)));
                 checkCudaErrors(cudaMalloc(&CUDNNCachedInvVariance, (m_batchSummaryBytes)));
-                checkCUDNN(cudnnBatchNormalizationForwardTraining(
+                checkCUDNN(cudnnBatchNormalizationForwardTrain(
                                m_CUDNNHandle,
                                m_CUDNNMode,
                                &m_CUDNNAlpha,
@@ -95,7 +95,7 @@ public:
                            );
                 break;
             case ACCUMULATING:
-                checkCUDNN(cudnnBatchNormalizationForwardTraining(
+                checkCUDNN(cudnnBatchNormalizationForwardTrain(
                                m_CUDNNHandle,
                                m_CUDNNMode,
                                &m_CUDNNAlpha,
@@ -150,7 +150,7 @@ public:
         checkCudaErrors(cudaMemcpy(m_aCUDNNTotalMean, CUDNNTotalMean, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
         checkCudaErrors(cudaMemcpy(m_aCUDNNTotalVariance, CUDNNTotalVariance, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
 
-        if (m_mode == TRAINING) {
+        if (m_mode == Train) {
             checkCudaErrors(cudaMemcpy(m_aCUDNNCachedMean, CUDNNCachedMean, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
             checkCudaErrors(cudaMemcpy(m_aCUDNNCachedInvVariance, CUDNNCachedInvVariance, m_batchSummaryBytes, cudaMemcpyDeviceToHost));
             checkCudaErrors(cudaFree(CUDNNCachedMean));
@@ -259,7 +259,7 @@ public:
 # endif // if __CUDNN__
 
 
-    int SetModeTraining() {
+    int SetModeTrain() {
         if (m_mode == ACCUMULATING) {
             ;
         } else if (m_mode == INFERENCING) {
@@ -267,12 +267,12 @@ public:
         } else {
             return TRUE;
         }
-        m_mode = TRAINING;
+        m_mode = Train;
         return TRUE;
     }
 
-    int SetModeAccumulating() {
-        if (m_mode == TRAINING) {
+    int SetModeAccumulate() {
+        if (m_mode == Train) {
             // m_numBatch= 0;
             m_CUDNNExponentialAverageFactor = 1.0;
 
@@ -289,9 +289,9 @@ public:
         return TRUE;
     }
 
-    int SetModeInferencing() {
+    int SetModeInference() {
         if (m_CUDNNExponentialAverageFactor < 1.0) {
-            if (m_mode == TRAINING) {
+            if (m_mode == Train) {
                 ;
             } else if (m_mode == ACCUMULATING) {
                 ;
@@ -394,7 +394,7 @@ private:
 
         // m_epsilon= pEpsilon;
 
-        m_mode = TRAINING;
+        m_mode = Train;
         // m_numBatch= 0;
         m_CUDNNHandle = this->GetCudnnHandle();
 

@@ -135,7 +135,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
     m_aaGradient  = NULL;
     m_name        = pName;
     m_Device      = CPU;
-    m_Mode        = TRAINING;
+    m_Mode        = Train;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     Alloc();
@@ -151,7 +151,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_aaGradient  = NULL;
     m_name        = pName;
     m_Device      = CPU;
-    m_Mode        = TRAINING;
+    m_Mode        = Train;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     Alloc();
@@ -168,7 +168,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_aaGradient  = NULL;
     m_name        = pName;
     m_Device      = CPU;
-    m_Mode        = TRAINING;
+    m_Mode        = Train;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     Alloc();
@@ -185,7 +185,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_aaGradient  = NULL;
     m_name        = pName;
     m_Device      = CPU;
-    m_Mode        = TRAINING;
+    m_Mode        = Train;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     Alloc();
@@ -311,17 +311,17 @@ template<typename DTYPE> int Operator<DTYPE>::SetIsTrainable(int pIsTrainable) {
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::SetModeTraining() {
-    m_Mode = TRAINING;
+template<typename DTYPE> int Operator<DTYPE>::SetModeTrain() {
+    m_Mode = Train;
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::SetModeAccumulating() {
+template<typename DTYPE> int Operator<DTYPE>::SetModeAccumulate() {
     m_Mode = ACCUMULATING;
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::SetModeInferencing() {
+template<typename DTYPE> int Operator<DTYPE>::SetModeInference() {
     m_Mode = INFERENCING;
     return TRUE;
 }

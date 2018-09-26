@@ -326,45 +326,45 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPU() {
     m_aLossFunction->SetDeviceCPU();
 }
 
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeTraining() {
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeTrain() {
     for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetModeTraining();
+        (*m_apExcutableOperator)[i]->SetModeTrain();
     }
 }
 
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeAccumulating() {
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeAccumulate() {
     for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetModeAccumulating();
+        (*m_apExcutableOperator)[i]->SetModeAccumulate();
     }
 }
 
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeInferencing() {
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeInference() {
     for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetModeInferencing();
+        (*m_apExcutableOperator)[i]->SetModeInference();
     }
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Training() {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Train() {
     if (m_Device == CPU) {
-        this->TrainingOnCPU();
+        this->TrainOnCPU();
     } else if (m_Device == GPU) {
-        this->TrainingOnGPU();
+        this->TrainOnGPU();
     } else return FALSE;
 
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Testing() {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Test() {
     if (m_Device == CPU) {
-        this->TestingOnCPU();
+        this->TestOnCPU();
     } else if (m_Device == GPU) {
-        this->TestingOnGPU();
+        this->TestOnGPU();
     } else return FALSE;
 
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnCPU() {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
     this->ResetOperatorResult();
     this->ResetOperatorGradient();
     this->ResetLossFunctionResult();
@@ -378,7 +378,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnCPU() {
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TestingOnCPU() {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnCPU() {
     this->ResetOperatorResult();
     this->ResetLossFunctionResult();
 
@@ -386,7 +386,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TestingOnCPU() {
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnGPU() {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnGPU() {
 #ifdef __CUDNN__
     this->ResetOperatorResult();
     this->ResetOperatorGradient();
@@ -405,7 +405,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainingOnGPU() {
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TestingOnGPU() {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnGPU() {
 #ifdef __CUDNN__
     this->ResetOperatorResult();
     this->ResetLossFunctionResult();

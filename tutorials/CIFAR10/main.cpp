@@ -68,13 +68,13 @@ int main(int argc, char const *argv[]) {
             net->GetOptimizer()->SetLearningRate(lr);
             std::cout << "lr : " << lr << '\n';
         }
-        //// ======================= Training =======================
+        //// ======================= Train =======================
         float train_avg_accuracy = 0.f;
         float train_cur_accuracy = 0.f;
         float train_avg_loss     = 0.f;
         float train_cur_loss     = 0.f;
 
-        net->SetModeTraining();
+        net->SetModeTrain();
 
         for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
             startTime = clock();
@@ -91,7 +91,7 @@ int main(int argc, char const *argv[]) {
             delete data;
             data = NULL;
             net->ResetParameterGradient();
-            net->Training();
+            net->Train();
 
             train_cur_accuracy = net->GetAccuracy();
             train_cur_loss     = net->GetLoss();
@@ -125,7 +125,7 @@ int main(int argc, char const *argv[]) {
         // train_avg_loss     = 0.f;
         // train_cur_loss     = 0.f;
         //
-        // net->SetModeAccumulating();
+        // net->SetModeAccumulate();
         //
         // for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
         // startTime = clock();
@@ -142,7 +142,7 @@ int main(int argc, char const *argv[]) {
         // delete data;
         // data = NULL;
         // net->ResetParameterGradient();
-        // net->Testing();
+        // net->Test();
         //// std::cin >> temp;
         // train_cur_accuracy = net->GetAccuracy();
         // train_cur_loss     = net->GetLoss();
@@ -170,11 +170,11 @@ int main(int argc, char const *argv[]) {
         // }
         // std::cout << '\n';
 
-        // ======================= Testing ======================
+        // ======================= Test ======================
         float test_avg_accuracy = 0.f;
         float test_avg_loss     = 0.f;
 
-        net->SetModeInferencing();
+        net->SetModeInference();
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
             data = test_data_reader->GetDataFromBuffer();
@@ -187,7 +187,7 @@ int main(int argc, char const *argv[]) {
             net->FeedInputTensor(2, data[0], data[1]);
             delete data;
             data = NULL;
-            net->Testing();
+            net->Test();
 
 
             test_avg_accuracy += net->GetAccuracy();

@@ -37,7 +37,7 @@ public:
         std::cout << "Dropout::Dropout(Operator<DTYPE> * float *)" << '\n';
         #endif  // __DEBUG__
         m_keeprate = 0.f;
-        m_mode = TRAINING;
+        m_mode = Train;
 
         this->Alloc(pInput, pKeeprate);
     }
@@ -65,7 +65,7 @@ public:
 
         m_noiseshape = new Tensor<unsigned char>(batchsize);
         m_keeprate = pKeeprate;
-        m_mode = TRAINING;
+        m_mode = Train;
 
         return TRUE;
     }
@@ -81,7 +81,7 @@ public:
         int colsize     = pInput->GetResult()->GetColSize();
 
         m_droprate = 1.f - m_keeprate;
-        m_mode = TRAINING;
+        m_mode = Train;
 
         checkCUDNN(cudnnCreateTensorDescriptor(&m_aInOutDesc));
 
@@ -154,7 +154,7 @@ int ForwardPropagate(int pTime = 0) {
 
       switch(m_mode){
 
-        case TRAINING:
+        case Train:
         for (int ba = 0; ba < batchsize; ba++) {
             for (int ch = 0; ch < channelsize; ch++) {
                 for (int ro = 0; ro < rowsize; ro++) {
@@ -242,7 +242,7 @@ int ForwardPropagate(int pTime = 0) {
         m_pDevOutput = result->GetGPUData(pTime);
 
         switch(m_mode){
-        case TRAINING:
+        case Train:
 
         checkCUDNN(cudnnDropoutForward(this->GetCudnnHandle(),
                                       m_aDropoutDesc,
@@ -302,12 +302,12 @@ int ForwardPropagate(int pTime = 0) {
         return TRUE;
     }
 
-      int SetModeTraining() {
-          m_mode = TRAINING;
+      int SetModeTrain() {
+          m_mode = Train;
           return TRUE;
         }
 
-      int SetModeInferencing() {
+      int SetModeInference() {
           m_mode = INFERENCING;
           return TRUE;
         }

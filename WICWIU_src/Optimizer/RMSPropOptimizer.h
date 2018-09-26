@@ -32,7 +32,7 @@ explain:
  Accuracy 측면에서는 좋으나, 수식이 많아 속도감이 떨어짐.
 
 If True, gradients are normalized by the estimated variance of the gradient;
-if False, by the uncentered second moment. Setting this to True may help with training,
+if False, by the uncentered second moment. Setting this to True may help with Train,
 but is slightly more expensive in terms of computation and memory. Defaults to False.
 This implementation of RMSProp uses plain momentum, not Nesterov momentum.
 The centered version additionally maintains a moving (discounted) average of the

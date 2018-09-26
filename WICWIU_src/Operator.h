@@ -5,7 +5,7 @@
 #include "Container.h"
 
 enum Mode {
-    TRAINING,
+    Train,
     ACCUMULATING,
     INFERENCING,
 };
@@ -62,9 +62,9 @@ public:
     int                                   SetIsTensorholder(int pIsParameter);
     int                                   SetIsTrainable(int pIsTrainable);
 
-    virtual int                           SetModeTraining();
-    virtual int                           SetModeAccumulating();
-    virtual int                           SetModeInferencing();
+    virtual int                           SetModeTrain();
+    virtual int                           SetModeAccumulate();
+    virtual int                           SetModeInference();
 
     virtual Operator<DTYPE>            ** GetOutput();
     virtual Container<Operator<DTYPE> *>* GetOutputContainer();

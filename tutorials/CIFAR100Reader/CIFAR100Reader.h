@@ -25,13 +25,13 @@ private:
     string train_data = "train.bin";
     string test_data  = "test.bin";
 
-    /*Training image*/
+    /*Train image*/
     // for shuffle class index
     vector<int> m_shuffledList;
     // number of img of each class
     unsigned char *m_aTrainImageSrcs;
 
-    /*Testing image*/
+    /*Test image*/
     unsigned char *m_aTestImageSrc;
 
     // batch Tensor << before concatenate

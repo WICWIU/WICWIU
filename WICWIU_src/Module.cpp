@@ -205,23 +205,23 @@ template<typename DTYPE> Container<Tensor<DTYPE> *> *Module<DTYPE>::GetDeltaCont
     return m_pLastOperator->GetDeltaContainer();
 }
 
-template<typename DTYPE> int Module<DTYPE>::SetModeTraining() {
+template<typename DTYPE> int Module<DTYPE>::SetModeTrain() {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->SetModeTraining();
+        (*m_aaExcutableOperator)[i]->SetModeTrain();
     }
     return TRUE;
 }
 
-template<typename DTYPE> int Module<DTYPE>::SetModeAccumulating() {
+template<typename DTYPE> int Module<DTYPE>::SetModeAccumulate() {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->SetModeAccumulating();
+        (*m_aaExcutableOperator)[i]->SetModeAccumulate();
     }
     return TRUE;
 }
 
-template<typename DTYPE> int Module<DTYPE>::SetModeInferencing() {
+template<typename DTYPE> int Module<DTYPE>::SetModeInference() {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->SetModeInferencing();
+        (*m_aaExcutableOperator)[i]->SetModeInference();
     }
     return TRUE;
 }

@@ -60,11 +60,11 @@ int main(int argc, char const *argv[]) {
             net->GetOptimizer()->SetLearningRate(lr * 0.1);
         }
 
-        // ======================= Training =======================
+        // ======================= Train =======================
         float train_accuracy = 0.f;
         float train_avg_loss = 0.f;
 
-        net->SetModeTraining();
+        net->SetModeTrain();
 
         startTime = clock();
 
@@ -81,12 +81,12 @@ int main(int argc, char const *argv[]) {
             // std::cin >> temp;
             net->FeedInputTensor(2, x_t, l_t);
             net->ResetParameterGradient();
-            net->Training();
+            net->Train();
             // std::cin >> temp;
             train_accuracy += net->GetAccuracy();
             train_avg_loss += net->GetLoss();
 
-            printf("\rTraining complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
+            printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
                    j + 1, LOOP_FOR_TRAIN,
                    train_avg_loss / (j + 1),
                    train_accuracy / (j + 1)
@@ -101,7 +101,7 @@ int main(int argc, char const *argv[]) {
         // train_accuracy = 0.f;
         // train_avg_loss = 0.f;
         //
-        // net->SetModeAccumulating();
+        // net->SetModeAccumulate();
         //
         // startTime = clock();
         //
@@ -118,7 +118,7 @@ int main(int argc, char const *argv[]) {
         //     // std::cin >> temp;
         //     net->FeedInputTensor(2, x_t, l_t);
         //     net->ResetParameterGradient();
-        //     net->Testing();
+        //     net->Test();
         //     // std::cin >> temp;
         //     train_accuracy += net->GetAccuracy();
         //     train_avg_loss += net->GetLoss();
@@ -134,11 +134,11 @@ int main(int argc, char const *argv[]) {
         // nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
         // printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
-        // ======================= Testing ======================
+        // ======================= Test ======================
         float test_accuracy = 0.f;
         float test_avg_loss = 0.f;
 
-        net->SetModeInferencing();
+        net->SetModeInference();
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
             dataset->CreateTestDataPair(BATCH);
@@ -152,12 +152,12 @@ int main(int argc, char const *argv[]) {
 #endif  // __CUDNN__
 
             net->FeedInputTensor(2, x_t, l_t);
-            net->Testing();
+            net->Test();
 
             test_accuracy += net->GetAccuracy();
             test_avg_loss += net->GetLoss();
 
-            printf("\rTesting complete percentage is %d / %d -> loss : %f, acc : %f",
+            printf("\rTest complete percentage is %d / %d -> loss : %f, acc : %f",
                    j + 1, LOOP_FOR_TEST,
                    test_avg_loss / (j + 1),
                    test_accuracy / (j + 1));

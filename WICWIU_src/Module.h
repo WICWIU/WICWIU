@@ -42,9 +42,9 @@ public:
     virtual Tensor<DTYPE>             * GetDelta() const;
     virtual Container<Tensor<DTYPE> *>* GetDeltaContainer();
 
-    int                                 SetModeTraining();
-    int                                 SetModeAccumulating();
-    int                                 SetModeInferencing();
+    int                                 SetModeTrain();
+    int                                 SetModeAccumulate();
+    int                                 SetModeInference();
 
     int                                 ForwardPropagate(int pTime = 0);
     int                                 BackPropagate(int pTime = 0);

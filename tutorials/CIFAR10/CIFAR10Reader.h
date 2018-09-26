@@ -33,13 +33,13 @@ private:
     string train_data = "data_batch_";
     string test_data  = "test_batch.bin";
 
-    /*Training image*/
+    /*Train image*/
     // for shuffle class index
     vector<int> m_shuffledList;
     // number of img of each class
     unsigned char **m_aaTrainImageSrcs;
 
-    /*Testing image*/
+    /*Test image*/
     unsigned char *m_aTestImageSrc;
 
     // batch Tensor << before concatenate
@@ -253,7 +253,7 @@ public:
         m_isNormalizePerChannelWise = isNormalizePerChannelWise;
 
         if (m_isTrain) {
-            CalculateTrainingDataMeanAndStddev();
+            CalculateTrainDataMeanAndStddev();
         } else {
             if (src) {
                 if (m_isNormalizePerChannelWise != src->GetNormalizationMode()) {
@@ -272,7 +272,7 @@ public:
         return TRUE;
     }
 
-    int CalculateTrainingDataMeanAndStddev() {
+    int CalculateTrainDataMeanAndStddev() {
         int imgNum = 0;  // random image of above class
         int srcNum = 0;
 

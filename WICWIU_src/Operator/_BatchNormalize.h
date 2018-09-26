@@ -101,8 +101,8 @@ public:
 
 #endif  // __CUDNN__
 
-    void SetModeTraining() {
-        // std::cout << "BatchNormalize::SetModeTraining()" << '\n';
+    void SetModeTrain() {
+        // std::cout << "BatchNormalize::SetModeTrain()" << '\n';
 
         if (m_mode == ACCUMULATING) {
             ;
@@ -111,13 +111,13 @@ public:
         } else {
             return;
         }
-        m_mode = TRAINING;
+        m_mode = Train;
     }
 
-    void SetModeAccumulating() {
-        // std::cout << "BatchNormalize::SetModeAccumulating()" << '\n';
+    void SetModeAccumulate() {
+        // std::cout << "BatchNormalize::SetModeAccumulate()" << '\n';
 
-        if (m_mode == TRAINING) {
+        if (m_mode == Train) {
             m_numBatch = 0;
 
             m_aTenTotalMean->Reset();
@@ -131,8 +131,8 @@ public:
         m_mode = ACCUMULATING;
     }
 
-    void SetModeInferencing() {
-        // std::cout << "BatchNormalize::SetModeInferencing()" << '\n';
+    void SetModeInference() {
+        // std::cout << "BatchNormalize::SetModeInference()" << '\n';
 
         if ((m_mode == ACCUMULATING) && (m_numBatch > 0)) {
             ComputeTotalSummary();
@@ -144,7 +144,7 @@ public:
     }
 
     // enum class Mode {
-    // TRAINING,
+    // Train,
     // ACCUMULATING,
     // INFERENCING
     // };
@@ -242,7 +242,7 @@ private:
 
         m_epsilon = pEpsilon;
 
-        m_mode     = TRAINING;
+        m_mode     = Train;
         m_numBatch = 0;
     }
 
