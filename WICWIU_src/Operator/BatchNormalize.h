@@ -126,7 +126,7 @@ public:
         m_pTenResult    = this->GetResult();
         m_pTenDerResult = this->GetGradient();
 
-        m_mode = Train;
+        m_mode = TRAIN;
 
         return TRUE;
     }
@@ -194,7 +194,7 @@ public:
         float temp = 0.f;
 
         switch (m_mode) {
-            case Train:
+            case TRAIN:
                 m_aTenCachedMean->Reset(m_CUDNNHandle);
                 m_aTenCachedInvVariance->Reset(m_CUDNNHandle);
                 CUDNNCachedMean        = m_aTenCachedMean->GetGPUData(0);
@@ -280,7 +280,7 @@ public:
         } else {
             return TRUE;
         }
-        m_mode = Train;
+        m_mode = TRAIN;
 
         return TRUE;
     }
@@ -289,7 +289,7 @@ public:
         // std::cout << m_aTenTotalMean << '\n';
         // std::cout << m_aTenTotalVariance << '\n';
 
-        if (m_mode == Train) {
+        if (m_mode == TRAIN) {
 #ifdef __CUDNN__
             m_CUDNNExponentialAverageFactor = 1.0;
             m_aTenTotalMean->Reset(m_CUDNNHandle);
@@ -314,7 +314,7 @@ public:
     int SetModeInference() {
         // std::cout << m_aTenTotalMean << '\n';
         // std::cout << m_aTenTotalVariance << '\n';
-        if (m_mode == Train) {
+        if (m_mode == TRAIN) {
             ;
         } else if (m_mode == ACCUMULATING) {
             ;

@@ -5,7 +5,7 @@
 #include "Container.h"
 
 enum Mode {
-    Train,
+    TRAIN,
     ACCUMULATING,
     INFERENCING,
 };

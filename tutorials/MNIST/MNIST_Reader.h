@@ -21,10 +21,10 @@
 using namespace std;
 
 enum OPTION {
-    TEST,
+    TESTING,
     TESTIMAGE,
     TESTLABEL,
-    TRAIN,
+    TRAINING,
     TRAINIMAGE,
     TRAINLABEL,
     DEFAULT
@@ -150,7 +150,7 @@ public:
     void CreateTrainDataPair(int pBatchSize) {
         if (pBatchSize * (m_RecallNumOfTrain + 1) > NUMOFTRAINDATA){
             m_RecallNumOfTrain = 0;
-			ShuffleDataPair(TRAIN, pBatchSize);
+			ShuffleDataPair(TRAINING, pBatchSize);
         }
 
         int numOfTrainData = NUMOFTRAINDATA;
@@ -184,8 +184,8 @@ public:
         srand(unsigned(time(0)));
         vector<int> *shuffledList = NULL;
 
-        if (pOption == TEST) shuffledList = m_ShuffledListTest;
-        else if (pOption == TRAIN) shuffledList = m_ShuffledListTrain;
+        if (pOption == TESTING) shuffledList = m_ShuffledListTest;
+        else if (pOption == TRAINING) shuffledList = m_ShuffledListTrain;
         else {
             cout << "invalid OPTION!" << '\n';
             exit(0);
