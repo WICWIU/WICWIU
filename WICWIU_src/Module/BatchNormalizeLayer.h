@@ -22,11 +22,15 @@ public:
 
         if (pIsChannelwise) {
             int pNumInputChannel = (*pInputShape)[2];
-            pGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumInputChannel, 1, 1, 1.0), "BatchNormalize_Gamma_" + pName);
+            // for He initialization
+            float stddev = sqrt((float)2/pNumInputChannel);
+            pGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumInputChannel, 1, 1, stddev), "BatchNormalize_Gamma_" + pName);
             pBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, pNumInputChannel, 1, 1), "BatchNormalize_Beta_" + pName);
         } else {
             int pNumInputCol = (*pInputShape)[4];
-            pGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumInputCol, 1.0), "BatchNormalize_Gamma_" + pName);
+            // for He initialization
+            float stddev = sqrt((float)2/pNumInputCol);
+            pGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumInputCol, stddev), "BatchNormalize_Gamma_" + pName);
             pBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, 1, 1, pNumInputCol), "BatchNormalize_Beta_" + pName);
         }
         // std::cout << pGamma->GetResult()->GetShape() << '\n';
