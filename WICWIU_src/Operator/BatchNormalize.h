@@ -208,7 +208,7 @@ public:
 
                 if (m_momentum == 0) m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));  // for exponential
                 break;
-            case ACCUMULATING:
+            case ACCUMULATE:
                 checkCUDNN(cudnnBatchNormalizationForwardTraining(
                                m_CUDNNHandle, m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
                                m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
@@ -218,7 +218,7 @@ public:
                            );
                 m_CUDNNExponentialAverageFactor = (m_CUDNNExponentialAverageFactor / (m_CUDNNExponentialAverageFactor + 1));
                 break;
-            case INFERENCING:
+            case INFERENCE:
                 checkCUDNN(cudnnBatchNormalizationForwardInference(
                                m_CUDNNHandle, m_CUDNNMode, &m_CUDNNAlpha, &m_CUDNNBeta,
                                m_CUDNNXDesc, CUDNNX, m_CUDNNYDesc, CUDNNY,
@@ -263,14 +263,14 @@ public:
 #endif  // if __CUDNN__
 
     int SetModeTrain() {
-        if (m_mode == ACCUMULATING) {
+        if (m_mode == ACCUMULATE) {
 #ifdef __CUDNN__
 
             if (m_momentum == 0) m_CUDNNExponentialAverageFactor = 1.0;
             m_aTenTotalMean->Reset(m_CUDNNHandle);
             m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
-        } else if (m_mode == INFERENCING) {
+        } else if (m_mode == INFERENCE) {
 #ifdef __CUDNN__
 
             if (m_momentum == 0) m_CUDNNExponentialAverageFactor = 1.0;
@@ -295,7 +295,7 @@ public:
             m_aTenTotalMean->Reset(m_CUDNNHandle);
             m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
-        } else if (m_mode == INFERENCING) {
+        } else if (m_mode == INFERENCE) {
 #ifdef __CUDNN__
             m_CUDNNExponentialAverageFactor = 1.0;
             m_aTenTotalMean->Reset(m_CUDNNHandle);
@@ -307,7 +307,7 @@ public:
         // std::cout << m_aTenTotalMean << '\n';
         // std::cout << m_aTenTotalVariance << '\n';
 
-        m_mode = ACCUMULATING;
+        m_mode = ACCUMULATE;
         return TRUE;
     }
 
@@ -316,12 +316,12 @@ public:
         // std::cout << m_aTenTotalVariance << '\n';
         if (m_mode == TRAIN) {
             ;
-        } else if (m_mode == ACCUMULATING) {
+        } else if (m_mode == ACCUMULATE) {
             ;
         } else {
             return TRUE;
         }
-        m_mode = INFERENCING;
+        m_mode = INFERENCE;
         return TRUE;
     }
 };

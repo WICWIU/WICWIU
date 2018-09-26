@@ -6,8 +6,8 @@
 
 enum Mode {
     TRAIN,
-    ACCUMULATING,
-    INFERENCING,
+    ACCUMULATE,
+    INFERENCE,
 };
 
 template<typename DTYPE> class Operator {
