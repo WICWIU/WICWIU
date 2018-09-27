@@ -390,16 +390,14 @@ template<typename DTYPE> int Operator<DTYPE>::GetIsTrainable() {
 
 template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime) {
     #ifdef __DEBUG__
-    std::cout << "thread number : " << pThreadNum << '\n';
-    std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
+
     #endif  // __DEBUG__
     return TRUE;
 }
 
 template<typename DTYPE> int Operator<DTYPE>::BackPropagate(int pTime) {
     #ifdef __DEBUG__
-    std::cout << "thread number : " << pThreadNum << '\n';
-    std::cout << "number of thread : " << this->GetNumOfThread() << '\n';
+
     #endif  // __DEBUG__
     return TRUE;
 }
