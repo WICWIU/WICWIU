@@ -203,11 +203,11 @@ void InitializeAttributeForGPU(unsigned int idOfDevice) {
     virtual int UpdateParameterOnGPU() {
         if (m_Beta1 == 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateParameterOnGPU((*m_ppParameter)[i]);
+                UpdateParameter((*m_ppParameter)[i]);
             }
         } else {
             for (int i = 0; i < m_numOfParameter; i++) {
-              UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i], (*m_rsqrt)[i]);
+              UpdateParameter((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i], (*m_rsqrt)[i]);
             }
         }
 
