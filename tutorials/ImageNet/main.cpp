@@ -46,16 +46,16 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    std::cout << "Loading..." << '\n';
-    FILE *fp = fopen(filename, "rb");
-    net->Load(fp);
-    fclose(fp);
-
-    FILE *fp_info = fopen(filename_info, "rb");
-    fread(&best_acc, sizeof(float), 1, fp_info);
-    fread(&epoch,    sizeof(int),   1, fp_info);
-    fclose(fp_info);
-    std::cout << "Done!" << '\n';
+    // std::cout << "Loading..." << '\n';
+    // FILE *fp = fopen(filename, "rb");
+    // net->Load(fp);
+    // fclose(fp);
+    //
+    // FILE *fp_info = fopen(filename_info, "rb");
+    // fread(&best_acc, sizeof(float), 1, fp_info);
+    // fread(&epoch,    sizeof(int),   1, fp_info);
+    // fclose(fp_info);
+    // std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
     std::cout << "filename_info : " << filename_info << '\n';
