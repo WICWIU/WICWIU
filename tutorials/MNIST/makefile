@@ -36,20 +36,30 @@ WICWIU_SRCS = \
 
 WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}
 
-all: main
+ifdef	ENABLE_CUDNN
+	WICWIU_CUDA_SRCS = \
+		../../WICWIU_src/Utils_CUDA.cu \
+		../../WICWIU_src/Optimizer/AdamOptimizer_CUDA.cu
 
+	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
+endif
+
+all: main
 
 .cpp.o:
 	$(CC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) $(LIB_PATH) -c $< -o $@
 
-main: $(WICWIU_OBJS) main.o
-	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) main.o
+# main: $(WICWIU_OBJS) $(WICWIU_CUDA_OBJS) main.o
+# 	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) $(WICWIU_CUDA_OBJS) main.o
+
+main: $(WICWIU_LIB) main.o
+	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) main.o
 
 #main: main.o $(WICWIU_LIB)
 #	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) main.o
 
 
-$(WICWIU_LIB): $(WICWIU_SRC)
+$(WICWIU_LIB): $(WICWIU_SRC) $(WICWIU_CUDA_SRCS)
 	make -C ../..
 
 clean:

@@ -18,6 +18,9 @@
 #include <time.h>
 #include <pthread.h>
 
+// Custom code
+#include "Utils.h"
+
 // define
 #ifndef TRUE
     # define TRUE     1

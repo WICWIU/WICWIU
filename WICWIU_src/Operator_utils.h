@@ -5,8 +5,8 @@
 #include "Operator/ReShape.h"
 
 #include "Operator/Relu.h"
-#include "Operator/LRelu.h"
-#include "Operator/PRelu.h"
+// #include "Operator/LRelu.h"
+// #include "Operator/PRelu.h"
 #include "Operator/Sigmoid.h"
 #include "Operator/Tanh.h"
 
