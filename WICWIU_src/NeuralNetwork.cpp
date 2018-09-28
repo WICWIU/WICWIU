@@ -433,18 +433,22 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass)
 
     int pred_index = 0;
     int ans_index  = 0;
+    // printf("\n\n");
 
     for (int ba = 0; ba < batchsize; ba++) {
         for (int ti = 0; ti < timesize; ti++) {
             pred_index = GetMaxIndex(pred, ba, ti, numOfClass);
             ans_index  = GetMaxIndex(ans, ba, ti, numOfClass);
+            // printf("%d, ", ans_index);
 
             if (pred_index == ans_index) {
                 accuracy += 1.f;
             }
         }
     }
+    // printf("\n\n");
 
+    // return (float)((accuracy / 1) / 1);
     return (float)((accuracy / timesize) / batchsize);
 }
 
@@ -479,25 +483,28 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetTop5Accuracy(int numOfCl
 
     float top5Accuracy = 0.f;
 
-    int pred_index[5] = { 0, };
-    int ans_index     = 0;
 
     for (int ba = 0; ba < batchsize; ba++) {
         for (int ti = 0; ti < timesize; ti++) {
+            int pred_index[5] = { 0, }; // for Initialize
+            int ans_index     = 0;
+
             GetTop5Index(pred, pred_index, ba, ti, numOfClass);
             ans_index = GetMaxIndex(ans, ba, ti, numOfClass);
+            // printf("%d, ", ans_index);
 
             // pred_index[5] (top5Index) 중 하나라도 레이블과 같은 경우, 1을 더하고 break
             for (int i = 0; i < 5; i++) {
                 // printf("pred_index[%d] = %d, ans_Index = %d\n", i, pred_index[i], ans_index);
                 if (pred_index[i] == ans_index) {
                     top5Accuracy += 1.f;
-                    break;
                 }
             }
         }
     }
+    // printf("\n\n");
 
+    // return (float)((top5Accuracy / 1) / 1);
     return (float)((top5Accuracy / timesize) / batchsize);
 }
 
