@@ -30,7 +30,7 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 50, TRUE);
-    // train_data_reader->UseRandomCrop(0);
+    train_data_reader->UseRandomCrop(0);
     train_data_reader->UseRandomHorizontalFlip();
 
     ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 100, FALSE);
@@ -48,16 +48,16 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    // std::cout << "Loading..." << '\n';
-    // FILE *fp = fopen(filename, "rb");
-    // net->Load(fp);
-    // fclose(fp);
-    //
-    // FILE *fp_info = fopen(filename_info, "rb");
-    // fread(&best_acc, sizeof(float), 1, fp_info);
-    // fread(&epoch,    sizeof(int),   1, fp_info);
-    // fclose(fp_info);
-    // std::cout << "Done!" << '\n';
+    std::cout << "Loading..." << '\n';
+    FILE *fp = fopen(filename, "rb");
+    net->Load(fp);
+    fclose(fp);
+
+    FILE *fp_info = fopen(filename_info, "rb");
+    fread(&best_acc, sizeof(float), 1, fp_info);
+    fread(&epoch,    sizeof(int),   1, fp_info);
+    fclose(fp_info);
+    std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
     std::cout << "filename_info : " << filename_info << '\n';
@@ -69,7 +69,7 @@ int main(int argc, char const *argv[]) {
 
         startTime = time(NULL);
         curr_tm = localtime(&startTime);
-        cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s" << endl << endl;
+        cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s" << endl;
 
         if ((i + 1) % 30 == 0) {
             std::cout << "Change learning rate!" << '\n';
