@@ -805,13 +805,13 @@ public:
         }
 
         // convert image to tensor
-        //// if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
-        if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
+        if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
+        // if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
 
         // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
 
-        //// if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
-        if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
+        if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
+        // if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
 
         // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
 
