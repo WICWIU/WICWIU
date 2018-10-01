@@ -56,6 +56,24 @@ public:
         Alloc(Beta1, Beta2, epsilon);
     }
 
+    AdamOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float Beta1, float Beta2, float epsilon, float weightDecayRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, weightDecayRate, pOptimizeDirection) {
+        #ifdef __DEBUG__
+        std::cout << "AdamOptimizer::AdamOptimizer(LossFunction<DTYPE> *, float, float, float, OptimizeDirection)" << '\n';
+        #endif  // __DEBUG__
+        m_ppParameter        = NULL;
+        m_aaFirstVelocity    = NULL;
+        m_aaFirstMomentum    = NULL;
+        m_aaUnbiasedVelocity = NULL;
+        m_aaUnbiasedMomentum = NULL;
+        m_rsqrt              = NULL;
+        m_Beta1              = 0.f;
+        m_Beta2              = 0.f;
+        m_numOfParameter     = 0;
+        m_epsilon            = 0.f;
+
+        Alloc(Beta1, Beta2, epsilon);
+    }
+
     ~AdamOptimizer() {
         #ifdef __DEBUG__
         std::cout << "AdamOptimizer::~AdamOptimizer()" << '\n';

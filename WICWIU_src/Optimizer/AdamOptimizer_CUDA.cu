@@ -8,7 +8,7 @@ template class AdamOptimizer<float>;
 
 //////////////////////////////////////////////////////////////////////////////// for private method
 
-__global__ void AdamUpdate_kernel(float *pDevWeight, float *pDevAccGradient, int weightDim, float signed_learning_rate, float beta1, float beta2, float epsilon, float *pDevFirstMomentum, float *pDevFirstVelocity) {
+__global__ void AdamUpdate_kernel(float *pDevWeight, float *pDevAccGradient, int weightDim, float signed_learning_rate, float beta1, float beta2, float epsilon, float weightDecayRate, float *pDevFirstMomentum, float *pDevFirstVelocity) {
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < weightDim; idx += blockDim.x * gridDim.x) {
         float g = pDevAccGradient[idx];
         pDevFirstMomentum[idx] = beta1 * pDevFirstMomentum[idx] + (1.F - beta1) * g;  // m (1st moment)
@@ -17,6 +17,7 @@ __global__ void AdamUpdate_kernel(float *pDevWeight, float *pDevAccGradient, int
         float m2 = pDevFirstMomentum[idx] / (1.F - beta1);
         float v2 = pDevFirstVelocity[idx] / (1.F - beta2);
 
+        pDevWeight[idx]     += signed_learning_rate * weightDecayRate * pDevWeight[idx];
         pDevWeight[idx]     += signed_learning_rate / sqrt(v2 + epsilon) * m2;
         pDevAccGradient[idx] = 0.F;
     }
@@ -34,6 +35,7 @@ template<typename DTYPE> int AdamOptimizer<DTYPE>::UpdateParameterOnGPU(Operator
     // GetKernelParameters(m_parameterDim, &noBlock, &threadsPerBlock);
 
     float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+    float weightDecayRate = this->GetWeightDecayRate();
 
     Tensor<DTYPE> *trainable_data = pParameter->GetResult();
     Tensor<DTYPE> *gradient       = pParameter->GetGradient();
@@ -43,7 +45,7 @@ template<typename DTYPE> int AdamOptimizer<DTYPE>::UpdateParameterOnGPU(Operator
     DTYPE *m_pDevFirstMomentum = pFirstMomentum->GetGPUData();
     DTYPE *m_pDevFirstVelocity = pFirstVelocity->GetGPUData();
 
-    AdamUpdate_kernel << < noBlock, threadsPerBlock >> > (m_pDevData, m_pDevGrad, m_parameterDim, signed_learning_rate, m_Beta1, m_Beta2, m_epsilon, m_pDevFirstMomentum, m_pDevFirstVelocity);
+    AdamUpdate_kernel << < noBlock, threadsPerBlock >> > (m_pDevData, m_pDevGrad, m_parameterDim, signed_learning_rate, m_Beta1, m_Beta2, m_epsilon, weightDecayRate, m_pDevFirstMomentum, m_pDevFirstVelocity);
 
     return TRUE;
 }
