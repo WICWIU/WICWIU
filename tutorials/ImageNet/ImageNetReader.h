@@ -26,6 +26,8 @@
 #define CAPACITY_OF_PLANE             50176
 #define CAPACITY_OF_IMAGE             150528
 #define NUMBER_OF_THREAD              5
+#define LENGTH_224                    224
+#define LENGTH_256                    256
 
 using namespace std;
 
@@ -743,7 +745,7 @@ public:
         unsigned long jpegSize;
         // unsigned char * clone;
         int xOfImage = 0, yOfImage = 0;
-        const int lengthLimit        = 224; // lengthLimit
+        // const int lengthLimit        = 224; // lengthLimit
         const int colorDim           = 3; // channel
         unsigned char *imgReshapeBuf = NULL;
 
@@ -763,7 +765,7 @@ public:
 
         // std::cout << "filePath : " << filePath << '\n';
 
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, LENGTH_224, LENGTH_224);
 
         // Load image (no throw and catch)
         /* Read the JPEG file into memory. */
@@ -786,16 +788,16 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        if ((width < lengthLimit) || (height < lengthLimit)) {
+        if ((width < LENGTH_256) || (height < LENGTH_256)) {
             int newHeight = 0, newWidth = 0;
 
             if (width < height) {
-                newHeight     = height * (float)lengthLimit / width;
-                newWidth      = lengthLimit;
+                newHeight     = height * (float)LENGTH_256 / width;
+                newWidth      = LENGTH_256;
                 imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
             } else {
-                newHeight     = lengthLimit;
-                newWidth      = width * (float)lengthLimit / height;
+                newHeight     = LENGTH_256;
+                newWidth      = width * (float)LENGTH_256 / height;
                 imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
             }
             Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
@@ -806,20 +808,22 @@ public:
 
         // convert image to tensor
         //// if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
-        if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
+        // if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
+        xOfImage = (width - LENGTH_224) / 2;
 
         // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
 
         //// if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
-        if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
+        // if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
+        yOfImage = (height - LENGTH_224) / 2;
 
         // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
 
         // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
-        for (ro = 0; ro < lengthLimit; ro++) {
-            for (co = 0; co < lengthLimit; co++) {
+        for (ro = 0; ro < LENGTH_224; ro++) {
+            for (co = 0; co < LENGTH_224; co++) {
                 for (ch = 0; ch < colorDim; ch++) {
                     if (imgReshapeBuf == NULL) (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
                     else (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
@@ -853,7 +857,7 @@ public:
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
 
-        temp->ReShape(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
+        temp->ReShape(1, 1, 1, 1, colorDim * LENGTH_224 * LENGTH_224);
 
         // std::cout << temp->GetShape() << '\n';
 
@@ -964,7 +968,7 @@ public:
         unsigned long jpegSize;
         // unsigned char * clone;
         int xOfImage = 0, yOfImage = 0;
-        const int lengthLimit        = 224; // lengthLimit
+        // const int lengthLimit        = 224; // lengthLimit
         const int colorDim           = 3; // channel
         unsigned char *imgReshapeBuf = NULL;
 
@@ -981,7 +985,7 @@ public:
 
         // std::cout << "filePath : " << filePath << '\n';
 
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, lengthLimit, lengthLimit);
+        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, LENGTH_224, LENGTH_224);
 
         // Load image (no throw and catch)
         /* Read the JPEG file into memory. */
@@ -1004,10 +1008,10 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        imgReshapeBuf = new unsigned char[colorDim * lengthLimit * lengthLimit];
-        ResizeWithPadding(colorDim, height, width, lengthLimit, imgBuf, imgReshapeBuf);
-        height = lengthLimit;
-        width  = lengthLimit;
+        imgReshapeBuf = new unsigned char[colorDim * LENGTH_224 * LENGTH_224];
+        ResizeWithPadding(colorDim, height, width, LENGTH_224, imgBuf, imgReshapeBuf);
+        height = LENGTH_224;
+        width  = LENGTH_224;
 
         // std::cout << temp->GetShape() << '\n';
 
@@ -1021,11 +1025,12 @@ public:
         }
 
         // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
+        // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, LENGTH_224, LENGTH_224);
 
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
 
-        temp->ReShape(1, 1, 1, 1, colorDim * lengthLimit * lengthLimit);
+        temp->ReShape(1, 1, 1, 1, colorDim * LENGTH_224 * LENGTH_224);
 
         // std::cout << temp->GetShape() << '\n';
 
