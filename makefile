@@ -45,7 +45,8 @@ ifdef	ENABLE_CUDNN
 	WICWIU_CUDA_SRCS = \
 		WICWIU_src/Utils_CUDA.cu \
 		WICWIU_src/Optimizer/AdamOptimizer_CUDA.cu \
-		WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.cu
+		WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.cu \
+		WICWIU_src/Optimizer/NagOptimizer_CUDA.cu
 
 	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
 endif
@@ -64,6 +65,9 @@ WICWIU_src/Optimizer/AdamOptimizer_CUDA.o: WICWIU_src/Optimizer/AdamOptimizer_CU
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
 WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.o: WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Optimizer/NagOptimizer_CUDA.o: WICWIU_src/Optimizer/NagOptimizer_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
 $(WICWIU_LIB): $(WICWIU_OBJS) $(WICWIU_CUDA_OBJS)
