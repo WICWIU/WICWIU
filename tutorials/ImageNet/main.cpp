@@ -10,7 +10,7 @@
 #define LOOP_FOR_TRAIN     (1300000 / BATCH)
 #define LOOP_FOR_ACCUM     (10000 / BATCH) * 10
 #define LOOP_FOR_TEST      (50000 / BATCH)
-#define GPUID              0
+#define GPUID              1
 #define LOG_LENGTH         1
 
 int main(int argc, char const *argv[]) {
@@ -29,8 +29,8 @@ int main(int argc, char const *argv[]) {
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
-    ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 50, TRUE);
-    train_data_reader->UseRandomCrop(0);
+    ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
+    train_data_reader->UseRandomCrop(28);
     train_data_reader->UseRandomHorizontalFlip();
 
     ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 100, FALSE);
