@@ -809,13 +809,13 @@ public:
         // convert image to tensor
         //// if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
         // if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
-        xOfImage = (width - LENGTH_224) / 2;
+        xOfImage = random_generator(width - LENGTH_224);
 
         // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
 
         //// if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
         // if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
-        yOfImage = (height - LENGTH_224) / 2;
+        yOfImage = random_generator(height - LENGTH_224);
 
         // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
 
@@ -967,7 +967,7 @@ public:
         int inSubsamp, inColorspace;
         unsigned long jpegSize;
         // unsigned char * clone;
-        int xOfImage = 0, yOfImage = 0;
+        // int xOfImage = 0, yOfImage = 0;
         // const int lengthLimit        = 224; // lengthLimit
         const int colorDim           = 3; // channel
         unsigned char *imgReshapeBuf = NULL;
