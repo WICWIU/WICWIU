@@ -10,6 +10,8 @@ private:
     Container<Tensor<DTYPE> *> *m_aaFirstMomentum;
     Container<Tensor<DTYPE> *> *m_aaUnbiasedVelocity;
     Container<Tensor<DTYPE> *> *m_aaUnbiasedMomentum;
+    Container<Tensor<DTYPE> *> *m_rsqrt;
+
 
     int m_numOfParameter;
 
@@ -19,6 +21,22 @@ private:
     float m_epsilon;
 
 public:
+    AdamOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
+        #ifdef __DEBUG__
+        std::cout << "AdamOptimizer::AdamOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
+        #endif  // __DEBUG__
+        m_ppParameter        = NULL;
+        m_aaFirstVelocity    = NULL;
+        m_aaFirstMomentum    = NULL;
+        m_aaUnbiasedVelocity = NULL;
+        m_rsqrt              = NULL;
+        m_Beta1              = 0.f;
+        m_Beta2              = 0.f;
+        m_numOfParameter     = 0;
+        m_epsilon            = 0.f;
+
+        Alloc();
+    }
 
     AdamOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float Beta1, float Beta2, float epsilon, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
         #ifdef __DEBUG__
@@ -29,23 +47,7 @@ public:
         m_aaFirstMomentum    = NULL;
         m_aaUnbiasedVelocity = NULL;
         m_aaUnbiasedMomentum = NULL;
-        m_Beta1              = 0.f;
-        m_Beta2              = 0.f;
-        m_numOfParameter     = 0;
-        m_epsilon            = 0.f;
-
-        Alloc(Beta1, Beta2, epsilon);
-    }
-
-    AdamOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float Beta1, float Beta2, float epsilon, float weightDecayRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, weightDecayRate, pOptimizeDirection) {
-        #ifdef __DEBUG__
-        std::cout << "AdamOptimizer::AdamOptimizer(LossFunction<DTYPE> *, float, float, float, OptimizeDirection)" << '\n';
-        #endif  // __DEBUG__
-        m_ppParameter        = NULL;
-        m_aaFirstVelocity    = NULL;
-        m_aaFirstMomentum    = NULL;
-        m_aaUnbiasedVelocity = NULL;
-        m_aaUnbiasedMomentum = NULL;
+        m_rsqrt              = NULL;
         m_Beta1              = 0.f;
         m_Beta2              = 0.f;
         m_numOfParameter     = 0;
@@ -83,25 +85,35 @@ public:
         }
     }
 
+    int Alloc() {
+        m_ppParameter    = this->GetTrainableTensor();
+        m_numOfParameter = this->GetTrainableTensorDegree();
+
+        return TRUE;
+    }
+
     int Alloc(float Beta1, float Beta2, float epsilon) {
+        Alloc();
 
         m_aaFirstVelocity    = new Container<Tensor<DTYPE> *>();
         m_aaUnbiasedVelocity = new Container<Tensor<DTYPE> *>();
         m_aaFirstMomentum    = new Container<Tensor<DTYPE> *>();
         m_aaUnbiasedMomentum = new Container<Tensor<DTYPE> *>();
+        m_rsqrt              = new Container<Tensor<DTYPE> *>();
 
         Shape *pParameterGradShape = NULL;
 
-        m_ppParameter    = this->GetTrainableTensor();
-        m_numOfParameter = this->GetTrainableTensorDegree();
-
         for (int i = 0; i < m_numOfParameter; i++) {
             pParameterGradShape = (*m_ppParameter)[i]->GetGradient()->GetShape();
+
+            // std::cout << (*m_ppParameter)[i]->GetName() << '\n';
+            // std::cout << pParameterGradShape << '\n';
 
             m_aaFirstVelocity->Push(new Tensor<DTYPE>(new Shape(pParameterGradShape)));
             m_aaUnbiasedVelocity->Push(new Tensor<DTYPE>(new Shape(pParameterGradShape)));
             m_aaFirstMomentum->Push(new Tensor<DTYPE>(new Shape(pParameterGradShape)));
             m_aaUnbiasedMomentum->Push(new Tensor<DTYPE>(new Shape(pParameterGradShape)));
+            m_rsqrt->Push(new Tensor<DTYPE>(new Shape(pParameterGradShape)));
 
             pParameterGradShape = NULL;
         }
@@ -114,23 +126,38 @@ public:
     }
 
     virtual int UpdateParameter() {
-      if( m_Beta1 != 0.f ) {
-          for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateParameter((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i]);
-          }
-      }else{
-            std::cout << "Don't execute UpdateParameter On CPU" << '\n';
-      }
+        if (m_Beta1 == 0.f) {
+            for (int i = 0; i < m_numOfParameter; i++) {
+                UpdateParameter((*m_ppParameter)[i]);
+            }
+        } else {
+            for (int i = 0; i < m_numOfParameter; i++) {
+                UpdateParameter((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i], (*m_rsqrt)[i]);
+            }
+        }
         return TRUE;
     }
 
-    int UpdateParameter(Operator<DTYPE> *pParameter){
-      return TRUE;
-    }
-
-    int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pFirstMomentum, Tensor<DTYPE> *pFirstVelocity, Tensor<DTYPE> *pUnbiasedMomentum, Tensor<DTYPE> *pUnbiasedVelocity) {
+    int UpdateParameter(Operator<DTYPE> *pParameter) {
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+
+
+        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+
+        int capacity = trainable_data->GetCapacity();
+
+        for (int i = 0; i < capacity; i++) {
+            (*trainable_data)[i] += learning_rate * (*gradient)[i];
+        }
+
+        return TRUE;
+    }
+
+    int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pFirstMomentum, Tensor<DTYPE> *pFirstVelocity, Tensor<DTYPE> *pUnbiasedMomentum, Tensor<DTYPE> *pUnbiasedVelocity, Tensor<DTYPE> *pRsqrt) {
+        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
+        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+
 
         float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
 
@@ -141,7 +168,13 @@ public:
             (*pFirstVelocity)[i]    = (m_Beta2 * (*pFirstVelocity)[i]) + ((1.f - m_Beta2) * ((*gradient)[i] * (*gradient)[i]));
             (*pUnbiasedMomentum)[i] = (*pFirstMomentum)[i] / (1.f - m_Beta1);
             (*pUnbiasedVelocity)[i] = (*pFirstVelocity)[i] / (1.f - m_Beta2);
-            (*trainable_data)[i] += ((signed_learning_rate * (*pUnbiasedMomentum)[i]) / (std::sqrt((*pUnbiasedVelocity)[i]) + m_epsilon));
+            // std::cout << "UV:" <<'\n';
+            // std::cout <<(*pUnbiasedVelocity)[i]  << '\n';
+            (*pRsqrt)[i] = (1.f / (std::sqrt((*pUnbiasedVelocity)[i]) + m_epsilon));
+            // std::cout << "rsrt:" <<'\n';
+            // std::cout << (*pRsqrt)[i]  << '\n';
+            (*trainable_data)[i] += ((signed_learning_rate * (*pUnbiasedMomentum)[i]) * (*pRsqrt)[i]);
+            // (*trainable_data)[i] += ((signed_learning_rate * (*pUnbiasedMomentum)[i]) / (std::sqrt((*pUnbiasedVelocity)[i]) + m_epsilon));
         }
 
         return TRUE;
@@ -156,28 +189,28 @@ public:
                 (*m_aaFirstVelocity)[i]->SetDeviceGPU(idOfDevice);
                 (*m_aaUnbiasedMomentum)[i]->SetDeviceGPU(idOfDevice);
                 (*m_aaUnbiasedVelocity)[i]->SetDeviceGPU(idOfDevice);
-
+                (*m_rsqrt)[i]->SetDeviceGPU(idOfDevice);
             }
         }
     }
 
     virtual int UpdateParameterOnGPU() {
-          if (m_Beta1 != 0.f) {
+        if (m_Beta1 == 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i]);
+                UpdateParameterOnGPU((*m_ppParameter)[i]);
             }
-          }else{
-            std::cout << "Don't execute UpdataParameterOnGPU" << '\n';
-          }
+        } else {
+            for (int i = 0; i < m_numOfParameter; i++) {
+                UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i], (*m_rsqrt)[i]);
+            }
+        }
 
         return TRUE;
     }
 
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter){
-      return TRUE;
-    }
+    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter);
 
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pFirstMomentum, Tensor<DTYPE> *pFirstVelocity, Tensor<DTYPE> *pUnbiasedMomentum, Tensor<DTYPE> *pUnbiasedVelocity);
+    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pFirstMomentum, Tensor<DTYPE> *pFirstVelocity, Tensor<DTYPE> *pUnbiasedMomentum, Tensor<DTYPE> *pUnbiasedVelocity, Tensor<DTYPE> *pRsqrt);
 
 
  #endif  // if __CUDNN__

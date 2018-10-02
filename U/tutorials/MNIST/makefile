@@ -39,8 +39,7 @@ WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}
 ifdef	ENABLE_CUDNN
 	WICWIU_CUDA_SRCS = \
 		../../WICWIU_src/Utils_CUDA.cu \
-		../../WICWIU_src/Optimizer/AdamOptimizer_CUDA.cu \
-		../../WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.cu
+		../../WICWIU_src/Optimizer/AdamOptimizer_CUDA.cu
 
 	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
 endif

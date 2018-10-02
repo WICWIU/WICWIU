@@ -66,9 +66,9 @@ private:
     bool m_centered;
 
 public:
-    RMSPropOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float decay, float epsilon, bool centered, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
+    RMSPropOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
         #ifdef __DEBUG__
-        std::cout << "RMSPropOptimizer::RMSPropOptimizer(LossFunction<DTYPE> *, float, float, OptimizeDirection)" << '\n';
+        std::cout << "RMSPropOptimizer::RMSPropOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
         #endif  // __DEBUG__
         m_ppParameter       = NULL;
         m_aaMeanSquared     = NULL;
@@ -76,12 +76,11 @@ public:
         m_numOfParameter    = 0;
         m_decay             = 0.f;
         m_epsilon           = 0.f;
-        m_centered          = FALSE;
 
-        Alloc(decay, epsilon, centered);
+        Alloc();
     }
 
-    RMSPropOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float decay, float epsilon, bool centered, float weightDecayRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, weightDecayRate, pOptimizeDirection) {
+    RMSPropOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float decay, float epsilon, bool centered, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
         #ifdef __DEBUG__
         std::cout << "RMSPropOptimizer::RMSPropOptimizer(LossFunction<DTYPE> *, float, float, OptimizeDirection)" << '\n';
         #endif  // __DEBUG__
@@ -114,12 +113,16 @@ public:
         }
     }
 
+    int Alloc() {
+        m_ppParameter    = this->GetTrainableTensor();
+        m_numOfParameter = this->GetTrainableTensorDegree();
 
+        return TRUE;
+    }
 
     int Alloc(float decay, float epsilon, bool centered) {
 
-        m_ppParameter    = this->GetTrainableTensor();
-        m_numOfParameter = this->GetTrainableTensorDegree();
+        Alloc();
 
         m_aaMeanSquared = new Container<Tensor<DTYPE> *>();
         m_aaMeanGrad    = new Container<Tensor<DTYPE> *>();
@@ -141,21 +144,46 @@ public:
     }
 
     virtual int UpdateParameter() {
-
-        if(m_centered == TRUE){
+      //std::cout << typeid(m_decay).name() << 0.f << std::endl;
+         if(m_decay == 0.f){          //trainable data = learning_rate * g_t / sqrt(m_aaMeanSqueared + epsilon)
+             for (int i = 0; i < m_numOfParameter; i++) {
+                 UpdateParameter((*m_ppParameter)[i]);
+             }
+         }
+         else if(m_centered == TRUE){
             for (int i = 0; i < m_numOfParameter; i++) {
                 UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
+
             }
-        }else{
-            for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
-            }
+          }
+        else
+        for (int i = 0; i < m_numOfParameter; i++) {
+            UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
         }
         return TRUE;
     }
 
-    int UpdateParameter(Operator<DTYPE> *pParameter){
-      return TRUE;
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
+        if (m_decay != 0.f) {
+            for (int i = 0; i < m_numOfParameter; i++) {
+                (*m_aaMeanSquared)[i]->SetDeviceGPU(idOfDevice);
+            }
+        }
+    }
+
+    int UpdateParameter(Operator<DTYPE> *pParameter) {
+        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
+        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+
+        float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate(); //minimizer = -1
+
+        int capacity = trainable_data->GetCapacity();
+
+        for (int i = 0; i < capacity; i++) {
+            (*trainable_data)[i] += signed_learning_rate * (*gradient)[i];
+        }
+
+        return TRUE;
     }
 
     int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *m_pMeanSquared) {
@@ -192,37 +220,70 @@ public:
 
 #ifdef __CUDNN__
 
-    void InitializeAttributeForGPU(unsigned int idOfDevice) {
-            for (int i = 0; i < m_numOfParameter; i++) {
-                (*m_aaMeanSquared)[i]->SetDeviceGPU(idOfDevice);
-                (*m_aaMeanGrad)[i]->SetDeviceGPU(idOfDevice);
-            }
-    }
 
     virtual int UpdateParameterOnGPU() {
-        if (m_centered == TRUE) {
+        if (m_decay == 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
-              UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
+                UpdateParameterOnGPU((*m_ppParameter)[i]);
             }
-        }else{
+        } else {
             for (int i = 0; i < m_numOfParameter; i++) {
-              UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
-          }
+                UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
+            }
         }
 
         return TRUE;
     }
 
+    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter) {
+        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
+        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter){
-      return TRUE;
+        cudnnTensorDescriptor_t dataDesc = trainable_data->GetDescriptor();
+        cudnnTensorDescriptor_t gradDesc = gradient->GetDescriptor();
+
+        DTYPE *m_pDevData = trainable_data->GetGPUData();
+        DTYPE *m_pDevGrad = gradient->GetGPUData();
+
+        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+
+        float alpha = 1.f;
+        float beta  = learning_rate;
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &beta, gradDesc, m_pDevGrad,
+                                  &alpha, dataDesc, m_pDevData));
+
+        return TRUE;
     }
 
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *m_pMeanSquared);
+    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pMeanSquared) {
+        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
+        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *m_pMeanSquared, Tensor<DTYPE> *m_pMeanGrad);
+        cudnnTensorDescriptor_t dataDesc = trainable_data->GetDescriptor();
+        cudnnTensorDescriptor_t gradDesc = gradient->GetDescriptor();
+        cudnnTensorDescriptor_t MeanSquearedDesc = pMeanSquared->GetDescriptor();
 
+        DTYPE *m_pDevData = trainable_data->GetGPUData();
+        DTYPE *m_pDevGrad = gradient->GetGPUData();
+        DTYPE *m_pMeanSquared = pMeanSquared->GetGPUData();
 
+        float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
+
+        float alpha = 1.f;
+        float beta  = learning_rate;
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &beta, gradDesc, m_pDevGrad,
+                                  &m_decay, MeanSquearedDesc, m_pMeanSquared));
+
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &alpha, MeanSquearedDesc, m_pMeanSquared,
+                                  &alpha, dataDesc, m_pDevData));
+
+        return TRUE;
+    }
 
 #endif  // if __CUDNN__
  };
