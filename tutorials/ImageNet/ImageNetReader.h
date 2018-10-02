@@ -864,96 +864,96 @@ public:
         return temp;
     }
 
-    void ResizeWithPadding(int channel, int oldHeight, int oldWidth, int lengthLimit, unsigned char *oldData, unsigned char *newData) {
-        unsigned char *dest = newData;
-        int newHeight = 0;
-        int newWidth = 0;
-
-        if(oldHeight > oldWidth){
-            newHeight = lengthLimit;
-            newWidth  = oldWidth * (float)lengthLimit / oldHeight;
-
-            for (int newy = 0; newy < newHeight; newy++) {
-                int oldy = newy * oldHeight / newHeight;
-                // if(oldy >= oldHeight)
-                // oldy = oldHeight - 1;			// for safety
-                unsigned char *srcLine = oldData + oldy * oldWidth * channel;
-
-                // 0 ~ (lengthLimit - newwidth) / 2
-                for (int newx = 0; newx < (lengthLimit - newWidth) / 2; newx++) {
-                    for (int c = 0; c < channel; c++) *(dest++) = 0;
-                }
-
-                // (lengthLimit - newWidth) / 2 ~ (lengthLimit + newWidth) / 2
-                for (int newx = (lengthLimit - newWidth) / 2; newx < (lengthLimit + newWidth) / 2; newx++) {
-                    int oldx = (newx - (lengthLimit - newWidth) / 2) * oldWidth / newWidth;
-                    // if(oldx >= oldWidth)
-                    // oldx = oldWidth - 1;			// for safety
-                    unsigned char *src = srcLine + oldx * channel;
-
-                    for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-                }
-
-                // (lengthLimit + newWidth) / 2 ~ lengthLimit
-                for (int newx = (lengthLimit + newWidth) / 2; newx < lengthLimit; newx++) {
-                    for (int c = 0; c < channel; c++) *(dest++) = 0;
-                }
-            }
-        }
-        else if(oldHeight < oldWidth){
-            newHeight = oldHeight * (float)lengthLimit / oldWidth;
-            newWidth  = lengthLimit;
-            // 0 ~ (lengthLimit - newHeight) / 2
-            for (int newy = 0; newy < (lengthLimit - newHeight) / 2; newy++) {
-                for (int newx = 0; newx < newWidth; newx++) {
-                    for (int c = 0; c < channel; c++) *(dest++) = 0;
-                }
-            }
-
-            // (lengthLimit - newHeight) / 2 ~ (lengthLimit + newHeight) / 2
-            for (int newy = (lengthLimit - newHeight) / 2; newy < (lengthLimit + newHeight) / 2; newy++) {
-                int oldy = (newy - (lengthLimit - newHeight) / 2) * oldHeight / newHeight;
-                // if(oldy >= oldHeight)
-                // oldy = oldHeight - 1;			// for safety
-                unsigned char *srcLine = oldData + oldy * oldWidth * channel;
-
-                for (int newx = 0; newx < newWidth; newx++) {
-                    int oldx = newx * oldWidth / newWidth;
-                    // if(oldx >= oldWidth)
-                    // oldx = oldWidth - 1;			// for safety
-                    unsigned char *src = srcLine + oldx * channel;
-
-                    for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-                }
-            }
-
-            // (lengthLimit + newHeight) / 2 ~ lengthLimit
-            for (int newy = (lengthLimit + newHeight) / 2; newy < lengthLimit; newy++) {
-                for (int newx = 0; newx < newWidth; newx++) {
-                    for (int c = 0; c < channel; c++) *(dest++) = 0;
-                }
-            }
-        }
-        else{
-            newHeight = lengthLimit;
-            newWidth  = lengthLimit;
-            for (int newy = 0; newy < newHeight; newy++) {
-                int oldy = newy * oldHeight / newHeight;
-                // if(oldy >= oldHeight)
-                // oldy = oldHeight - 1;			// for safety
-                unsigned char *srcLine = oldData + oldy * oldWidth * channel;
-
-                for (int newx = 0; newx < newWidth; newx++) {
-                    int oldx = newx * oldWidth / newWidth;
-                    // if(oldx >= oldWidth)
-                    // oldx = oldWidth - 1;			// for safety
-                    unsigned char *src = srcLine + oldx * channel;
-
-                    for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-                }
-            }
-        }
-    }
+    // void ResizeWithPadding(int channel, int oldHeight, int oldWidth, int lengthLimit, unsigned char *oldData, unsigned char *newData) {
+    //     unsigned char *dest = newData;
+    //     int newHeight = 0;
+    //     int newWidth = 0;
+    //
+    //     if(oldHeight > oldWidth){
+    //         newHeight = lengthLimit;
+    //         newWidth  = oldWidth * (float)lengthLimit / oldHeight;
+    //
+    //         for (int newy = 0; newy < newHeight; newy++) {
+    //             int oldy = newy * oldHeight / newHeight;
+    //             // if(oldy >= oldHeight)
+    //             // oldy = oldHeight - 1;			// for safety
+    //             unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+    //
+    //             // 0 ~ (lengthLimit - newwidth) / 2
+    //             for (int newx = 0; newx < (lengthLimit - newWidth) / 2; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
+    //
+    //             // (lengthLimit - newWidth) / 2 ~ (lengthLimit + newWidth) / 2
+    //             for (int newx = (lengthLimit - newWidth) / 2; newx < (lengthLimit + newWidth) / 2; newx++) {
+    //                 int oldx = (newx - (lengthLimit - newWidth) / 2) * oldWidth / newWidth;
+    //                 // if(oldx >= oldWidth)
+    //                 // oldx = oldWidth - 1;			// for safety
+    //                 unsigned char *src = srcLine + oldx * channel;
+    //
+    //                 for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+    //             }
+    //
+    //             // (lengthLimit + newWidth) / 2 ~ lengthLimit
+    //             for (int newx = (lengthLimit + newWidth) / 2; newx < lengthLimit; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
+    //         }
+    //     }
+    //     else if(oldHeight < oldWidth){
+    //         newHeight = oldHeight * (float)lengthLimit / oldWidth;
+    //         newWidth  = lengthLimit;
+    //         // 0 ~ (lengthLimit - newHeight) / 2
+    //         for (int newy = 0; newy < (lengthLimit - newHeight) / 2; newy++) {
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
+    //         }
+    //
+    //         // (lengthLimit - newHeight) / 2 ~ (lengthLimit + newHeight) / 2
+    //         for (int newy = (lengthLimit - newHeight) / 2; newy < (lengthLimit + newHeight) / 2; newy++) {
+    //             int oldy = (newy - (lengthLimit - newHeight) / 2) * oldHeight / newHeight;
+    //             // if(oldy >= oldHeight)
+    //             // oldy = oldHeight - 1;			// for safety
+    //             unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+    //
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 int oldx = newx * oldWidth / newWidth;
+    //                 // if(oldx >= oldWidth)
+    //                 // oldx = oldWidth - 1;			// for safety
+    //                 unsigned char *src = srcLine + oldx * channel;
+    //
+    //                 for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+    //             }
+    //         }
+    //
+    //         // (lengthLimit + newHeight) / 2 ~ lengthLimit
+    //         for (int newy = (lengthLimit + newHeight) / 2; newy < lengthLimit; newy++) {
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
+    //         }
+    //     }
+    //     else{
+    //         newHeight = lengthLimit;
+    //         newWidth  = lengthLimit;
+    //         for (int newy = 0; newy < newHeight; newy++) {
+    //             int oldy = newy * oldHeight / newHeight;
+    //             // if(oldy >= oldHeight)
+    //             // oldy = oldHeight - 1;			// for safety
+    //             unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+    //
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 int oldx = newx * oldWidth / newWidth;
+    //                 // if(oldx >= oldWidth)
+    //                 // oldx = oldWidth - 1;			// for safety
+    //                 unsigned char *src = srcLine + oldx * channel;
+    //
+    //                 for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+    //             }
+    //         }
+    //     }
+    // }
 
     Tensor<DTYPE>* Image2Tensor(int classNum, string imgName  /*Address of Image*/) {
         int   width, height;
@@ -967,7 +967,8 @@ public:
         int inSubsamp, inColorspace;
         unsigned long jpegSize;
         // unsigned char * clone;
-        // int xOfImage = 0, yOfImage = 0;
+        int newWidth = 0, newHeight = 0;
+        int xOfImage = 0, yOfImage = 0;
         // const int lengthLimit        = 224; // lengthLimit
         const int colorDim           = 3; // channel
         unsigned char *imgReshapeBuf = NULL;
@@ -1008,18 +1009,37 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        imgReshapeBuf = new unsigned char[colorDim * LENGTH_224 * LENGTH_224];
-        ResizeWithPadding(colorDim, height, width, LENGTH_224, imgBuf, imgReshapeBuf);
-        height = LENGTH_224;
-        width  = LENGTH_224;
+        if (width < height) {
+                newHeight     = height * (float)LENGTH_224 / width;
+                newWidth      = LENGTH_224;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        } else {
+                newHeight     = LENGTH_224;
+                newWidth      = width * (float)LENGTH_224 / height;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        }
+        Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
+        height = newHeight;
+        width = newWidth;
+
+        // convert image to tensor
+        // if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
+        xOfImage = (width - LENGTH_224) / 2;
+
+        // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
+
+        // if (height != LENGTH_224) yOfImage = random_generator(height - LENGTH_224);
+        yOfImage = (height - LENGTH_224) / 2;
+
+        // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
 
         // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
-        for (ro = 0; ro < height; ro++) {
-            for (co = 0; co < width; co++) {
+        for (ro = 0; ro < LENGTH_224; ro++) {
+            for (co = 0; co < LENGTH_224; co++) {
                 for (ch = 0; ch < colorDim; ch++) {
-                    (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[ro * width * colorDim + co * colorDim + ch] / 255.0;
+                    (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
                 }
             }
         }
