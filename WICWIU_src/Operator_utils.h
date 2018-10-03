@@ -22,5 +22,6 @@
 // #include "Operator/CUDNNBatchNormalize.h"
 
 #include "Operator/Softmax.h"
+#include "Operator/Dropout.h"
 
 #endif  // __OPERATER_UTIL_H__

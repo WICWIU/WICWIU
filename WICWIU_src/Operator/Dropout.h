@@ -5,9 +5,9 @@
 
 template<typename DTYPE> class Dropout : public Operator<DTYPE>{
 private:
-  float m_keeprate;
+  float m_droprate;
   Mode  m_mode;
-  Tensor<unsigned char> *m_noiseshape; //1D Tensor, type: unsigned char
+  Tensor<unsigned char> *m_activeshape; //1D Tensor, type: unsigned char
 
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t m_aInOutDesc, m_aDeltaDesc, m_aInputDeltaDesc;
@@ -15,9 +15,6 @@ private:
     cudnnDropoutDescriptor_t m_aDropoutDesc;
 
     DTYPE *m_pDevInput, *m_pDevOutput, *m_pDevInputDelta, *m_pDevDelta, *m_pRandNumGenerator, *m_pReserveSpace;
-
-    float m_droprate;
-
 
     size_t m_dataSizeInBytes   = 0;
     size_t m_spaceSizeInBytes  = 0;
@@ -29,17 +26,17 @@ public:
         #ifdef __DEBUG__
         std::cout << "Dropout::Dropout(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput);
     }
+    
 
-    Dropout(Operator<DTYPE> *pInput, float pKeeprate, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Dropout(Operator<DTYPE> *pInput, float pDroprate, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
         std::cout << "Dropout::Dropout(Operator<DTYPE> * float *)" << '\n';
         #endif  // __DEBUG__
-        m_keeprate = 0.f;
+        m_droprate = 0.f;
         m_mode = TRAIN;
 
-        this->Alloc(pInput, pKeeprate);
+        this->Alloc(pInput, pDroprate);
     }
 
     ~Dropout() {
@@ -49,7 +46,7 @@ public:
         Delete();
     }
 
-    int Alloc(Operator<DTYPE> *pInput, float pKeeprate) {
+    int Alloc(Operator<DTYPE> *pInput, float pDroprate) {
         #ifdef __DEBUG__
         std::cout << "Dropout::Alloc(Operator<DTYPE> *, float *)" << '\n';
         #endif  // __DEBUG__
@@ -63,8 +60,8 @@ public:
         this->SetResult(Tensor<DTYPE>::Zeros(timesize, batchsize, channelsize, rowsize, colsize));
         this->SetDelta(Tensor<DTYPE>::Zeros(timesize, batchsize, channelsize, rowsize, colsize));
 
-        m_noiseshape = new Tensor<unsigned char>(batchsize);
-        m_keeprate = pKeeprate;
+        m_activeshape = new Tensor<unsigned char>(batchsize);
+        m_droprate = pDroprate;
         m_mode = TRAIN;
 
         return TRUE;
@@ -80,7 +77,6 @@ public:
         int rowsize     = pInput->GetResult()->GetRowSize();
         int colsize     = pInput->GetResult()->GetColSize();
 
-        m_droprate = 1.f - m_keeprate;
         m_mode = TRAIN;
 
         checkCUDNN(cudnnCreateTensorDescriptor(&m_aInOutDesc));
@@ -106,7 +102,6 @@ public:
 
         checkCUDNN(cudnnSetDropoutDescriptor(m_aDropoutDesc, this->GetCudnnHandle(),
                                              m_droprate, m_pRandNumGenerator, m_dataSizeInBytes, time(NULL)));
-
 
     }
 
@@ -138,7 +133,7 @@ public:
 int ForwardPropagate(int pTime = 0) {
     Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
     Tensor<DTYPE> *result = this->GetResult();
-    Tensor<unsigned char> *noiseshape   = m_noiseshape;
+    Tensor<unsigned char> *activeshape   = m_activeshape;
 
     int timesize    = result->GetTimeSize();
     int batchsize   = result->GetBatchSize();
@@ -160,17 +155,16 @@ int ForwardPropagate(int pTime = 0) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
                           randNum = rand()/(float)RAND_MAX;
-                          if(randNum <= m_keeprate){
-                          (*noiseshape)[ba] = (1.f / m_keeprate);
+                          if(randNum > m_droprate){
+                          (*activeshape)[ba] = (1.f / (1.f - m_droprate));
                           (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                          = (*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)] * (*noiseshape)[ba]; //scale up
+                          = (*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)] * (*activeshape)[ba]; //scale up
 
                           }
-
                           else
-                          (*noiseshape)[ba] = 0.f;
+                          (*activeshape)[ba] = 0.f;
                           (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                          = (*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)] * (*noiseshape)[ba];
+                          = (*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)] * (*activeshape)[ba];
 
                       }
                     }
@@ -203,7 +197,7 @@ int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *result       = this->GetResult();
         Tensor<DTYPE> *this_delta   = this->GetGradient();
         Tensor<DTYPE> *input_delta  = this->GetInput()[0]->GetDelta();
-        Tensor<unsigned char> *noiseshape         = m_noiseshape;
+        Tensor<unsigned char> *activeshape         = m_activeshape;
 
         int timesize    = result->GetTimeSize();
         int batchsize   = result->GetBatchSize();
@@ -220,7 +214,7 @@ int ForwardPropagate(int pTime = 0) {
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
                             (*input_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                              += (*this_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)] * (*noiseshape)[ba];
+                              += (*this_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)] * (*activeshape)[ba];
                         }
                     }
                 }
@@ -236,7 +230,6 @@ int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *result = this->GetResult();
 
         float alpha = 1.f;
-        float beta = 0.f;
 
         m_pDevInput  = input->GetGPUData(pTime);
         m_pDevOutput = result->GetGPUData(pTime);
@@ -257,14 +250,13 @@ int ForwardPropagate(int pTime = 0) {
         break;
         case INFERENCE:
 
-        // checkCUDNN(cudnnTransformTensor(this->GetCudnnHandle(),
-        //                                 &alpha,
-        //                                 m_aInOutDesc,
-        //                                 m_pDevInput,
-        //                                 &beta,
-        //                                 m_aInOutDesc,
-        //                                 m_pDevOutput));
-        this->ForwardPropagate(pTime);
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &alpha,
+                                  m_aInOutDesc,
+                                  m_pDevInput,
+                                  &alpha,
+                                  m_aInOutDesc,
+                                  m_pDevOutput));
         break;
       }
 
@@ -296,21 +288,20 @@ int ForwardPropagate(int pTime = 0) {
                         m_pReserveSpace,
                         m_spaceSizeInBytes));
 
-//m_pDevInputDelta
         checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }
 
-      int SetModeTrain() {
-          m_mode = TRAIN;
-          return TRUE;
-        }
+    int SetModeTrain() {
+        m_mode = TRAIN;
+        return TRUE;
+      }
 
-      int SetModeInference() {
-          m_mode = INFERENCE;
-          return TRUE;
-        }
+    int SetModeInference() {
+        m_mode = INFERENCE;
+        return TRUE;
+      }
 
 #endif  // if __CUDNN__
 };
