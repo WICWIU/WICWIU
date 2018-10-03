@@ -192,6 +192,27 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     AddEdgebetweenOperators(3, pInput0, pInput1, pInput2);
 }
 
+template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {
+    #ifdef __DEBUG__
+    std::cout << "Operator<DTYPE>::Operator()" << '\n';
+    #endif  // __DEBUG__
+    m_apOutput    = NULL;
+    m_apInput     = NULL;
+    m_aaResult    = NULL;
+    m_aaGradient  = NULL;
+    m_name        = "";
+    m_Device      = CPU;
+    m_Mode        = TRAIN;
+    m_isParameter = FALSE;
+    m_isTrainable = FALSE;
+    Alloc();
+
+    va_list ap;
+    va_start(ap, numInput);
+    AddEdgebetweenOperators(numInput, ap);
+    va_end(ap);
+}
+
 template<typename DTYPE> Operator<DTYPE>::~Operator() {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::~Operator()" << '\n';
@@ -202,6 +223,41 @@ template<typename DTYPE> Operator<DTYPE>::~Operator() {
 template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(Operator<DTYPE> *pInput) {
     this->AddInputEdge(pInput);
     pInput->AddOutputEdge(this);
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(int numInput, va_list ap) {
+    #ifdef __DEBUG__
+    std::cout << "Operator<DTYPE>::Alloc(Tensor<DTYPE> *)" << '\n';
+    #endif  // __DEBUG__
+    Operator<DTYPE> *temp = NULL;
+
+
+    int null_count = 0;
+
+    for (int i = 0; i < numInput; i++) {
+         temp = va_arg(ap, Operator<DTYPE> *);
+
+         if (!temp) {
+           null_count++;
+         } else{
+           this->AddEdgebetweenOperators(temp);
+         }
+    }
+
+
+    if(null_count){
+      numInput = numInput - null_count;
+      for (int i = 0; i < numInput; i++) {
+          delete (*m_apInput)[i];
+      }
+      delete m_apInput;
+      m_apInput = NULL;
+
+      printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+      return FALSE;
+    }
+
     return TRUE;
 }
 

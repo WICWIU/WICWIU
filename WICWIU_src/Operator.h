@@ -45,9 +45,11 @@ public:
     Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME");
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME");
+    Operator(int numInput, ...);
     virtual ~Operator();
 
     int                                   AddEdgebetweenOperators(Operator<DTYPE> *pInput);
+    int                                   AddEdgebetweenOperators(int numInput, va_list ap);
     int                                   AddEdgebetweenOperators(int numInput, ...);
     int                                   AddResult(Tensor<DTYPE> *pTensor);
     int                                   AddGradient(Tensor<DTYPE> *pTensor);

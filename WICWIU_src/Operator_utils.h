@@ -3,6 +3,7 @@
 
 #include "Operator/Tensorholder.h"
 #include "Operator/ReShape.h"
+#include "Operator/Concatenate.h"
 
 #include "Operator/Relu.h"
 // #include "Operator/LRelu.h"
