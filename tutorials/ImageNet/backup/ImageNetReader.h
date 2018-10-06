@@ -31,12 +31,6 @@
 
 using namespace std;
 
-// class DataPair {
-// public:
-// int    label     = 0;
-// string imagename = 0;
-// };
-
 template<typename DTYPE> class ImageNetDataReader {
 private:
     string m_path             = "../../../../../../mnt/ssd/Data/ImageNet";
@@ -49,13 +43,6 @@ private:
     string m_className[NUMBER_OF_CLASS];
     // for shuffle class index
     vector<int> m_shuffledList;
-
-    // for new algorithm
-    vector<int> m_shuffledListForAll;
-    int m_numOfTrainImage;
-    string *m_aImage;
-    int *m_aLable;
-
     // number of img of each class
     int m_aNumOfImageOfClass[NUMBER_OF_CLASS];
     // image set of each class
@@ -116,7 +103,6 @@ private:
     // for multi thread
     queue<int> m_selectedClassNum;
     queue<int> m_selectedimgNum;
-    queue<int> m_selectedimgNumForAll;
 
     sem_t m_fullForSelectedDataInformation;
     sem_t m_emptyForSelectedDataInformation;
@@ -352,69 +338,33 @@ public:
 
                     if (fscanf(pFile, "%s", realValue)) {
                         m_aNumOfImageOfClass[classNum] = atoi(realValue);
-                        count                         += m_aNumOfImageOfClass[classNum];
-                    } else {
-                        printf("there is something error\n");
-                        exit(-1);
-                    }
-                }
-                fclose(pFile);
-                // std::cout << "test" << '\n';
-            }
-
-            std::cout << "count : " << count << '\n';
-            m_numOfTrainImage = count;
-
-            for (int i = 1; i < m_numOfTrainImage; ++i) m_shuffledListForAll.push_back(i);
-            m_aImage = new string[m_numOfTrainImage];
-            m_aLable = new int[m_numOfTrainImage];
-
-            count = 0;
-
-            std::cout << "count : " << count << '\n';
-
-            for (int classNum = 0; classNum < NUMBER_OF_CLASS; classNum++) {
-                string filePath  = m_path + '/' + m_dirOfTrainImage + '/' + m_className[classNum] + "/list.txt"; // check with printf
-                const char *cstr = filePath.c_str();
-
-                // list file : 1st line - number of image, the others - image file name
-                FILE *pFile = NULL;
-                pFile = fopen(cstr, "r");
-
-                if (pFile == NULL) {
-                    printf("file open fail\n");
-                    exit(-1);
-                } else {
-                    char realValue[100];
-
-                    if (fscanf(pFile, "%s", realValue)) {
-                        m_aNumOfImageOfClass[classNum] = atoi(realValue);
                         // std::cout << m_aNumOfImageOfClass[i] << '\n';
+                        string *listOfImage = new string[m_aNumOfImageOfClass[classNum]];
+
+                        count += m_aNumOfImageOfClass[classNum];
 
                         for (int imageNum = 0; imageNum < m_aNumOfImageOfClass[classNum]; imageNum++) {
                             if (fscanf(pFile, "%s", realValue)) {
-                                m_aLable[count + imageNum] = classNum;
-                                m_aImage[count + imageNum] = m_className[classNum] + '/' + realValue;
+                                listOfImage[imageNum] = realValue;
                                 // std::cout << listOfImage[imageNum] << '\n';
                             } else {
                                 printf("there is something error\n");
                                 exit(-1);
                             }
                         }
+
+                        m_aaImagesOfClass[classNum] = listOfImage;
                     } else {
                         printf("there is something error\n");
                         exit(-1);
                     }
                 }
 
-                count += m_aNumOfImageOfClass[classNum];
-
                 fclose(pFile);
 
                 // std::cout << "test" << '\n';
             }
-
-            std::cout << "count : " << count << '\n';
+            std::cout << count << '\n';
         } else {
             for (int classNum = 0; classNum < NUMBER_OF_CLASS; classNum++) {
                 string filePath  = m_path + '/' + m_dirOfTestImage + '/' + m_className[classNum] + "/list.txt"; // check with printf
@@ -513,7 +463,7 @@ public:
         Tensor<DTYPE> *preprocessedLabels = NULL;
 
         if (m_isTrain) {
-            this->ShuffleImageNum();
+            this->ShuffleClassNum();
 
             pthread_t *setOfThread = (pthread_t *)malloc(sizeof(pthread_t) * NUMBER_OF_THREAD);
             pthread_t  setOfThreadForPushData2Buffer;
@@ -526,8 +476,8 @@ public:
             pthread_create(&setOfThreadForPushData2Buffer, NULL, &ImageNetDataReader::ThreadFuncForPushData2Buffer, (void *)this);
 
             do {
-                if (((m_recallnum + 1) * m_batchSize) >= m_numOfTrainImage) {
-                    this->ShuffleImageNum();
+                if (((m_recallnum + 1) * m_batchSize) > NUMBER_OF_CLASS) {
+                    this->ShuffleClassNum();
                     m_recallnum = 0;
                 }
 
@@ -554,21 +504,20 @@ public:
                 // std::cout << "m_recallnum : " << m_recallnum << '\n';
 
                 for (int i = 0; i < m_batchSize; i++) {
-                    imgNum = m_shuffledListForAll[i + m_recallnum * m_batchSize] % m_numOfTrainImage;
+                    classNum = m_shuffledList[i + m_recallnum * m_batchSize] % NUMBER_OF_CLASS;
                     // classNum = m_shuffledList[i + m_recallnum * m_batchSize];
                     // std::cout << classNum << ' ';
                     // std::cout << i + m_recallnum * m_batchSize << ' ';
                     // std::cout << classNum << ' ';
-                    // imgNum = rand() % m_aNumOfImageOfClass[classNum];  // random select from range(0, m_aNumOfImageOfClass[classNum])
+                    imgNum = rand() % m_aNumOfImageOfClass[classNum];  // random select from range(0, m_aNumOfImageOfClass[classNum])
                     // std::cout << m_aNumOfImageOfClass[classNum] << " : " << imgNum << '\n';
                     // m_aaSetOfImage->push(this->Image2Tensor(classNum, imgNum));
                     // m_aaSetOfLabel->push(this->Label2Tensor(classNum));
                     sem_wait(&m_emptyForSelectedDataInformation);
                     sem_wait(&m_mutexForSelectedDataInformation);
 
-                    // m_selectedClassNum.push(classNum);
-                    // m_selectedimgNum.push(imgNum);
-                    m_selectedimgNumForAll.push(imgNum);
+                    m_selectedClassNum.push(classNum);
+                    m_selectedimgNum.push(imgNum);
 
                     sem_post(&m_mutexForSelectedDataInformation);
                     sem_post(&m_fullForSelectedDataInformation);
@@ -673,19 +622,17 @@ public:
                 sem_wait(&m_fullForSelectedDataInformation);
                 sem_wait(&m_mutexForSelectedDataInformation);
 
-                // classNum = m_selectedClassNum.front();
-                // m_selectedClassNum.pop();
-                // imgNum = m_selectedimgNum.front();
-                // m_selectedimgNum.pop();
-                imgNum = m_selectedimgNumForAll.front();
-                m_selectedimgNumForAll.pop();
+                classNum = m_selectedClassNum.front();
+                m_selectedClassNum.pop();
+                imgNum = m_selectedimgNum.front();
+                m_selectedimgNum.pop();
 
                 sem_post(&m_mutexForSelectedDataInformation);
                 sem_post(&m_emptyForSelectedDataInformation);
 
                 // 안에서 막아줄 필요가 있다.
-                preprocessedImages = this->Image2Tensor(m_aLable[imgNum], imgNum);
-                preprocessedLabels = this->Label2Tensor(m_aLable[imgNum]);
+                preprocessedImages = this->Image2Tensor(classNum, imgNum);
+                preprocessedLabels = this->Label2Tensor(classNum);
 
                 sem_wait(&m_mutexForSingleImgTensor);
 
@@ -765,11 +712,6 @@ public:
         random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 
-    void ShuffleImageNum() {
-        srand(unsigned(time(0)));
-        random_shuffle(m_shuffledListForAll.begin(), m_shuffledListForAll.end(), ImageNetDataReader<DTYPE>::random_generator);
-    }
-
     void Resize(int channel, int oldHeight, int oldWidth, unsigned char *oldData, int newHeight, int newWidth, unsigned char *newData) {
         unsigned char *dest = newData;
 
@@ -807,15 +749,14 @@ public:
         const int colorDim           = 3; // channel
         unsigned char *imgReshapeBuf = NULL;
 
-        // string classDir = m_className[classNum];
-        // std::cout << classNum << '\n';
+        string classDir = m_className[classNum];
+        // std::cout << classDir << '\n';
 
-        string imgName = m_aImage[imgNum];
+        string imgName = m_aaImagesOfClass[classNum][imgNum];
         // std::cout << "imgName : " << imgName << '\n';
 
         // create file address
-        string filePath = m_path + '/' + m_dirOfTrainImage + '/' + imgName;  // check with printf
-        // std::cout << filePath << '\n';
+        string filePath = m_path + '/' + m_dirOfTrainImage + '/' + classDir + '/' + imgName;  // check with printf
 
         const char *cstr = filePath.c_str();
 
@@ -924,94 +865,94 @@ public:
     }
 
     // void ResizeWithPadding(int channel, int oldHeight, int oldWidth, int lengthLimit, unsigned char *oldData, unsigned char *newData) {
-    // unsigned char *dest = newData;
-    // int newHeight = 0;
-    // int newWidth = 0;
+    //     unsigned char *dest = newData;
+    //     int newHeight = 0;
+    //     int newWidth = 0;
     //
-    // if(oldHeight > oldWidth){
-    // newHeight = lengthLimit;
-    // newWidth  = oldWidth * (float)lengthLimit / oldHeight;
+    //     if(oldHeight > oldWidth){
+    //         newHeight = lengthLimit;
+    //         newWidth  = oldWidth * (float)lengthLimit / oldHeight;
     //
-    // for (int newy = 0; newy < newHeight; newy++) {
-    // int oldy = newy * oldHeight / newHeight;
-    //// if(oldy >= oldHeight)
-    //// oldy = oldHeight - 1;			// for safety
-    // unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+    //         for (int newy = 0; newy < newHeight; newy++) {
+    //             int oldy = newy * oldHeight / newHeight;
+    //             // if(oldy >= oldHeight)
+    //             // oldy = oldHeight - 1;			// for safety
+    //             unsigned char *srcLine = oldData + oldy * oldWidth * channel;
     //
-    //// 0 ~ (lengthLimit - newwidth) / 2
-    // for (int newx = 0; newx < (lengthLimit - newWidth) / 2; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
+    //             // 0 ~ (lengthLimit - newwidth) / 2
+    //             for (int newx = 0; newx < (lengthLimit - newWidth) / 2; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
     //
-    //// (lengthLimit - newWidth) / 2 ~ (lengthLimit + newWidth) / 2
-    // for (int newx = (lengthLimit - newWidth) / 2; newx < (lengthLimit + newWidth) / 2; newx++) {
-    // int oldx = (newx - (lengthLimit - newWidth) / 2) * oldWidth / newWidth;
-    //// if(oldx >= oldWidth)
-    //// oldx = oldWidth - 1;			// for safety
-    // unsigned char *src = srcLine + oldx * channel;
+    //             // (lengthLimit - newWidth) / 2 ~ (lengthLimit + newWidth) / 2
+    //             for (int newx = (lengthLimit - newWidth) / 2; newx < (lengthLimit + newWidth) / 2; newx++) {
+    //                 int oldx = (newx - (lengthLimit - newWidth) / 2) * oldWidth / newWidth;
+    //                 // if(oldx >= oldWidth)
+    //                 // oldx = oldWidth - 1;			// for safety
+    //                 unsigned char *src = srcLine + oldx * channel;
     //
-    // for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-    // }
+    //                 for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+    //             }
     //
-    //// (lengthLimit + newWidth) / 2 ~ lengthLimit
-    // for (int newx = (lengthLimit + newWidth) / 2; newx < lengthLimit; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
-    // }
-    // }
-    // else if(oldHeight < oldWidth){
-    // newHeight = oldHeight * (float)lengthLimit / oldWidth;
-    // newWidth  = lengthLimit;
-    //// 0 ~ (lengthLimit - newHeight) / 2
-    // for (int newy = 0; newy < (lengthLimit - newHeight) / 2; newy++) {
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
-    // }
+    //             // (lengthLimit + newWidth) / 2 ~ lengthLimit
+    //             for (int newx = (lengthLimit + newWidth) / 2; newx < lengthLimit; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
+    //         }
+    //     }
+    //     else if(oldHeight < oldWidth){
+    //         newHeight = oldHeight * (float)lengthLimit / oldWidth;
+    //         newWidth  = lengthLimit;
+    //         // 0 ~ (lengthLimit - newHeight) / 2
+    //         for (int newy = 0; newy < (lengthLimit - newHeight) / 2; newy++) {
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
+    //         }
     //
-    //// (lengthLimit - newHeight) / 2 ~ (lengthLimit + newHeight) / 2
-    // for (int newy = (lengthLimit - newHeight) / 2; newy < (lengthLimit + newHeight) / 2; newy++) {
-    // int oldy = (newy - (lengthLimit - newHeight) / 2) * oldHeight / newHeight;
-    //// if(oldy >= oldHeight)
-    //// oldy = oldHeight - 1;			// for safety
-    // unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+    //         // (lengthLimit - newHeight) / 2 ~ (lengthLimit + newHeight) / 2
+    //         for (int newy = (lengthLimit - newHeight) / 2; newy < (lengthLimit + newHeight) / 2; newy++) {
+    //             int oldy = (newy - (lengthLimit - newHeight) / 2) * oldHeight / newHeight;
+    //             // if(oldy >= oldHeight)
+    //             // oldy = oldHeight - 1;			// for safety
+    //             unsigned char *srcLine = oldData + oldy * oldWidth * channel;
     //
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // int oldx = newx * oldWidth / newWidth;
-    //// if(oldx >= oldWidth)
-    //// oldx = oldWidth - 1;			// for safety
-    // unsigned char *src = srcLine + oldx * channel;
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 int oldx = newx * oldWidth / newWidth;
+    //                 // if(oldx >= oldWidth)
+    //                 // oldx = oldWidth - 1;			// for safety
+    //                 unsigned char *src = srcLine + oldx * channel;
     //
-    // for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-    // }
-    // }
+    //                 for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+    //             }
+    //         }
     //
-    //// (lengthLimit + newHeight) / 2 ~ lengthLimit
-    // for (int newy = (lengthLimit + newHeight) / 2; newy < lengthLimit; newy++) {
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
-    // }
-    // }
-    // else{
-    // newHeight = lengthLimit;
-    // newWidth  = lengthLimit;
-    // for (int newy = 0; newy < newHeight; newy++) {
-    // int oldy = newy * oldHeight / newHeight;
-    //// if(oldy >= oldHeight)
-    //// oldy = oldHeight - 1;			// for safety
-    // unsigned char *srcLine = oldData + oldy * oldWidth * channel;
+    //         // (lengthLimit + newHeight) / 2 ~ lengthLimit
+    //         for (int newy = (lengthLimit + newHeight) / 2; newy < lengthLimit; newy++) {
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 for (int c = 0; c < channel; c++) *(dest++) = 0;
+    //             }
+    //         }
+    //     }
+    //     else{
+    //         newHeight = lengthLimit;
+    //         newWidth  = lengthLimit;
+    //         for (int newy = 0; newy < newHeight; newy++) {
+    //             int oldy = newy * oldHeight / newHeight;
+    //             // if(oldy >= oldHeight)
+    //             // oldy = oldHeight - 1;			// for safety
+    //             unsigned char *srcLine = oldData + oldy * oldWidth * channel;
     //
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // int oldx = newx * oldWidth / newWidth;
-    //// if(oldx >= oldWidth)
-    //// oldx = oldWidth - 1;			// for safety
-    // unsigned char *src = srcLine + oldx * channel;
+    //             for (int newx = 0; newx < newWidth; newx++) {
+    //                 int oldx = newx * oldWidth / newWidth;
+    //                 // if(oldx >= oldWidth)
+    //                 // oldx = oldWidth - 1;			// for safety
+    //                 unsigned char *src = srcLine + oldx * channel;
     //
-    // for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-    // }
-    // }
-    // }
+    //                 for (int c = 0; c < channel; c++) *(dest++) = *(src++);
+    //             }
+    //         }
+    //     }
     // }
 
     Tensor<DTYPE>* Image2Tensor(int classNum, string imgName  /*Address of Image*/) {
@@ -1069,17 +1010,17 @@ public:
         tjDestroy(tjInstance); tjInstance = NULL;
 
         if (width < height) {
-            newHeight     = height * (float)LENGTH_224 / width;
-            newWidth      = LENGTH_224;
-            imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+                newHeight     = height * (float)LENGTH_224 / width;
+                newWidth      = LENGTH_224;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
         } else {
-            newHeight     = LENGTH_224;
-            newWidth      = width * (float)LENGTH_224 / height;
-            imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+                newHeight     = LENGTH_224;
+                newWidth      = width * (float)LENGTH_224 / height;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
         }
         Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
         height = newHeight;
-        width  = newWidth;
+        width = newWidth;
 
         // convert image to tensor
         // if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
@@ -1414,27 +1355,6 @@ public:
     }
 
     Tensor<DTYPE>* VerticalFlip(Tensor<DTYPE> *image) {
-        int numOfChannel        = 3;
-        int imageSizePerChannel = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int rowSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int colSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int halfColSizePerPlane = colSizePerPlane / 2;
-
-        DTYPE temp          = 0;
-        int   idx           = 0;
-        int   idxOfOpposite = 0;
-
-        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
-            for (int colNum = 0; colNum < halfColSizePerPlane; colNum++) {
-                for (int rowNum = 0; rowNum < rowSizePerPlane; rowNum++) {
-                    idx                     = channelNum * imageSizePerChannel + rowNum * colSizePerPlane + colNum;
-                    idxOfOpposite           = channelNum * imageSizePerChannel + (rowSizePerPlane - rowNum - 1) * colSizePerPlane + colNum;
-                    temp                    = (*image)[idx];
-                    (*image)[idx]           = (*image)[idxOfOpposite];
-                    (*image)[idxOfOpposite] = temp;
-                }
-            }
-        }
         return NULL;
     }
 

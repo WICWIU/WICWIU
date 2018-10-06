@@ -33,8 +33,8 @@ using namespace std;
 
 // class DataPair {
 // public:
-// int    label     = 0;
-// string imagename = 0;
+//     int    label     = 0;
+//     string imagename = 0;
 // };
 
 template<typename DTYPE> class ImageNetDataReader {
@@ -394,7 +394,7 @@ public:
                         for (int imageNum = 0; imageNum < m_aNumOfImageOfClass[classNum]; imageNum++) {
                             if (fscanf(pFile, "%s", realValue)) {
                                 m_aLable[count + imageNum] = classNum;
-                                m_aImage[count + imageNum] = m_className[classNum] + '/' + realValue;
+                                m_aImage[count + imageNum]= m_className[classNum] + '/' + realValue;
                                 // std::cout << listOfImage[imageNum] << '\n';
                             } else {
                                 printf("there is something error\n");
@@ -1414,27 +1414,6 @@ public:
     }
 
     Tensor<DTYPE>* VerticalFlip(Tensor<DTYPE> *image) {
-        int numOfChannel        = 3;
-        int imageSizePerChannel = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int rowSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int colSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int halfColSizePerPlane = colSizePerPlane / 2;
-
-        DTYPE temp          = 0;
-        int   idx           = 0;
-        int   idxOfOpposite = 0;
-
-        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
-            for (int colNum = 0; colNum < halfColSizePerPlane; colNum++) {
-                for (int rowNum = 0; rowNum < rowSizePerPlane; rowNum++) {
-                    idx                     = channelNum * imageSizePerChannel + rowNum * colSizePerPlane + colNum;
-                    idxOfOpposite           = channelNum * imageSizePerChannel + (rowSizePerPlane - rowNum - 1) * colSizePerPlane + colNum;
-                    temp                    = (*image)[idx];
-                    (*image)[idx]           = (*image)[idxOfOpposite];
-                    (*image)[idxOfOpposite] = temp;
-                }
-            }
-        }
         return NULL;
     }
 
