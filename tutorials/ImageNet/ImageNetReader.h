@@ -1108,6 +1108,10 @@ public:
         // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
         // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, LENGTH_224, LENGTH_224);
 
+        if (m_useNormalization) {
+            temp = Normalization(temp);
+        }
+
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
 

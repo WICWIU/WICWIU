@@ -39,6 +39,7 @@ int main(int argc, char const *argv[]) {
     train_data_reader->UseRandomVerticalFlip();
 
     ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 50, FALSE);
+    test_data_reader->UseNormalization(TRUE, mean, stddev);
 
     train_data_reader->StartProduce();
     test_data_reader->StartProduce();
