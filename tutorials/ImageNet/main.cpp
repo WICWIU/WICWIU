@@ -10,13 +10,16 @@
 #define LOOP_FOR_TRAIN     (1300000 / BATCH)
 #define LOOP_FOR_ACCUM     (10000 / BATCH) * 10
 #define LOOP_FOR_TEST      (50000 / BATCH)
-#define GPUID              1
+#define GPUID              0
 #define LOG_LENGTH         1
 
 int main(int argc, char const *argv[]) {
     time_t startTime;
     struct tm *curr_tm;
     double  nProcessExcuteTime;
+    float mean[] = {0.485, 0.456, 0.406};
+    float stddev[] = {0.229, 0.224, 0.225};
+
     char    filename[]      = "params_40";
     char    filename_info[] = "params_40_info";
 
@@ -31,9 +34,11 @@ int main(int argc, char const *argv[]) {
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
     train_data_reader->UseRandomCrop(28);
+    train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
+    train_data_reader->UseRandomVerticalFlip();
 
-    ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 100, FALSE);
+    ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 50, FALSE);
 
     train_data_reader->StartProduce();
     test_data_reader->StartProduce();

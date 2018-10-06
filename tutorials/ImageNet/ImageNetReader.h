@@ -907,7 +907,9 @@ public:
         }
 
         if (m_useRandomVerticalFlip) {
-            if (m_shuffledListForVerticalFlip.back()) temp = VerticalFlip(temp);
+            if (m_shuffledListForVerticalFlip.back()) {
+                temp = VerticalFlip(temp);
+            }
             m_shuffledListForVerticalFlip.pop_back();
         }
 
@@ -1435,7 +1437,7 @@ public:
                 }
             }
         }
-        return NULL;
+        return image;
     }
 
     int AddData2Buffer(Tensor<DTYPE> *setOfImage, Tensor<DTYPE> *setOfLabel) {
