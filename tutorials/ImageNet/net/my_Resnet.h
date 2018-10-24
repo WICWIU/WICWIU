@@ -111,10 +111,13 @@ public:
 
         // ReShape
         out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, FALSE, "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+        out = new Relu<DTYPE>(out, "Relu0");
+
         out = new Maxpooling2D<float>(out, 2, 2, 3, 3, 1, "MaxPool_2");
         // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
 

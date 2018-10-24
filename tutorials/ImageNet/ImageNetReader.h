@@ -512,6 +512,8 @@ public:
         Tensor<DTYPE> *preprocessedImages = NULL;
         Tensor<DTYPE> *preprocessedLabels = NULL;
 
+        srand(unsigned(time(0)));
+
         if (m_isTrain) {
             this->ShuffleImageNum();
 
@@ -533,19 +535,19 @@ public:
 
                 if (m_useRandomCrop) {
                     FillshuffledListForCrop();
-                    srand(unsigned(time(0)));
+                    // srand(unsigned(time(0)));
                     random_shuffle(m_shuffledListForCrop.begin(), m_shuffledListForCrop.end(), ImageNetDataReader<DTYPE>::random_generator);
                 }
 
                 if (m_useRandomHorizontalFlip) {
                     FillshuffledListForHorizontalFlip();
-                    srand(unsigned(time(0)));
+                    // srand(unsigned(time(0)));
                     random_shuffle(m_shuffledListForHorizontalFlip.begin(), m_shuffledListForHorizontalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
                 }
 
                 if (m_useRandomVerticalFlip) {
                     FillshuffledListForVerticalFlip();
-                    srand(unsigned(time(0)));
+                    // srand(unsigned(time(0)));
                     random_shuffle(m_shuffledListForVerticalFlip.begin(), m_shuffledListForVerticalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
                 }
 
@@ -761,12 +763,12 @@ public:
     }
 
     void ShuffleClassNum() {
-        srand(unsigned(time(0)));
+        // srand(unsigned(time(0)));
         random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 
     void ShuffleImageNum() {
-        srand(unsigned(time(0)));
+        // srand(unsigned(time(0)));
         random_shuffle(m_shuffledListForAll.begin(), m_shuffledListForAll.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 

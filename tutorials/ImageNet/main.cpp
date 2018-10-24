@@ -4,24 +4,25 @@
 #include <ctime>
 #include <unistd.h>
 
-#define NUMBER_OF_CLASS    1000
-#define BATCH              100
-#define EPOCH              1000
-#define LOOP_FOR_TRAIN     (1300000 / BATCH)
-#define LOOP_FOR_ACCUM     (10000 / BATCH) * 10
-#define LOOP_FOR_TEST      (50000 / BATCH)
-#define GPUID              0
-#define LOG_LENGTH         1
+#define NUMBER_OF_CLASS             1000
+#define BATCH                       100
+#define EPOCH                       1000
+#define LOOP_FOR_TRAIN              (1300000 / BATCH)
+#define LOOP_FOR_ACCUM              (10000 / BATCH) * 10
+#define LOOP_FOR_TEST               (50000 / BATCH)
+#define GPUID                       0
+#define LOG_LENGTH                  1
+#define LEARNING_RATE_DECAY_RATE    0.5
 
 int main(int argc, char const *argv[]) {
     time_t startTime;
     struct tm *curr_tm;
-    double  nProcessExcuteTime;
-    float mean[] = {0.485, 0.456, 0.406};
-    float stddev[] = {0.229, 0.224, 0.225};
+    double     nProcessExcuteTime;
+    float mean[]   = { 0.485, 0.456, 0.406 };
+    float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char    filename[]      = "params_40";
-    char    filename_info[] = "params_40_info";
+    char filename[]      = "params_38_rev";
+    char filename_info[] = "params_38_rev_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
@@ -33,7 +34,7 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
-    train_data_reader->UseRandomCrop(28);
+    train_data_reader->UseRandomCrop(10);
     train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
     train_data_reader->UseRandomVerticalFlip();
@@ -54,34 +55,40 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    std::cout << "Loading..." << '\n';
-    FILE *fp = fopen(filename, "rb");
-    net->Load(fp);
-    fclose(fp);
-
-    FILE *fp_info = fopen(filename_info, "rb");
-    fread(&best_acc, sizeof(float), 1, fp_info);
-    fread(&epoch,    sizeof(int),   1, fp_info);
-    fclose(fp_info);
-    std::cout << "Done!" << '\n';
+    // std::cout << "Loading..." << '\n';
+    // FILE *fp = fopen(filename, "rb");
+    // net->Load(fp);
+    // fclose(fp);
+    //
+    // FILE *fp_info = fopen(filename_info, "rb");
+    // fread(&best_acc, sizeof(float), 1, fp_info);
+    // fread(&epoch,    sizeof(int),   1, fp_info);
+    // fclose(fp_info);
+    // std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
     std::cout << "filename_info : " << filename_info << '\n';
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
 
+    if (epoch / 30) {
+        float lr = net->GetOptimizer()->GetLearningRate();
+        net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / 30)));
+        std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / 30)) << '\n';
+    }
+
     for (int i = epoch + 1; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';
 
         startTime = time(NULL);
-        curr_tm = localtime(&startTime);
+        curr_tm   = localtime(&startTime);
         cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s" << endl;
 
         if ((i + 1) % 30 == 0) {
             std::cout << "Change learning rate!" << '\n';
             float lr = net->GetOptimizer()->GetLearningRate();
-            net->GetOptimizer()->SetLearningRate(lr * 0.1);
-            std::cout << "lr : " << lr * 0.1 << '\n';
+            net->GetOptimizer()->SetLearningRate(lr * LEARNING_RATE_DECAY_RATE);
+            std::cout << "lr : " << lr * LEARNING_RATE_DECAY_RATE << '\n';
         } else {
             float lr = net->GetOptimizer()->GetLearningRate();
             std::cout << "lr : " << lr << '\n';
@@ -136,9 +143,9 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
 
             // if (train_cur_accuracy > train_cur_top5_accuracy) {
-            //   std::cout << "anomaly" << '\n';
-            //   int temp  = 0;
-            //   std::cin >> temp;
+            // std::cout << "anomaly" << '\n';
+            // int temp  = 0;
+            // std::cin >> temp;
             // }
             // sleep(30);
             if (j % (LOOP_FOR_TRAIN / LOG_LENGTH) == (LOOP_FOR_TRAIN / LOG_LENGTH) - 1) {
