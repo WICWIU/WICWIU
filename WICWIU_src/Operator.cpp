@@ -447,7 +447,15 @@ template<typename DTYPE> int Operator<DTYPE>::ResetGradient() {
     return TRUE;
 }
 
-template<typename DTYPE> void Operator<DTYPE>::PrintInformation() {
+// template<typename DTYPE> void Operator<DTYPE>::PrintInformation() {
+//     std::cout << this->GetName() << " : ";
+//     std::cout << this->GetResult()->GetShape() << '\n';
+// }
+
+template<typename DTYPE> void Operator<DTYPE>::PrintInformation(int level) {
+    for(int j = 0; j < level; j++){
+        std::cout << "-- ";
+    }
     std::cout << this->GetName() << " : ";
     std::cout << this->GetResult()->GetShape() << '\n';
 }

@@ -90,7 +90,8 @@ public:
     virtual int                           ResetResult();
     virtual int                           ResetGradient();
 
-    virtual void                          PrintInformation();
+    // virtual void                          PrintInformation();
+    virtual void                          PrintInformation(int level);
 
     virtual void                          SetDeviceCPU();
 

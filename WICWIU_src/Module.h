@@ -52,7 +52,8 @@ public:
     int                                 ResetResult();
     int                                 ResetGradient();
 
-    void                                PrintInformation();
+    // void                                PrintInformation();
+    void                                PrintInformation(int level);
 
     void                                SetDeviceCPU();
 

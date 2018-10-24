@@ -255,13 +255,25 @@ template<typename DTYPE> int Module<DTYPE>::ResetGradient() {
     return TRUE;
 }
 
-template<typename DTYPE> void Module<DTYPE>::PrintInformation() {
+// template<typename DTYPE> void Module<DTYPE>::PrintInformation() {
+//     std::cout << this->GetName() << " : ";
+//     std::cout << this->GetResult()->GetShape() << '\n';
+//
+//     for (int i = 0; i < m_numOfExcutableOperator; i++) {
+//         std::cout << "-- ";
+//         (*m_aaExcutableOperator)[i]->PrintInformation();
+//     }
+// }
+
+template<typename DTYPE> void Module<DTYPE>::PrintInformation(int level) {
+    for(int j = 0; j < level; j++){
+        std::cout << "-- ";
+    }
     std::cout << this->GetName() << " : ";
     std::cout << this->GetResult()->GetShape() << '\n';
 
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        std::cout << "-- ";
-        (*m_aaExcutableOperator)[i]->PrintInformation();
+        (*m_aaExcutableOperator)[i]->PrintInformation(level + 1);
     }
 }
 
