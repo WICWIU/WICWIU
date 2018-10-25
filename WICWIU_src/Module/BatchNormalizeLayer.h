@@ -6,7 +6,7 @@
 template<typename DTYPE> class BatchNormalizeLayer : public Module<DTYPE>{
 private:
 public:
-    BatchNormalizeLayer(Operator<DTYPE> *pInput, int pIsChannelwise = FALSE, std::string pName = "NO NAME") {
+    BatchNormalizeLayer(Operator<DTYPE> *pInput, int pIsChannelwise = FALSE, std::string pName = "NO NAME") : Module<DTYPE>(pName) {
         Alloc(pInput, pIsChannelwise, pName);
     }
 
