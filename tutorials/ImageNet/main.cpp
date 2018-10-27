@@ -4,15 +4,16 @@
 #include <ctime>
 #include <unistd.h>
 
-#define NUMBER_OF_CLASS             1000
-#define BATCH                       100
-#define EPOCH                       1000
-#define LOOP_FOR_TRAIN              (1300000 / BATCH)
-#define LOOP_FOR_ACCUM              (10000 / BATCH) * 10
-#define LOOP_FOR_TEST               (50000 / BATCH)
-#define GPUID                       0
-#define LOG_LENGTH                  1
-#define LEARNING_RATE_DECAY_RATE    0.5
+#define NUMBER_OF_CLASS               1000
+#define BATCH                         95
+#define EPOCH                         1000
+#define LOOP_FOR_TRAIN                (1300000 / BATCH)
+#define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
+#define LOOP_FOR_TEST                 (50000 / BATCH)
+#define GPUID                         0
+#define LOG_LENGTH                    1
+#define LEARNING_RATE_DECAY_RATE      0.1
+#define LEARNING_RATE_DECAY_TIMING    30
 
 int main(int argc, char const *argv[]) {
     time_t startTime;
@@ -21,8 +22,8 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[]      = "params_38_rev";
-    char filename_info[] = "params_38_rev_info";
+    char filename[]      = "params_40_revise";
+    char filename_info[] = "params_40_revise_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
@@ -34,7 +35,7 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
-    train_data_reader->UseRandomCrop(10);
+    train_data_reader->UseRandomCrop(20);
     train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
     train_data_reader->UseRandomVerticalFlip();
@@ -71,7 +72,7 @@ int main(int argc, char const *argv[]) {
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
 
-    if (epoch / 30) {
+    if (epoch / LEARNING_RATE_DECAY_TIMING) {
         float lr = net->GetOptimizer()->GetLearningRate();
         net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / 30)));
         std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / 30)) << '\n';
@@ -84,7 +85,7 @@ int main(int argc, char const *argv[]) {
         curr_tm   = localtime(&startTime);
         cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s" << endl;
 
-        if ((i + 1) % 30 == 0) {
+        if ((i + 1) % LEARNING_RATE_DECAY_TIMING == 0) {
             std::cout << "Change learning rate!" << '\n';
             float lr = net->GetOptimizer()->GetLearningRate();
             net->GetOptimizer()->SetLearningRate(lr * LEARNING_RATE_DECAY_RATE);
