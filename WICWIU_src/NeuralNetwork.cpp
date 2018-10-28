@@ -577,7 +577,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::PrintGraphInformation() {
     std::cout << "Graph Structure: " << "\n\n";
 
     for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->PrintInformation();
+        (*m_apExcutableOperator)[i]->PrintInformation(0);
         std::cout << '\n';
     }
 

@@ -202,11 +202,11 @@ public:
     virtual int UpdateParameterOnGPU() {
         if (m_centered == TRUE) {
             for (int i = 0; i < m_numOfParameter; i++) {
-              UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
+              UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
             }
         }else{
             for (int i = 0; i < m_numOfParameter; i++) {
-              UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
+              UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
           }
         }
 

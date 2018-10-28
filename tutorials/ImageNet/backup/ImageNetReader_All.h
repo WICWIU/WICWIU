@@ -33,8 +33,8 @@ using namespace std;
 
 // class DataPair {
 // public:
-// int    label     = 0;
-// string imagename = 0;
+//     int    label     = 0;
+//     string imagename = 0;
 // };
 
 template<typename DTYPE> class ImageNetDataReader {
@@ -394,7 +394,7 @@ public:
                         for (int imageNum = 0; imageNum < m_aNumOfImageOfClass[classNum]; imageNum++) {
                             if (fscanf(pFile, "%s", realValue)) {
                                 m_aLable[count + imageNum] = classNum;
-                                m_aImage[count + imageNum] = m_className[classNum] + '/' + realValue;
+                                m_aImage[count + imageNum]= m_className[classNum] + '/' + realValue;
                                 // std::cout << listOfImage[imageNum] << '\n';
                             } else {
                                 printf("there is something error\n");
@@ -512,8 +512,6 @@ public:
         Tensor<DTYPE> *preprocessedImages = NULL;
         Tensor<DTYPE> *preprocessedLabels = NULL;
 
-        srand(unsigned(time(0)));
-
         if (m_isTrain) {
             this->ShuffleImageNum();
 
@@ -535,19 +533,19 @@ public:
 
                 if (m_useRandomCrop) {
                     FillshuffledListForCrop();
-                    // srand(unsigned(time(0)));
+                    srand(unsigned(time(0)));
                     random_shuffle(m_shuffledListForCrop.begin(), m_shuffledListForCrop.end(), ImageNetDataReader<DTYPE>::random_generator);
                 }
 
                 if (m_useRandomHorizontalFlip) {
                     FillshuffledListForHorizontalFlip();
-                    // srand(unsigned(time(0)));
+                    srand(unsigned(time(0)));
                     random_shuffle(m_shuffledListForHorizontalFlip.begin(), m_shuffledListForHorizontalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
                 }
 
                 if (m_useRandomVerticalFlip) {
                     FillshuffledListForVerticalFlip();
-                    // srand(unsigned(time(0)));
+                    srand(unsigned(time(0)));
                     random_shuffle(m_shuffledListForVerticalFlip.begin(), m_shuffledListForVerticalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
                 }
 
@@ -763,12 +761,12 @@ public:
     }
 
     void ShuffleClassNum() {
-        // srand(unsigned(time(0)));
+        srand(unsigned(time(0)));
         random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 
     void ShuffleImageNum() {
-        // srand(unsigned(time(0)));
+        srand(unsigned(time(0)));
         random_shuffle(m_shuffledListForAll.begin(), m_shuffledListForAll.end(), ImageNetDataReader<DTYPE>::random_generator);
     }
 
@@ -909,9 +907,7 @@ public:
         }
 
         if (m_useRandomVerticalFlip) {
-            if (m_shuffledListForVerticalFlip.back()) {
-                temp = VerticalFlip(temp);
-            }
+            if (m_shuffledListForVerticalFlip.back()) temp = VerticalFlip(temp);
             m_shuffledListForVerticalFlip.pop_back();
         }
 
@@ -1109,10 +1105,6 @@ public:
 
         // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
         // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, LENGTH_224, LENGTH_224);
-
-        if (m_useNormalization) {
-            temp = Normalization(temp);
-        }
 
         tjFree(imgBuf);
         delete[] imgReshapeBuf;
@@ -1422,28 +1414,7 @@ public:
     }
 
     Tensor<DTYPE>* VerticalFlip(Tensor<DTYPE> *image) {
-        int numOfChannel        = 3;
-        int imageSizePerChannel = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int rowSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int colSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
-        int halfColSizePerPlane = colSizePerPlane / 2;
-
-        DTYPE temp          = 0;
-        int   idx           = 0;
-        int   idxOfOpposite = 0;
-
-        for (int channelNum = 0; channelNum < numOfChannel; channelNum++) {
-            for (int colNum = 0; colNum < halfColSizePerPlane; colNum++) {
-                for (int rowNum = 0; rowNum < rowSizePerPlane; rowNum++) {
-                    idx                     = channelNum * imageSizePerChannel + rowNum * colSizePerPlane + colNum;
-                    idxOfOpposite           = channelNum * imageSizePerChannel + (rowSizePerPlane - rowNum - 1) * colSizePerPlane + colNum;
-                    temp                    = (*image)[idx];
-                    (*image)[idx]           = (*image)[idxOfOpposite];
-                    (*image)[idxOfOpposite] = temp;
-                }
-            }
-        }
-        return image;
+        return NULL;
     }
 
     int AddData2Buffer(Tensor<DTYPE> *setOfImage, Tensor<DTYPE> *setOfLabel) {

@@ -1,6 +1,7 @@
 #include "../../../WICWIU_src/NeuralNetwork.h"
 
-template<typename DTYPE> class BasicBlock : public Module<DTYPE>{
+template<typename DTYPE> class BasicBlock :
+    public Module<DTYPE>{
 private:
 public:
     BasicBlock(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, int pStride = 1, std::string pName = NULL) {
@@ -16,18 +17,20 @@ public:
         Operator<DTYPE> *out      = pInput;
 
         // 1
-        out = new ConvolutionLayer2D<DTYPE>(out, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv1" + pName);
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1" + pName);
         out = new Relu<DTYPE>(out, "BasicBlock_Relu1" + pName);
+        out = new ConvolutionLayer2D<DTYPE>(out, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv1" + pName);
 
         // 2
-        out = new ConvolutionLayer2D<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 3, 3, 1, 1, 1, FALSE, "BasicBlock_Conv2" + pName);
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN2" + pName);
+        out = new Relu<DTYPE>(out, "BasicBlock_Relu2" + pName);
+        out = new ConvolutionLayer2D<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 3, 3, 1, 1, 1, FALSE, "BasicBlock_Conv2" + pName);
 
         // ShortCut
         if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel)) {
-            remember = new ConvolutionLayer2D<DTYPE>(remember, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv_Shortcut" + pName);
-            out      = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN3" + pName);
+            remember = new BatchNormalizeLayer<DTYPE>(remember, TRUE, "BasicBlock_BN3_Shortcut" + pName);
+            remember = new Relu<DTYPE>(remember, "BasicBlock_Relu3_Shortcut" + pName);
+            remember = new ConvolutionLayer2D<DTYPE>(remember, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv3_Shortcut" + pName);
         }
 
         // Add (for skip Connection)
@@ -35,7 +38,7 @@ public:
         // out = new Addall<DTYPE>(remember, out, "ResNet_Skip_Add");
 
         // Last Relu
-        out = new Relu<DTYPE>(out, "BasicBlock_Relu2" + pName);
+        // out = new Relu<DTYPE>(out, "BasicBlock_Relu3" + pName);
 
         this->AnalyzeGraph(out);
 
@@ -91,7 +94,8 @@ public:
 // }
 // };
 
-template<typename DTYPE> class ResNet : public NeuralNetwork<DTYPE>{
+template<typename DTYPE> class ResNet :
+    public NeuralNetwork<DTYPE>{
 private:
     int m_numInputChannel;
 
@@ -111,10 +115,13 @@ public:
 
         // ReShape
         out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, FALSE, "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+        out = new Relu<DTYPE>(out, "Relu0");
+
         out = new Maxpooling2D<float>(out, 2, 2, 3, 3, 1, "MaxPool_2");
         // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
 
@@ -123,11 +130,15 @@ public:
         out = this->MakeLayer(out, 256, pBlockType, pNumOfBlock3, 2, "Block3");
         out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock3, 2, "Block4");
 
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
+        out = new Relu<DTYPE>(out, "Relu1");
+
         out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
 
         out = new ReShape<DTYPE>(out, 1, 1, 512, "ReShape");
 
-        out = new Linear<DTYPE>(out, 512, pNumOfClass, TRUE, "Classification");
+        out = new Linear<DTYPE>(out, 512, pNumOfClass, FALSE, "Classification");
+        out = new BatchNormalizeLayer < DTYPE > (out, FALSE, "BN0");
 
         this->AnalyzeGraph(out);
 
