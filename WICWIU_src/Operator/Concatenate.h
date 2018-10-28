@@ -9,7 +9,7 @@ private:
     int m_noOperator;
 
 public:
-    ConcatenateChannelWise(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1) : Operator<DTYPE>(pInput0, pInput1) {
+    ConcatenateChannelWise(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME") : Operator<DTYPE>(pInput0, pInput1, pName) {
         #ifdef __DEBUG__
         std::cout << "ConcatenateChannelWise::ConcatenateChannelWise(Operator *)" << '\n';
         #endif  // __DEBUG__
