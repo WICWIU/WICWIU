@@ -127,6 +127,18 @@ template<typename DTYPE> int LongArray<DTYPE>::MemcpyCPU2GPU() {
             checkCudaErrors(cudaMemcpy(m_aaDevLongArray[i], m_aaHostLongArray[i], (m_CapacityPerTime * sizeof(DTYPE)), cudaMemcpyHostToDevice));
         }
     }
+
+    // delete CPU memory
+    if (m_aaHostLongArray) {
+        for (int i = 0; i < m_TimeSize; i++) {
+            if (m_aaHostLongArray[i]) {
+                delete[] m_aaHostLongArray[i];
+                m_aaHostLongArray[i] = NULL;
+            }
+        }
+        delete[] m_aaHostLongArray;
+        m_aaHostLongArray = NULL;
+    }
     return TRUE;
 }
 
@@ -134,6 +146,12 @@ template<typename DTYPE> int LongArray<DTYPE>::MemcpyGPU2CPU() {
     # if __DEBUG__
     std::cout << "LongArray<DTYPE>::MemcpyGPU2CPU()" << '\n';
     # endif // __DEBUG__
+
+    m_aaHostLongArray = new DTYPE *[m_TimeSize];
+
+    for (int i = 0; i < m_TimeSize; i++) {
+        m_aaHostLongArray[i] = new DTYPE[m_CapacityPerTime];
+    }
 
     if (m_aaDevLongArray != NULL) {
         for (int i = 0; i < m_TimeSize; i++) {
@@ -365,6 +383,7 @@ template<typename DTYPE> int LongArray<DTYPE>::SetDeviceGPU(unsigned int idOfDev
         this->AllocOnGPU(idOfDevice);
     }
     this->MemcpyCPU2GPU();
+
     return TRUE;
 }
 
