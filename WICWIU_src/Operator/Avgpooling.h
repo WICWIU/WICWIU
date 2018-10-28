@@ -13,6 +13,17 @@ private:
 
     int m_divisor;
 
+#ifdef __CUDNN__
+    cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
+    cudnnPoolingDescriptor_t m_aPoolingDesc;
+    DTYPE *m_pDevInput, *m_pDevOutput, *m_pDevInputDelta, *m_pDevDelta;
+    // DTYPE *m_aHostInput, *m_aHostOutput, *m_aHostInputDelta, *m_aHostDelta;
+
+    float m_alpha;
+    float m_beta;
+    double m_coef;
+#endif  // __CUDNN__
+
 public:
     GlobalAvaragePooling2D(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
@@ -39,6 +50,34 @@ public:
 
         return TRUE;
     }
+
+#ifdef __CUDNN__
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
+        Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
+        Tensor<DTYPE> *result = this->GetResult();
+        Shape *shapeOfResult  = result->GetShape();
+
+        int batchsize   = (*shapeOfResult)[1];
+        int channelsize = (*shapeOfResult)[2];  // == shapeOfWeight[1]
+        int rowsize     = (*shapeOfResult)[3];
+        int colsize     = (*shapeOfResult)[4];
+
+        m_alpha = 1.f;
+        m_beta  = 0.f;
+
+        checkCUDNN(cudnnCreatePoolingDescriptor(&m_aPoolingDesc));
+
+        checkCUDNN(cudnnSetPooling2dDescriptor(m_aPoolingDesc, CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING, CUDNN_PROPAGATE_NAN,
+                                               m_rowsize, m_colsize,  // mask
+                                               0, 0, // padding
+                                               m_rowsize, m_colsize // stride
+                                             ));
+
+        checkCUDNN(cudnnGetPooling2dForwardOutputDim(m_aPoolingDesc, input->GetDescriptor(),
+                                                     &batchsize, &channelsize, &rowsize, &colsize));
+    }
+
+#endif  // if __CUDNN__
 
     int ForwardPropagate(int pTime = 0) {
         Container<Operator<DTYPE> *> *input_contatiner = this->GetInputContainer();
@@ -96,18 +135,52 @@ public:
     }
 
 #ifdef __CUDNN__
-    int ForwardPropagateOnGPU(int pTime) {
-        this->ForwardPropagate(pTime);
-        return TRUE;
-    }
+      int ForwardPropagateOnGPU(int pTime = 0) {
+          Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
+          Tensor<DTYPE> *result = this->GetResult();
 
-    int BackPropagateOnGPU(int pTime) {
-        this->BackPropagate(pTime);
+          m_pDevInput         = input->GetGPUData(pTime);
+          m_aInputTensorDesc  = input->GetDescriptor();
+          m_pDevOutput        = result->GetGPUData(pTime);
+          m_aOutputTensorDesc = result->GetDescriptor();
 
-        return TRUE;
-    }
+          checkCUDNN(cudnnPoolingForward(this->GetCudnnHandle(), m_aPoolingDesc,
+                                        &m_alpha, m_aInputTensorDesc, m_pDevInput,
+                                        &m_beta, m_aOutputTensorDesc, m_pDevOutput));
 
-#endif  // __CUDNN__
+
+          checkCudaErrors(cudaDeviceSynchronize());
+          // this->ForwardPropagate(pTime);
+          return TRUE;
+      }
+
+      int BackPropagateOnGPU(int pTime = 0) {
+          Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
+          Tensor<DTYPE> *this_delta  = this->GetDelta();
+          Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
+          Tensor<DTYPE> *result      = this->GetResult();
+
+          m_pDevInput         = input->GetGPUData(pTime);
+          m_aInputTensorDesc  = input->GetDescriptor();
+          m_pDevOutput        = result->GetGPUData(pTime);
+          m_aOutputTensorDesc = result->GetDescriptor();
+          m_pDevDelta         = this_delta->GetGPUData(pTime);
+          m_aDeltaDesc        = this_delta->GetDescriptor();
+          m_pDevInputDelta    = input_delta->GetGPUData(pTime);
+          m_aInputDeltaDesc   = input_delta->GetDescriptor();
+
+          checkCUDNN(cudnnPoolingBackward(this->GetCudnnHandle(), m_aPoolingDesc,
+                                          &m_alpha, m_aOutputTensorDesc, m_pDevOutput,
+                                          m_aDeltaDesc, m_pDevDelta, m_aInputTensorDesc, m_pDevInput,
+                                          &m_alpha, m_aInputDeltaDesc, m_pDevInputDelta));
+
+
+          checkCudaErrors(cudaDeviceSynchronize());
+          // this->BackPropagate(pTime);
+          return TRUE;
+      }
+
+#endif  // if __CUDNN__
 };
 //
 #endif  // __AVGPOOLING__
