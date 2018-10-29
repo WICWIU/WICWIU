@@ -149,7 +149,7 @@ public:
                                         &m_beta, m_aOutputTensorDesc, m_pDevOutput));
 
 
-          checkCudaErrors(cudaDeviceSynchronize());
+          // checkCudaErrors(cudaDeviceSynchronize());
           // this->ForwardPropagate(pTime);
           return TRUE;
       }
@@ -175,7 +175,7 @@ public:
                                           &m_alpha, m_aInputDeltaDesc, m_pDevInputDelta));
 
 
-          checkCudaErrors(cudaDeviceSynchronize());
+          // checkCudaErrors(cudaDeviceSynchronize());
           // this->BackPropagate(pTime);
           return TRUE;
       }
@@ -287,7 +287,7 @@ public:
         if (m_aPoolingDesc) checkCUDNN(cudnnDestroyPoolingDescriptor(m_aPoolingDesc));
         m_aPoolingDesc = NULL;
 
-        checkCudaErrors(cudaThreadSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
 #endif  // if __CUDNN__
     }
@@ -319,7 +319,7 @@ public:
                                        &m_beta, m_aOutputTensorDesc, m_pDevOutput));
 
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
         return TRUE;
     }
 
@@ -344,7 +344,7 @@ public:
                                         &m_alpha, m_aInputDeltaDesc, m_pDevInputDelta));
 
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
         return TRUE;
     }
 

@@ -114,7 +114,7 @@ public:
         if (actDesc) checkCUDNN(cudnnDestroyActivationDescriptor(actDesc));
         actDesc = NULL;
 
-        checkCudaErrors(cudaThreadSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 #endif  // if __CUDNN__
     }
 
@@ -197,7 +197,7 @@ public:
                                           m_aInputTensorDesc, m_pDevInput, &m_beta,
                                           m_aOutputTensorDesc, m_pDevOutput));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
         return TRUE;
     }
 
@@ -218,7 +218,7 @@ public:
                                            m_aInputTensorDesc, m_pDevInput, &m_alpha,
                                            m_aInputTensorDesc, m_pDevInputDelta));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }

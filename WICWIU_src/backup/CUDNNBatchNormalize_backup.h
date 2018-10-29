@@ -137,7 +137,7 @@ public:
             default:
                 break;
         }
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
         // checkCudaErrors(cudaFree(CUDNNX));
         // checkCudaErrors(cudaFree(CUDNNBnScale));
@@ -224,7 +224,7 @@ public:
                        NULL,
                        NULL)
                    );
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
         // checkCudaErrors(cudaFree(CUDNNX));
         // checkCudaErrors(cudaFree(CUDNNBnScale));

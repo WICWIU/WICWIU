@@ -229,7 +229,7 @@ public:
                 break;
         }
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
 
         return TRUE;
@@ -255,7 +255,7 @@ public:
                        m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnScaleDiff, CUDNNBnBiasDiff,
                        m_CUDNNEpsilon, CUDNNCachedMean, CUDNNCachedInvVariance  /* CUDNNCachedMean, CUDNNCachedInvVariance*/));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }

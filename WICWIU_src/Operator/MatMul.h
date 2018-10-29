@@ -171,7 +171,7 @@ public:
             }
         }
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
     }
 
 #endif  // if __CUDNN__
@@ -213,7 +213,7 @@ public:
             checkCudaErrors(cudaFree(m_filterDevWorkSpace));
         }
 
-        checkCudaErrors(cudaThreadSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
 #endif  // if __CUDNN__
     }
@@ -318,7 +318,7 @@ public:
         checkCUDNN(cudnnConvolutionForward(this->GetCudnnHandle(), &m_alpha, inputTensorDesc, m_pDevInput, filterDesc, m_pDevFilter, convDesc,
                                            m_algo, m_devWorkSpace, m_sizeInBytes, &m_beta, outputTensorDesc, m_pDevOutput));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }
@@ -342,7 +342,7 @@ public:
         checkCUDNN(cudnnConvolutionBackwardFilter(this->GetCudnnHandle(), &m_alpha, inputTensorDesc, m_pDevInput, deltaDesc, m_pDevDelta, convDesc,
                                                   m_filterAlgo, m_filterDevWorkSpace, m_filterSizeInBytes, &m_alpha, filterDesc, m_pDevFilterDelta));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
         return TRUE;
     }
 

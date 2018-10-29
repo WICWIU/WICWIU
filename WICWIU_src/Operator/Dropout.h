@@ -27,7 +27,7 @@ public:
         std::cout << "Dropout::Dropout(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
     }
-    
+
 
     Dropout(Operator<DTYPE> *pInput, float pDroprate, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
@@ -126,7 +126,7 @@ public:
         m_pReserveSpace = NULL;
 
 
-        checkCudaErrors(cudaThreadSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 #endif  // if __CUDNN__
     }
 
@@ -288,7 +288,7 @@ int ForwardPropagate(int pTime = 0) {
                         m_pReserveSpace,
                         m_spaceSizeInBytes));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }

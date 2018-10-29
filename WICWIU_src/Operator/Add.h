@@ -88,7 +88,7 @@ public:
         checkCUDNN(cudnnSetTensor4dDescriptor(deltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
                                               m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
     }
 
 #endif  // if __CUDNN__
@@ -114,7 +114,7 @@ public:
         if (deltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
         deltaDesc = NULL;
 
-        checkCudaErrors(cudaThreadSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 #endif  // if __CUDNN__
     }
 
@@ -314,7 +314,7 @@ public:
         checkCUDNN(cudnnSetTensor4dDescriptor(deltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
                                               m_batchsize, m_colsize, 1, 1));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
     }
 
 #endif  // if __CUDNN__
@@ -340,7 +340,7 @@ public:
         if (deltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
         deltaDesc = NULL;
 
-        checkCudaErrors(cudaThreadSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 #endif  // if __CUDNN__
     }
 
@@ -541,7 +541,7 @@ public:
         checkCUDNN(cudnnSetTensor4dDescriptor(deltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
                                               m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
     }
 
     #endif  // if __CUDNN__
@@ -567,7 +567,7 @@ public:
         if (deltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(deltaDesc));
         deltaDesc = NULL;
 
-        checkCudaErrors(cudaThreadSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
     #endif  // if __CUDNN__
     }
 

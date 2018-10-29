@@ -71,8 +71,8 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::AllocOnGPU() {
 }
 
 template<typename DTYPE> void NeuralNetwork<DTYPE>::DeleteOnGPU() {
-    // checkCudaErrors(cudaThreadSynchronize());
-    // checkCudaErrors(cudaDeviceSynchronize());
+    // // checkCudaErrors(cudaDeviceSynchronize());
+    // // checkCudaErrors(cudaDeviceSynchronize());
     if (m_cudnnHandle) checkCUDNN(cudnnDestroy(m_cudnnHandle));
 }
 
