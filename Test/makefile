@@ -2,7 +2,7 @@
 
 CFLAGS = -O2 -std=c++11
 ENABLE_CUDNN = -D__CUDNN__
-#DFLAGS = -g -D__DEBUG__
+DFLAGS = -g -D__DEBUG__
 
 LFLAGS = -lcudart -lcudnn -lpthread -ljpeg -lturbojpeg
 
@@ -35,8 +35,8 @@ all: main
 #main: $(WICWIU_OBJS) main.o
 #	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) main.o
 
-main: ConcatenateOperatorTest.o $(WICWIU_LIB)
-	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) ConcatenateOperatorTest.o
+main: AveragePoolingOperatorTest.o $(WICWIU_LIB)
+	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) AveragePoolingOperatorTest.o
 
 $(WICWIU_LIB): $(WICWIU_SRC)
 	make -C ../..

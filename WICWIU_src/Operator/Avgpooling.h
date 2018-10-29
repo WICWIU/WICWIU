@@ -257,7 +257,6 @@ public:
 #ifdef __CUDNN__
     void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Tensor<DTYPE> *input = this->GetInput()[0]->GetResult();
-        Shape *shapeOfInput  = input->GetShape();
 
         Tensor<DTYPE> *result = this->GetResult();
         Shape *shapeOfResult  = result->GetShape();
@@ -272,11 +271,13 @@ public:
 
         checkCUDNN(cudnnCreatePoolingDescriptor(&m_aPoolingDesc));
 
+
         checkCUDNN(cudnnSetPooling2dDescriptor(m_aPoolingDesc, CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING, CUDNN_PROPAGATE_NAN,
                                                m_mask[0], m_mask[1], m_padding[0], m_padding[1], m_stride[0], m_stride[1]));
 
-        checkCUDNN(cudnnGetPooling2dForwardOutputDim(m_aPoolingDesc, m_aInputTensorDesc,
+        checkCUDNN(cudnnGetPooling2dForwardOutputDim(m_aPoolingDesc, input->GetDescriptor(),
                                                      &batchsize, &channelsize, &rowsize, &colsize));
+                                                     // std::cout << "/* cudnnGetPooling2dForwardOutputDim */" << '\n';
     }
 
 #endif  // if __CUDNN__
