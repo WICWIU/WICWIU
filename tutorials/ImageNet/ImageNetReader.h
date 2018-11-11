@@ -25,7 +25,7 @@
 #define LEGNTH_OF_WIDTH_AND_HEIGHT    224
 #define CAPACITY_OF_PLANE             50176
 #define CAPACITY_OF_IMAGE             150528
-#define NUMBER_OF_THREAD              5
+#define NUMBER_OF_THREAD             8
 #define LENGTH_224                    224
 #define LENGTH_256                    256
 
@@ -365,7 +365,7 @@ public:
             std::cout << "count : " << count << '\n';
             m_numOfTrainImage = count;
 
-            for (int i = 1; i < m_numOfTrainImage; ++i) m_shuffledListForAll.push_back(i);
+            for (int i = 0; i < m_numOfTrainImage; ++i) m_shuffledListForAll.push_back(i);
             m_aImage = new string[m_numOfTrainImage];
             m_aLable = new int[m_numOfTrainImage];
 
@@ -508,9 +508,14 @@ public:
         int classNum   = 0; // random class
         int imgNum     = 0;   // random image of above class
         string imgName = "\0";
+        int threshold = 0;
+        int index = 0;
 
         Tensor<DTYPE> *preprocessedImages = NULL;
         Tensor<DTYPE> *preprocessedLabels = NULL;
+
+        std::cout << "m_numOfTrainImage : " << m_numOfTrainImage << '\n';
+        std::cout << "m_shuffledListForAll.size() : " << m_shuffledListForAll.size() << '\n';
 
         srand(unsigned(time(0)));
 
@@ -528,10 +533,10 @@ public:
             pthread_create(&setOfThreadForPushData2Buffer, NULL, &ImageNetDataReader::ThreadFuncForPushData2Buffer, (void *)this);
 
             do {
-                if (((m_recallnum + 1) * m_batchSize) >= m_numOfTrainImage) {
-                    this->ShuffleImageNum();
-                    m_recallnum = 0;
-                }
+                // if (((m_recallnum + 1) * m_batchSize) >= m_numOfTrainImage) {
+                //     this->ShuffleImageNum();
+                //     m_recallnum = 0;
+                // }
 
                 if (m_useRandomCrop) {
                     FillshuffledListForCrop();
@@ -556,7 +561,16 @@ public:
                 // std::cout << "m_recallnum : " << m_recallnum << '\n';
 
                 for (int i = 0; i < m_batchSize; i++) {
-                    imgNum = m_shuffledListForAll[i + m_recallnum * m_batchSize] % m_numOfTrainImage;
+                    index = i + m_recallnum * m_batchSize - threshold;
+                    if(index >= m_numOfTrainImage) {
+                        std::cout << "\nindex : " << index << '\n';
+                        threshold = i;
+                        this->ShuffleImageNum();
+                        m_recallnum = 0;
+                        index = i + m_recallnum * m_batchSize - threshold;
+                    }
+                    imgNum = m_shuffledListForAll[index];
+
                     // classNum = m_shuffledList[i + m_recallnum * m_batchSize];
                     // std::cout << classNum << ' ';
                     // std::cout << i + m_recallnum * m_batchSize << ' ';
@@ -813,6 +827,7 @@ public:
         // std::cout << classNum << '\n';
 
         string imgName = m_aImage[imgNum];
+        // string imgName = "n04275548/n04275548_7127.JPEG";
         // std::cout << "imgName : " << imgName << '\n';
 
         // create file address
@@ -849,16 +864,35 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        if ((width < LENGTH_256) || (height < LENGTH_256)) {
+        // if ((width < LENGTH_256) || (height < LENGTH_256)) {
+        //     int newHeight = 0, newWidth = 0;
+        //
+        //     if (width < height) {
+        //         newHeight     = height * (float)LENGTH_256 / width;
+        //         newWidth      = LENGTH_256;
+        //         imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        //     } else {
+        //         newHeight     = LENGTH_256;
+        //         newWidth      = width * (float)LENGTH_256 / height;
+        //         imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        //     }
+        //     Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
+        //
+        //     width  = newWidth;
+        //     height = newHeight;
+        // }
+
+        // printf("width %d height %d\n", width, height );
+        if ((width < LENGTH_224) || (height < LENGTH_224)) {
             int newHeight = 0, newWidth = 0;
 
             if (width < height) {
-                newHeight     = height * (float)LENGTH_256 / width;
-                newWidth      = LENGTH_256;
+                newHeight     = height * (float)LENGTH_224 / width;
+                newWidth      = LENGTH_224;
                 imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
             } else {
-                newHeight     = LENGTH_256;
-                newWidth      = width * (float)LENGTH_256 / height;
+                newHeight     = LENGTH_224;
+                newWidth      = width * (float)LENGTH_224 / height;
                 imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
             }
             Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
@@ -867,16 +901,21 @@ public:
             height = newHeight;
         }
 
+        // printf("width %d height %d\n", width, height );
+
         // convert image to tensor
         //// if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
         // if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
-        xOfImage = random_generator(width - LENGTH_224);
+        if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
+        else xOfImage = 0;
 
         // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
 
         //// if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
         // if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
-        yOfImage = random_generator(height - LENGTH_224);
+        if (height != LENGTH_224)  yOfImage = random_generator(height - LENGTH_224);
+        else yOfImage = 0;
+        // printf("xOfImage %d yOfImage %d\n", xOfImage, yOfImage );
 
         // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
 
@@ -1072,26 +1111,70 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        if (width < height) {
-            newHeight     = height * (float)LENGTH_224 / width;
-            newWidth      = LENGTH_224;
-            imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-        } else {
-            newHeight     = LENGTH_224;
-            newWidth      = width * (float)LENGTH_224 / height;
-            imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        // if (width < height) {
+        //     newHeight     = height * (float)LENGTH_224 / width;
+        //     newWidth      = LENGTH_224;
+        //     imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        // } else {
+        //     newHeight     = LENGTH_224;
+        //     newWidth      = width * (float)LENGTH_224 / height;
+        //     imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        // }
+        // Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
+        // height = newHeight;
+        // width  = newWidth;
+
+        //
+        // // convert image to tensor
+        // // if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
+        // xOfImage = (width - LENGTH_224) / 2;
+        //
+        // // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
+        //
+        // // if (height != LENGTH_224) yOfImage = random_generator(height - LENGTH_224);
+        // yOfImage = (height - LENGTH_224) / 2;
+        //
+        // // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
+        //
+        // // std::cout << temp->GetShape() << '\n';
+        //
+        // // should be modularized
+        // for (ro = 0; ro < LENGTH_224; ro++) {
+        //     for (co = 0; co < LENGTH_224; co++) {
+        //         for (ch = 0; ch < colorDim; ch++) {
+        //             (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
+        //         }
+        //     }
+        // }
+        //
+
+        if ((width < LENGTH_256) || (height < LENGTH_256)) {
+            int newHeight = 0, newWidth = 0;
+
+            if (width < height) {
+                newHeight     = height * (float)LENGTH_256 / width;
+                newWidth      = LENGTH_256;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            } else {
+                newHeight     = LENGTH_256;
+                newWidth      = width * (float)LENGTH_256 / height;
+                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+            }
+            Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
+
+            width  = newWidth;
+            height = newHeight;
         }
-        Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
-        height = newHeight;
-        width  = newWidth;
 
         // convert image to tensor
-        // if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
+        //// if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
+        // if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
         xOfImage = (width - LENGTH_224) / 2;
 
         // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
 
-        // if (height != LENGTH_224) yOfImage = random_generator(height - LENGTH_224);
+        //// if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
+        // if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
         yOfImage = (height - LENGTH_224) / 2;
 
         // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
@@ -1102,7 +1185,8 @@ public:
         for (ro = 0; ro < LENGTH_224; ro++) {
             for (co = 0; co < LENGTH_224; co++) {
                 for (ch = 0; ch < colorDim; ch++) {
-                    (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
+                    if (imgReshapeBuf == NULL) (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
+                    else (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
                 }
             }
         }

@@ -1,6 +1,6 @@
 .SUFFIXES = .cpp .o
 
-CFLAGS = -O2 -std=c++11
+CFLAGS = -O2 -std=c++11 -g
 ENABLE_CUDNN = -D__CUDNN__
 #DFLAGS = -g -D__DEBUG__
 
