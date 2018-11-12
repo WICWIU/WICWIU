@@ -1,4 +1,5 @@
 #include "net/my_Resnet.h"
+#include "net/my_Densenet.hpp"
 #include "ImageNetReader.h"
 #include <time.h>
 #include <ctime>
@@ -7,10 +8,10 @@
 #define NUMBER_OF_CLASS               1000
 #define BATCH                         100
 #define EPOCH                         1000
-#define LOOP_FOR_TRAIN                (1300000 / BATCH)
+#define LOOP_FOR_TRAIN                (1281144 / BATCH)
 #define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
 #define LOOP_FOR_TEST                 (50000 / BATCH)
-#define GPUID                         0
+#define GPUID                         1
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    30
@@ -22,25 +23,28 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[]      = "params_38_revise";
-    char filename_info[] = "params_38_revise_info";
+    char filename[]      = "params_201811121700";
+    char filename_info[] = "params_201811121700_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 100, "label");
 
     // ======================= Select net ===================
+    // NeuralNetwork<float> *net = Resnet10<float>(x, label, NUMBER_OF_CLASS);
     NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = DenseNet18<float>(x, label, NUMBER_OF_CLASS);
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
-    train_data_reader->UseRandomCrop(10);
+    // train_data_reader->UseRandomCrop(28);
     train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
-    train_data_reader->UseRandomVerticalFlip();
+    // train_data_reader->UseRandomVerticalFlip();
 
-    ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 50, FALSE);
+    ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 25, FALSE);
     test_data_reader->UseNormalization(TRUE, mean, stddev);
 
     train_data_reader->StartProduce();
@@ -56,16 +60,16 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    // std::cout << "Loading..." << '\n';
-    // FILE *fp = fopen(filename, "rb");
-    // net->Load(fp);
-    // fclose(fp);
-    //
-    // FILE *fp_info = fopen(filename_info, "rb");
-    // fread(&best_acc, sizeof(float), 1, fp_info);
-    // fread(&epoch,    sizeof(int),   1, fp_info);
-    // fclose(fp_info);
-    // std::cout << "Done!" << '\n';
+    std::cout << "Loading..." << '\n';
+    FILE *fp = fopen(filename, "rb");
+    net->Load(fp);
+    fclose(fp);
+
+    FILE *fp_info = fopen(filename_info, "rb");
+    fread(&best_acc, sizeof(float), 1, fp_info);
+    fread(&epoch,    sizeof(int),   1, fp_info);
+    fclose(fp_info);
+    std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
     std::cout << "filename_info : " << filename_info << '\n';
@@ -77,6 +81,8 @@ int main(int argc, char const *argv[]) {
         net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / 30)));
         std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / 30)) << '\n';
     }
+
+    // net->GetOptimizer()->SetLearningRate(0.00001);
 
     for (int i = epoch + 1; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';

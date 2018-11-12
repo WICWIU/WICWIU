@@ -562,8 +562,9 @@ public:
 
                 for (int i = 0; i < m_batchSize; i++) {
                     index = i + m_recallnum * m_batchSize - threshold;
-                    if(index >= m_numOfTrainImage) {
-                        std::cout << "\nindex : " << index << '\n';
+                    // std::cout << "\nindex : " << index << '\n';
+                    if(index >= m_shuffledListForAll.size()) {
+                        // std::cout << "\nindex : " << index << '\n';
                         threshold = i;
                         this->ShuffleImageNum();
                         m_recallnum = 0;
@@ -588,6 +589,7 @@ public:
 
                     sem_post(&m_mutexForSelectedDataInformation);
                     sem_post(&m_fullForSelectedDataInformation);
+                    // std::cout << "\nindex : " << index << '\n';
                 }
 
                 // std::cout << "test" << '\n';
@@ -827,7 +829,7 @@ public:
         // std::cout << classNum << '\n';
 
         string imgName = m_aImage[imgNum];
-        // string imgName = "n04275548/n04275548_7127.JPEG";
+        // string imgName = "n02865351/n02865351_2336.JPEG";
         // std::cout << "imgName : " << imgName << '\n';
 
         // create file address
