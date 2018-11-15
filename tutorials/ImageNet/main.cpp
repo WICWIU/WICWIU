@@ -1,4 +1,6 @@
 #include "net/my_Resnet.h"
+// #include "net/my_Resnet_nb.h"
+// #include "net/my_Resnet_ns.h"
 #include "net/my_Densenet.hpp"
 #include "ImageNetReader.h"
 #include <time.h>
@@ -11,10 +13,10 @@
 #define LOOP_FOR_TRAIN                (1281144 / BATCH)
 #define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
 #define LOOP_FOR_TEST                 (50000 / BATCH)
-#define GPUID                         1
+#define GPUID                         2
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
-#define LEARNING_RATE_DECAY_TIMING    30
+#define LEARNING_RATE_DECAY_TIMING    20
 
 int main(int argc, char const *argv[]) {
     time_t startTime;
@@ -23,8 +25,8 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[]      = "params_201811121700";
-    char filename_info[] = "params_201811121700_info";
+    char filename[]      = "params_40_revice";
+    char filename_info[] = "params_40_revice_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
@@ -32,6 +34,8 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Select net ===================
     // NeuralNetwork<float> *net = Resnet10<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = Resnet10_ns<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = Resnet10_nb<float>(x, label, NUMBER_OF_CLASS);
     NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
     // NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
     // NeuralNetwork<float> *net = DenseNet18<float>(x, label, NUMBER_OF_CLASS);
@@ -39,10 +43,10 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
-    // train_data_reader->UseRandomCrop(28);
+    train_data_reader->UseRandomCrop(28);
     train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
-    // train_data_reader->UseRandomVerticalFlip();
+    train_data_reader->UseRandomVerticalFlip();
 
     ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 25, FALSE);
     test_data_reader->UseNormalization(TRUE, mean, stddev);
@@ -78,8 +82,8 @@ int main(int argc, char const *argv[]) {
 
     if (epoch / LEARNING_RATE_DECAY_TIMING) {
         float lr = net->GetOptimizer()->GetLearningRate();
-        net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / 30)));
-        std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / 30)) << '\n';
+        net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / LEARNING_RATE_DECAY_TIMING)));
+        std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / LEARNING_RATE_DECAY_TIMING)) << '\n';
     }
 
     // net->GetOptimizer()->SetLearningRate(0.00001);

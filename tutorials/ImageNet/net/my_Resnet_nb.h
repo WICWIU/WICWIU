@@ -18,18 +18,18 @@ public:
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, pNumInputChannel, pNumOutputChannel, 3, 3, pStride, pStride, 1, FALSE, "BasicBlock_Conv1" + pName);
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1" + pName);
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN1" + pName);
         out = new Relu<DTYPE>(out, "BasicBlock_Relu1" + pName);
 
         // 2
         out = new ConvolutionLayer2D<DTYPE>(out, pNumOutputChannel, pNumOutputChannel, 3, 3, 1, 1, 1, FALSE, "BasicBlock_Conv2" + pName);
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN2" + pName);
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BasicBlock_BN2" + pName);
         // out = new Relu<DTYPE>(out, "BasicBlock_Relu2" + pName);
 
         // ShortCut
         if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel)) {
             remember = new ConvolutionLayer2D<DTYPE>(remember, pNumInputChannel, pNumOutputChannel, 1, 1, pStride, pStride, 0, FALSE, "BasicBlock_Conv3_Shortcut" + pName);
-            remember = new BatchNormalizeLayer<DTYPE>(remember, TRUE, "BasicBlock_BN3_Shortcut" + pName);
+            // remember = new BatchNormalizeLayer<DTYPE>(remember, TRUE, "BasicBlock_BN3_Shortcut" + pName);
             // remember = new Relu<DTYPE>(remember, "BasicBlock_Relu3_Shortcut" + pName);
         }
 
@@ -71,7 +71,7 @@ public:
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, FALSE, "Conv");
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
         out = new Relu<DTYPE>(out, "Relu0");
 
         out = new Maxpooling2D<float>(out, 2, 2, 3, 3, 1, "MaxPool_2");
@@ -128,14 +128,14 @@ public:
     }
 };
 
-template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet10(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
+template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet10_nb(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
     return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 1, 1, 1, 1, pNumOfClass);
 }
 
-template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet18(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
+template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet18_nb(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
     return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 2, 2, 2, 2, pNumOfClass);
 }
 
-template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet34(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
+template<typename DTYPE> NeuralNetwork<DTYPE>* Resnet34_nb(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
     return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 3, 4, 6, 3, pNumOfClass);
 }
