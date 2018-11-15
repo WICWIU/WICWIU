@@ -56,20 +56,20 @@ private:
 #endif  // _CUDNN__
 
 public:
-    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
+    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, Operator<DTYPE> *m_aTotalVariance, Operator<DTYPE> *m_aTotalMean, int pIsChannelwise = TRUE, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__
 
-        Alloc(pInput, pScale, pBias, pIsChannelwise);
+        Alloc(pInput, pScale, pBias, m_aTotalVariance, m_aTotalMean, pIsChannelwise);
     }
 
-    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, float pMomentum = 0.1, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
+    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, Operator<DTYPE> *m_aTotalVariance, Operator<DTYPE> *m_aTotalMean, int pIsChannelwise = TRUE, float pMomentum = 0.1, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__
 
-        Alloc(pInput, pScale, pBias, pIsChannelwise, pMomentum);
+        Alloc(pInput, pScale, pBias, m_aTotalVariance, m_aTotalMean, pIsChannelwise, pMomentum);
     }
 
     ~BatchNormalize() {
@@ -80,7 +80,7 @@ public:
         Delete();
     }
 
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, float pMomentum = 0.1, double pEpsilon = 0.01) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, Operator<DTYPE> *m_aTotalVariance, Operator<DTYPE> *m_aTotalMean, int pIsChannelwise, float pMomentum = 0.1, double pEpsilon = 0.01) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: Alloc( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, double)" << '\n';
 #endif  // __DEBUG__
@@ -92,6 +92,9 @@ public:
         m_pTenDerInput = pInput->GetGradient();
         m_pTenDerScale = pScale->GetGradient();
         m_pTenDerBias  = pBias->GetGradient();
+
+        m_aTenTotalVariance = m_aTotalVariance->GetResult();
+        m_aTenTotalMean = m_aTotalMean->GetResult();
 
         m_inputCapacity = m_pTenInput->GetCapacity();
 
@@ -108,14 +111,14 @@ public:
 
         if (m_isChannelwise) {
             m_batchSummaryCapacity  = m_numChannel;
-            m_aTenTotalMean         = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, 1, 1);
-            m_aTenTotalVariance     = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, 1, 1);
+            // m_aTenTotalMean         = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, 1, 1);
+            // m_aTenTotalVariance     = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, 1, 1);
             m_aTenCachedMean        = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, 1, 1);
             m_aTenCachedInvVariance = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, 1, 1);
         } else {
             m_batchSummaryCapacity  = m_numChannel * m_numInputRow * m_numInputColumn;
-            m_aTenTotalMean         = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, m_numInputRow, m_numInputColumn);
-            m_aTenTotalVariance     = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, m_numInputRow, m_numInputColumn);
+            // m_aTenTotalMean         = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, m_numInputRow, m_numInputColumn);
+            // m_aTenTotalVariance     = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, m_numInputRow, m_numInputColumn);
             m_aTenCachedMean        = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, m_numInputRow, m_numInputColumn);
             m_aTenCachedInvVariance = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, m_numInputRow, m_numInputColumn);
         }
@@ -169,8 +172,8 @@ public:
         checkCUDNN(cudnnDestroyTensorDescriptor(m_CUDNNBatchSummaryDesc));
         m_CUDNNBatchSummaryDesc = NULL;
 
-        delete m_aTenTotalMean;
-        delete m_aTenTotalVariance;
+        // delete m_aTenTotalMean;
+        // delete m_aTenTotalVariance;
         delete m_aTenCachedMean;
         delete m_aTenCachedInvVariance;
 #endif  // if __CUDNN__
