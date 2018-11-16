@@ -27,20 +27,20 @@ public:
             // for He initialization
             pGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumInputChannel, 1, 1, 1), "BatchNormalize_Gamma_" + pName);
             pBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, pNumInputChannel, 1, 1), "BatchNormalize_Beta_" + pName);
-            pTotalGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumInputChannel, 1, 1, 1), "BatchNormalize_TotalGamma_" + pName);
-            pTotalBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, pNumInputChannel, 1, 1), "BatchNormalize_TotalBeta_" + pName);
+            // pTotalGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, pNumInputChannel, 1, 1, 1), "BatchNormalize_TotalGamma_" + pName);
+            // pTotalBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, pNumInputChannel, 1, 1), "BatchNormalize_TotalBeta_" + pName);
         } else {
             int pNumInputCol = (*pInputShape)[4];
             // for He initialization
             pGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumInputCol, 1), "BatchNormalize_Gamma_" + pName);
             pBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, 1, 1, pNumInputCol), "BatchNormalize_Beta_" + pName);
-            pTotalGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumInputCol, 1), "BatchNormalize_TotalGamma_" + pName);
-            pTotalBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, 1, 1, pNumInputCol), "BatchNormalize_TotalBeta_" + pName);
+            // pTotalGamma = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumInputCol, 1), "BatchNormalize_TotalGamma_" + pName);
+            // pTotalBeta  = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(1, 1, 1, 1, pNumInputCol), "BatchNormalize_TotalBeta_" + pName);
         }
         // std::cout << pGamma->GetResult()->GetShape() << '\n';
         // std::cout << pBeta->GetResult()->GetShape() << '\n';
 
-        out = new BatchNormalize<DTYPE>(out, pGamma, pBeta, pTotalGamma, pTotalBeta, pIsChannelwise, "BatchNormalize_BatchNormalize_" + pName);
+        out = new BatchNormalize<DTYPE>(out, pGamma, pBeta, pIsChannelwise, "BatchNormalize_BatchNormalize_" + pName);
 
         this->AnalyzeGraph(out);
 
