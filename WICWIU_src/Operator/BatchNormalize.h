@@ -259,6 +259,10 @@ public:
                        m_CUDNNBatchSummaryDesc, CUDNNBnScale, CUDNNBnScaleDiff, CUDNNBnBiasDiff,
                        m_CUDNNEpsilon, CUDNNCachedMean, CUDNNCachedInvVariance  /* CUDNNCachedMean, CUDNNCachedInvVariance*/));
 
+
+        m_pTenDerScale->Reset(m_CUDNNHandle);
+        m_pTenDerBias->Reset(m_CUDNNHandle);
+
         checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
@@ -271,15 +275,15 @@ public:
 #ifdef __CUDNN__
 
             if (m_momentum == 0) m_CUDNNExponentialAverageFactor = 1.0;
-            m_aTenTotalMean->Reset(m_CUDNNHandle);
-            m_aTenTotalVariance->Reset(m_CUDNNHandle);
+            // m_aTenTotalMean->Reset(m_CUDNNHandle);
+            // m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
         } else if (m_mode == INFERENCE) {
 #ifdef __CUDNN__
 
             if (m_momentum == 0) m_CUDNNExponentialAverageFactor = 1.0;
-            m_aTenTotalMean->Reset(m_CUDNNHandle);
-            m_aTenTotalVariance->Reset(m_CUDNNHandle);
+            // m_aTenTotalMean->Reset(m_CUDNNHandle);
+            // m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
         } else {
             return TRUE;
@@ -296,14 +300,14 @@ public:
         if (m_mode == TRAIN) {
 #ifdef __CUDNN__
             m_CUDNNExponentialAverageFactor = 1.0;
-            m_aTenTotalMean->Reset(m_CUDNNHandle);
-            m_aTenTotalVariance->Reset(m_CUDNNHandle);
+            // m_aTenTotalMean->Reset(m_CUDNNHandle);
+            // m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
         } else if (m_mode == INFERENCE) {
 #ifdef __CUDNN__
             m_CUDNNExponentialAverageFactor = 1.0;
-            m_aTenTotalMean->Reset(m_CUDNNHandle);
-            m_aTenTotalVariance->Reset(m_CUDNNHandle);
+            // m_aTenTotalMean->Reset(m_CUDNNHandle);
+            // m_aTenTotalVariance->Reset(m_CUDNNHandle);
 #endif  // ifdef __CUDNN__
         } else {
             return TRUE;
