@@ -7,6 +7,7 @@ template<typename DTYPE>
 class ConcatenateChannelWise : public Operator<DTYPE>{
 private:
     int m_noOperator;
+    int *m_aAccumulate;
 
 public:
     ConcatenateChannelWise(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME") : Operator<DTYPE>(pInput0, pInput1, pName) {
@@ -27,26 +28,34 @@ public:
         std::cout << "ConcatenateChannelWise::Alloc(Operator *, Operator *)" << '\n';
         #endif  // __DEBUG__
 
-        m_noOperator = noOperator;
+        m_noOperator  = noOperator;
+        m_aAccumulate = new int[noOperator];
 
         va_list ap;
         va_start(ap, noOperator);
 
         Operator<DTYPE> *temp = va_arg(ap, Operator<DTYPE> *);
 
-        int timesize         = temp->GetResult()->GetTimeSize();
-        int batchsize        = temp->GetResult()->GetBatchSize();
-        int totalchannelsize = temp->GetResult()->GetChannelSize();
-        int rowsize          = temp->GetResult()->GetRowSize();
-        int colsize          = temp->GetResult()->GetColSize();
+        int timesize    = temp->GetResult()->GetTimeSize();
+        int batchsize   = temp->GetResult()->GetBatchSize();
+        int channelsize = temp->GetResult()->GetChannelSize();
+        int rowsize     = temp->GetResult()->GetRowSize();
+        int colsize     = temp->GetResult()->GetColSize();
+
+        int totalchannelsize = channelsize;
+        m_aAccumulate[0] = 0;
+        m_aAccumulate[1] = channelsize;
 
         for (int i = 1; i < noOperator; i++) {
             temp = va_arg(ap, Operator<DTYPE> *);
 
             totalchannelsize += temp->GetResult()->GetChannelSize();
+
+            if (i != noOperator - 1) m_aAccumulate[i + 1] = totalchannelsize;
         }
 
         va_end(ap);
+
 
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, totalchannelsize, rowsize, colsize));
 
@@ -69,7 +78,7 @@ public:
 
         int ti = pTime;
 
-        int totalchannelsize = 0;
+        // int totalchannelsize = 0;
 
         for (int opnum = 0; opnum < m_noOperator; opnum++) {
             input         = this->GetInput()[opnum]->GetResult();
@@ -80,14 +89,14 @@ public:
                 for (int ch = 0; ch < channelsize; ch++) {
                     for (int ro = 0; ro < rowsize; ro++) {
                         for (int co = 0; co < colsize; co++) {
-                            (*result)[Index5D(resultTenShape, ti, ba, totalchannelsize + ch, ro, co)]
+                            (*result)[Index5D(resultTenShape, ti, ba, m_aAccumulate[opnum] + ch, ro, co)]
                                 = (*input)[Index5D(inputTenShape, ti, ba, ch, ro, co)];
                         }
                     }
                 }
             }
 
-            totalchannelsize += channelsize;
+            // totalchannelsize += channelsize;
         }
 
 
@@ -108,7 +117,7 @@ public:
 
         int ti = pTime;
 
-        int totalchannelsize = 0;
+        // int totalchannelsize = 0;
 
         for (int opnum = 0; opnum < m_noOperator; opnum++) {
             input_delta   = this->GetInput()[opnum]->GetDelta();
@@ -120,29 +129,22 @@ public:
                     for (int ro = 0; ro < rowsize; ro++) {
                         for (int co = 0; co < colsize; co++) {
                             (*input_delta)[Index5D(inputTenShape, ti, ba, ch, ro, co)]
-                                += (*this_delta)[Index5D(resultTenShape, ti, ba, totalchannelsize + ch, ro, co)];
+                                += (*this_delta)[Index5D(resultTenShape, ti, ba, m_aAccumulate[opnum] + ch, ro, co)];
                         }
                     }
                 }
             }
 
-            totalchannelsize += channelsize;
+            // totalchannelsize += channelsize;
         }
 
         return TRUE;
     }
 
 #ifdef __CUDNN__
-    int ForwardPropagateOnGPU(int pTime) {
-        this->ForwardPropagate(pTime);
-        return TRUE;
-    }
+    int ForwardPropagateOnGPU(int pTime);
 
-    int BackPropagateOnGPU(int pTime) {
-        this->BackPropagate(pTime);
-
-        return TRUE;
-    }
+    int BackPropagateOnGPU(int pTime);
 
 #endif  // __CUDNN__
 };

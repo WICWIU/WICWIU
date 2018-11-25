@@ -233,7 +233,7 @@ public:
                 break;
         }
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
 
         return TRUE;
@@ -263,7 +263,7 @@ public:
         m_pTenDerScale->Reset(m_CUDNNHandle);
         m_pTenDerBias->Reset(m_CUDNNHandle);
 
-        checkCudaErrors(cudaDeviceSynchronize());
+        // checkCudaErrors(cudaDeviceSynchronize());
 
         return TRUE;
     }
