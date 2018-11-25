@@ -11,15 +11,53 @@ int main(int argc, char const *argv[]) {
     std::cout << input1->GetResult()->GetShape() << '\n';
     std::cout << input1->GetResult() << '\n';
 
-    Operator<float> * concat = new ConcatenateChannelWise<float>(input0, input1);
+    Operator<float> *concat = new ConcatenateChannelWise<float>(input0, input1);
+
+  #ifdef __CUDNN__
+    cudnnHandle_t m_cudnnHandle;
+    cudnnCreate(&m_cudnnHandle);
+    input0->SetDeviceGPU(m_cudnnHandle, 0);
+    input1->SetDeviceGPU(m_cudnnHandle, 0);
+    concat->SetDeviceGPU(m_cudnnHandle, 0);
+  #endif  // ifdef __CUDNN__
 
     std::cout << concat->GetResult()->GetShape() << '\n';
     std::cout << concat->GetResult() << '\n';
 
+#ifdef __CUDNN__
+    concat->ForwardPropagateOnGPU();
+#else // ifdef __CUDNN__
     concat->ForwardPropagate();
+#endif  // ifdef __CUDNN__
+
 
     std::cout << concat->GetResult()->GetShape() << '\n';
     std::cout << concat->GetResult() << '\n';
+
+    for(int i = 0; i < 2 * 2 * 4; i++){
+      (*(concat->GetDelta()))[i] = i;
+    }
+
+    std::cout << concat->GetDelta()->GetShape() << '\n';
+    std::cout << concat->GetDelta() << '\n';
+
+    std::cout << input0->GetDelta()->GetShape() << '\n';
+    std::cout << input0->GetDelta() << '\n';
+
+    std::cout << input1->GetDelta()->GetShape() << '\n';
+    std::cout << input1->GetDelta() << '\n';
+
+  #ifdef __CUDNN__
+      concat->BackPropagateOnGPU();
+  #else // ifdef __CUDNN__
+      concat->BackPropagate();
+  #endif  // ifdef __CUDNN__
+
+    std::cout << input0->GetDelta()->GetShape() << '\n';
+    std::cout << input0->GetDelta() << '\n';
+
+    std::cout << input1->GetDelta()->GetShape() << '\n';
+    std::cout << input1->GetDelta() << '\n';
 
     delete input0;
     delete input1;

@@ -35,8 +35,8 @@ all: main
 #main: $(WICWIU_OBJS) main.o
 #	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_OBJS) main.o
 
-main: AveragePoolingOperatorTest.o $(WICWIU_LIB)
-	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) AveragePoolingOperatorTest.o
+main: ConcatenateOperatorTest.o $(WICWIU_LIB)
+	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) ConcatenateOperatorTest.o
 
 $(WICWIU_LIB): $(WICWIU_SRC)
 	make -C ../..
