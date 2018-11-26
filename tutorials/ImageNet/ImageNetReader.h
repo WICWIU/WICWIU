@@ -25,7 +25,7 @@
 #define LEGNTH_OF_WIDTH_AND_HEIGHT    224
 #define CAPACITY_OF_PLANE             50176
 #define CAPACITY_OF_IMAGE             150528
-#define NUMBER_OF_THREAD              8
+#define NUMBER_OF_THREAD              1
 #define LENGTH_224                    224
 #define LENGTH_256                    256
 
@@ -728,7 +728,11 @@ public:
     }
 
     static int random_generator(int upperbound) {
-        return rand() % upperbound;
+        return (upperbound == 0) ? 0 : rand() % upperbound;
+    }
+
+    float rand_FloatRange(float a, float b) {
+        return ((b - a) * ((float)rand() / RAND_MAX)) + a;
     }
 
     void ShuffleClassNum() {
@@ -775,7 +779,12 @@ public:
         // unsigned char * clone;
         int xOfImage = 0, yOfImage = 0;
         // const int lengthLimit        = 224; // lengthLimit
-        const int colorDim           = 3; // channel
+        const int colorDim = 3;  // channel
+        unsigned char *imgCropBuf = NULL;
+        int   crop_co = 0, crop_ro = 0;
+        int   newHeight = 0, newWidth = 0;
+        float scale = 0.F, ratio = 0.F;
+        float target_area            = 0.F;
         unsigned char *imgReshapeBuf = NULL;
 
         string imgName = m_aImage[imgNum];
@@ -808,45 +817,89 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        // printf("width %d height %d\n", width, height );
-        if ((width < LENGTH_224) || (height < LENGTH_224)) {
-            int newHeight = 0, newWidth = 0;
+        // random crop
+        int temporary;
 
-            if (width < height) {
-                newHeight     = height * (float)LENGTH_224 / width;
-                newWidth      = LENGTH_224;
-                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-            } else {
-                newHeight     = LENGTH_224;
-                newWidth      = width * (float)LENGTH_224 / height;
-                imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+        for (int attempt = 0; attempt < 11; attempt++) {
+            scale = rand_FloatRange(0.08, 1.0);
+            ratio = rand_FloatRange(3.F / 4, 4.F / 3);
+
+            target_area = scale * width * height;
+
+            newWidth  = int(round(sqrt(target_area * ratio)));
+            newHeight = int(round(sqrt(target_area / ratio)));
+
+            if (rand() % 2 == 1) {
+                temporary = newWidth;
+                newWidth  = newHeight;
+                newHeight = temporary;
             }
-            Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
 
-            width  = newWidth;
-            height = newHeight;
+            if (attempt != 10) {
+                if ((newWidth <= width) && (newHeight <= height)) {
+                    crop_co = random_generator(width - newWidth);
+                    crop_ro = random_generator(height - newHeight);
+                    break;
+                }
+            } else {
+                if (width < height) newWidth = width;
+                else newWidth = height;
+                crop_co   = random_generator(width - newWidth);
+                crop_ro   = random_generator(height - newWidth);
+                newHeight = newWidth;
+                break;
+            }
+        }
+        // newHeight = height;
+        // newWidth = width;
+        // printf("width %d height %d\n",       width,    height);
+        // printf("newWidth %d newHeight %d\n", newWidth, newHeight);
+
+        imgCropBuf = new unsigned char[colorDim * newHeight * newWidth];
+
+        for (int ro = 0; ro < newHeight; ro++) {
+            for (int co = 0; co < newWidth; co++) {
+                for (ch = 0; ch < colorDim; ch++) {
+                    imgCropBuf[ro * newWidth * colorDim + co * colorDim + ch]
+                        = imgBuf[(crop_ro + ro) * width * colorDim + (crop_co + co) * colorDim + ch];
+                }
+            }
         }
 
-        // convert image to tensor
-        if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
-        else xOfImage = 0;
+        width  = newWidth;
+        height = newHeight;
 
-        if (height != LENGTH_224) yOfImage = random_generator(height - LENGTH_224);
-        else yOfImage = 0;
+        newHeight     = LENGTH_224;
+        newWidth      = LENGTH_224;
+        imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
+
+        Resize(colorDim, height, width, imgCropBuf, newHeight, newWidth, imgReshapeBuf);
+
+        width  = newWidth;
+        height = newHeight;
+
+        // convert image to tensor
+        // if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
+        // else xOfImage = 0;
+        // // xOfImage = 0;
+        //
+        // if (height != LENGTH_224) yOfImage = random_generator(height - LENGTH_224);
+        // else yOfImage = 0;
+        // // yOfImage = 0;
 
         // should be modularized
         for (ro = 0; ro < LENGTH_224; ro++) {
             for (co = 0; co < LENGTH_224; co++) {
                 for (ch = 0; ch < colorDim; ch++) {
-                    if (imgReshapeBuf == NULL) (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
-                    else (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
+                    if (imgReshapeBuf == NULL) (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgCropBuf[ro * width * colorDim + co * colorDim + ch] / 255.0;
+                    else (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[ro * width * colorDim + co * colorDim + ch] / 255.0;
                 }
             }
         }
 
-        if (m_useNormalization) {
-            temp = Normalization(temp);
-        }
+        // if (m_useNormalization) {
+        // temp = Normalization(temp);
+        // }
 
         if (m_useRandomHorizontalFlip) {
             if (m_shuffledListForHorizontalFlip.back()) {
@@ -862,9 +915,12 @@ public:
             m_shuffledListForVerticalFlip.pop_back();
         }
 
-        // ImageNetDataReader::Tensor2Image(temp, FILENAME, colorDim, lengthLimit, lengthLimit);
+        // printf("%s\n", imgName.c_str());
+        // ImageNetDataReader::Tensor2Image(temp, imgName.c_str(), colorDim, LENGTH_224, LENGTH_224);
+        // printf("end\n");
 
         tjFree(imgBuf);
+        delete[] imgCropBuf;
         delete[] imgReshapeBuf;
 
         temp->ReShape(1, 1, 1, 1, colorDim * LENGTH_224 * LENGTH_224);
@@ -1006,9 +1062,13 @@ public:
         tjInstance = NULL;
         delete imgBuf;
 
-        // std::cout << FILENAME << '\n';
+        char temp_name[128];
+        strcpy(temp_name, FILENAME);
+        strtok(temp_name, "/");
+        char *temp_name_re = strtok(NULL, "/");
+        printf("%s\n", temp_name_re);
 
-        if (!(jpegFile = fopen(FILENAME, "wb"))) {
+        if (!(jpegFile = fopen(temp_name_re, "wb"))) {
             printf("file open fail\n");
             exit(-1);
         }
