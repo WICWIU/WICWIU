@@ -6,7 +6,7 @@
 template<typename DTYPE> class DenseNetBlock : public Module<DTYPE>{
 private:
 public:
-    DenseNetBlock(Operator<DTYPE> *pInput, int pNumInputChannel, int pGrowthRate, std::string pName = NULL) : Module<DTYPE>(pName){
+    DenseNetBlock(Operator<DTYPE> *pInput, int pNumInputChannel, int pGrowthRate, std::string pName = NULL) : Module<DTYPE>(pName) {
         Alloc(pInput, pNumInputChannel, pGrowthRate, pName);
     }
 
@@ -40,7 +40,7 @@ public:
 template<typename DTYPE> class Transition : public Module<DTYPE>{
 private:
 public:
-    Transition(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, std::string pName = NULL) : Module<DTYPE>(pName){
+    Transition(Operator<DTYPE> *pInput, int pNumInputChannel, int pNumOutputChannel, std::string pName = NULL) : Module<DTYPE>(pName) {
         Alloc(pInput, pNumInputChannel, pNumOutputChannel, pName);
     }
 
@@ -93,7 +93,7 @@ public:
         // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
 
         // 1
-        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 1, FALSE, "Conv");
+        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2, 2, 3, FALSE, "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
         out = new Relu<DTYPE>(out, "Relu0");
 
@@ -121,15 +121,11 @@ public:
         out                = new Transition<DTYPE>(out, m_numInputChannel, m_numOutputChannel, "Trans4");
         m_numInputChannel  = m_numOutputChannel;
 
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
-        out = new Relu<DTYPE>(out, "Relu1");
-
         out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
 
         out = new ReShape<DTYPE>(out, 1, 1, m_numInputChannel, "ReShape");
 
         out = new Linear<DTYPE>(out, m_numInputChannel, pNumOfClass, TRUE, "Classification");
-        out = new BatchNormalizeLayer<DTYPE>(out, FALSE, "BN0");
 
         this->AnalyzeGraph(out);
 
@@ -140,7 +136,7 @@ public:
         // ======================= Select Optimizer ===================
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.000001, 0.9, 5e-4, MINIMIZE));
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, MINIMIZE));
-        this->SetOptimizer(new AdamOptimizer<float>(this->GetParameter(), 0.001, 0.9, 0.999, 1e-08, 5e-4, MINIMIZE));
+        this->SetOptimizer(new AdamOptimizer<float>(this->GetParameter(), 0.01, 0.9, 0.999, 1e-08, 5e-4, MINIMIZE));
 
         return TRUE;
     }
@@ -163,8 +159,12 @@ public:
     }
 };
 
-template<typename DTYPE> NeuralNetwork<DTYPE>* DenseNet18(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
-    return new DenseNet<DTYPE>(pInput, pLabel, "DenseNetBlock", 2, 2, 2, 2, 12, 0.5, pNumOfClass);
+template<typename DTYPE> NeuralNetwork<DTYPE>* DenseNet121(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
+    return new DenseNet<DTYPE>(pInput, pLabel, "DenseNetBlock", 6, 12, 24, 16, 12, 0.5, pNumOfClass);
+}
+
+template<typename DTYPE> NeuralNetwork<DTYPE>* DenseNetNew(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
+    return new DenseNet<DTYPE>(pInput, pLabel, "DenseNetBlock", 2, 3, 6, 4, 12, 0.5, pNumOfClass);
 }
 
 #endif  // ifndef DENSENET_H_

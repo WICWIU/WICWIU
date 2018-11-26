@@ -1,6 +1,4 @@
 #include "net/my_Resnet.h"
-// #include "net/my_Resnet_nb.h"
-// #include "net/my_Resnet_ns.h"
 #include "net/my_Densenet.hpp"
 #include "ImageNetReader.h"
 #include <time.h>
@@ -8,15 +6,15 @@
 #include <unistd.h>
 
 #define NUMBER_OF_CLASS               1000
-#define BATCH                         100
+#define BATCH                         20
 #define EPOCH                         1000
 #define LOOP_FOR_TRAIN                (1281144 / BATCH)
 #define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
 #define LOOP_FOR_TEST                 (50000 / BATCH)
-#define GPUID                         2
+#define GPUID                         0
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
-#define LEARNING_RATE_DECAY_TIMING    20
+#define LEARNING_RATE_DECAY_TIMING    10
 
 int main(int argc, char const *argv[]) {
     time_t startTime;
@@ -25,30 +23,27 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[]      = "params_40_revice";
-    char filename_info[] = "params_40_revice_info";
+    char filename[]      = "20181126_rn38";
+    char filename_info[] = "20181126_rn38_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
-    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 100, "label");
+    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 1000, "label");
 
     // ======================= Select net ===================
     // NeuralNetwork<float> *net = Resnet10<float>(x, label, NUMBER_OF_CLASS);
-    // NeuralNetwork<float> *net = Resnet10_ns<float>(x, label, NUMBER_OF_CLASS);
-    // NeuralNetwork<float> *net = Resnet10_nb<float>(x, label, NUMBER_OF_CLASS);
-    NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
-    // NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
-    // NeuralNetwork<float> *net = DenseNet18<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
+    NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = DenseNetNew<float>(x, label, NUMBER_OF_CLASS);
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
-    train_data_reader->UseRandomCrop(28);
     train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
     train_data_reader->UseRandomVerticalFlip();
 
-    ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 25, FALSE);
+    ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 50, FALSE);
     test_data_reader->UseNormalization(TRUE, mean, stddev);
 
     train_data_reader->StartProduce();
@@ -64,16 +59,16 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    std::cout << "Loading..." << '\n';
-    FILE *fp = fopen(filename, "rb");
-    net->Load(fp);
-    fclose(fp);
-
-    FILE *fp_info = fopen(filename_info, "rb");
-    fread(&best_acc, sizeof(float), 1, fp_info);
-    fread(&epoch,    sizeof(int),   1, fp_info);
-    fclose(fp_info);
-    std::cout << "Done!" << '\n';
+    // std::cout << "Loading..." << '\n';
+    // FILE *fp = fopen(filename, "rb");
+    // net->Load(fp);
+    // fclose(fp);
+    //
+    // FILE *fp_info = fopen(filename_info, "rb");
+    // fread(&best_acc, sizeof(float), 1, fp_info);
+    // fread(&epoch,    sizeof(int),   1, fp_info);
+    // fclose(fp_info);
+    // std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
     std::cout << "filename_info : " << filename_info << '\n';
@@ -165,6 +160,7 @@ int main(int argc, char const *argv[]) {
         }
         std::cout << '\n';
 
+
         // ======================= Test ======================
         float test_avg_accuracy      = 0.f;
         float test_avg_top5_accuracy = 0.f;
@@ -212,9 +208,6 @@ int main(int argc, char const *argv[]) {
             std::cout << "done" << "\n\n";
         } else std::cout << "\n\n";
     }
-
-    int temp = 0;
-    std::cin >> temp;
 
     train_data_reader->StopProduce();
     test_data_reader->StopProduce();

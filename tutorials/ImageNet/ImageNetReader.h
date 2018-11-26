@@ -25,19 +25,13 @@
 #define LEGNTH_OF_WIDTH_AND_HEIGHT    224
 #define CAPACITY_OF_PLANE             50176
 #define CAPACITY_OF_IMAGE             150528
-#define NUMBER_OF_THREAD             8
+#define NUMBER_OF_THREAD              8
 #define LENGTH_224                    224
 #define LENGTH_256                    256
 
 using namespace std;
 
-// class DataPair {
-// public:
-// int    label     = 0;
-// string imagename = 0;
-// };
-
-template<typename DTYPE> class ImageNetDataReader {
+template < typename DTYPE > class ImageNetDataReader {
 private:
     string m_path             = "../../../../../../mnt/ssd/Data/ImageNet";
     string m_dirOfTrainImage  = "ILSVRC2012_img_train256";
@@ -48,13 +42,13 @@ private:
     // list of Class
     string m_className[NUMBER_OF_CLASS];
     // for shuffle class index
-    vector<int> m_shuffledList;
+    vector < int > m_shuffledList;
 
     // for new algorithm
-    vector<int> m_shuffledListForAll;
+    vector < int > m_shuffledListForAll;
     int m_numOfTrainImage;
     string *m_aImage;
-    int *m_aLable;
+    int    *m_aLable;
 
     // number of img of each class
     int m_aNumOfImageOfClass[NUMBER_OF_CLASS];
@@ -62,19 +56,19 @@ private:
     string **m_aaImagesOfClass;
 
     /*Test image*/
-    int m_numOfTestImage;
+    int  m_numOfTestImage;
     int *m_classNumOfEachImage;
     string *m_listOfTestImage;
 
     // batch Tensor << before concatenate
-    queue<Tensor<DTYPE> *> *m_aaSetOfImage;  // size : batch size
-    queue<Tensor<DTYPE> *> *m_aaSetOfLabel;  // size : batch size
+    queue < Tensor < DTYPE > * > *m_aaSetOfImage;  // size : batch size
+    queue < Tensor < DTYPE > * > *m_aaSetOfLabel;  // size : batch size
 
-    queue<Tensor<DTYPE> *> *m_aaSetOfImageForConcatenate;  // size : batch size
-    queue<Tensor<DTYPE> *> *m_aaSetOfLabelForConcatenate;  // size : batch size
+    queue < Tensor < DTYPE > * > *m_aaSetOfImageForConcatenate;  // size : batch size
+    queue < Tensor < DTYPE > * > *m_aaSetOfLabelForConcatenate;  // size : batch size
 
     // Storage for preprocessed Tensor
-    queue<Tensor<DTYPE> **> *m_aaQForData;  // buffer Size is independently define here
+    queue < Tensor < DTYPE > ** > *m_aaQForData;  // buffer Size is independently define here
 
     // vector<int> m_shuffledListForImgNum;
 
@@ -103,20 +97,20 @@ private:
     // Random_crop
     int m_useRandomCrop;
     int m_padding;
-    vector<int> m_shuffledListForCrop;
+    vector < int > m_shuffledListForCrop;
 
     // Horizontal Flip
     int m_useRandomHorizontalFlip;
-    vector<int> m_shuffledListForHorizontalFlip;
+    vector < int > m_shuffledListForHorizontalFlip;
 
     // Vetical Flip
     int m_useRandomVerticalFlip;
-    vector<int> m_shuffledListForVerticalFlip;
+    vector < int > m_shuffledListForVerticalFlip;
 
     // for multi thread
-    queue<int> m_selectedClassNum;
-    queue<int> m_selectedimgNum;
-    queue<int> m_selectedimgNumForAll;
+    queue < int > m_selectedClassNum;
+    queue < int > m_selectedimgNum;
+    queue < int > m_selectedimgNumForAll;
 
     sem_t m_fullForSelectedDataInformation;
     sem_t m_emptyForSelectedDataInformation;
@@ -134,15 +128,15 @@ private:
 
         m_aaImagesOfClass = new string *[NUMBER_OF_CLASS];
 
-        m_aaSetOfImage = new queue<Tensor<DTYPE> *>();  // Each tensor shows single image
-        m_aaSetOfLabel = new queue<Tensor<DTYPE> *>();
+        m_aaSetOfImage = new queue < Tensor < DTYPE > * > ();  // Each tensor shows single image
+        m_aaSetOfLabel = new queue < Tensor < DTYPE > * > ();
 
         if (m_isTrain) {
-            m_aaSetOfImageForConcatenate = new queue<Tensor<DTYPE> *>();  // Each tensor shows single image
-            m_aaSetOfLabelForConcatenate = new queue<Tensor<DTYPE> *>();
+            m_aaSetOfImageForConcatenate = new queue < Tensor < DTYPE > * > ();  // Each tensor shows single image
+            m_aaSetOfLabelForConcatenate = new queue < Tensor < DTYPE > * > ();
         }
 
-        m_aaQForData = new queue<Tensor<DTYPE> **>();  // Each tensor shows set of image which size is batchSize
+        m_aaQForData = new queue < Tensor < DTYPE > ** > ();  // Each tensor shows set of image which size is batchSize
         return TRUE;
     }
 
@@ -194,7 +188,7 @@ private:
                 int numOfTensor = m_aaQForData->size();
 
                 for (int i = 0; i < numOfTensor; i++) {
-                    Tensor<DTYPE> **temp = m_aaQForData->front();
+                    Tensor < DTYPE > **temp = m_aaQForData->front();
                     m_aaQForData->pop();
                     delete temp[0];
                     delete temp[1];
@@ -275,7 +269,7 @@ public:
                 int numOfTensor = m_aaQForData->size();
 
                 for (int i = 0; i < numOfTensor; i++) {
-                    Tensor<DTYPE> **temp = m_aaQForData->front();
+                    Tensor < DTYPE > **temp = m_aaQForData->front();
                     m_aaQForData->pop();
                     delete temp[0];
                     delete temp[1];
@@ -491,7 +485,7 @@ public:
     }
 
     static void* ThreadFuncForDataPreprocess(void *arg) {
-        ImageNetDataReader<DTYPE> *reader = (ImageNetDataReader<DTYPE> *)arg;
+        ImageNetDataReader < DTYPE > *reader = (ImageNetDataReader < DTYPE > *)arg;
 
         reader->DataPreprocess();
 
@@ -505,14 +499,14 @@ public:
         // semaphore is used
         m_recallnum = 0;
 
-        int classNum   = 0; // random class
-        int imgNum     = 0;   // random image of above class
-        string imgName = "\0";
-        int threshold = 0;
-        int index = 0;
+        int classNum     = 0; // random class
+        int imgNum       = 0; // random image of above class
+        string imgName   = "\0";
+        int    threshold = 0;
+        int    index     = 0;
 
-        Tensor<DTYPE> *preprocessedImages = NULL;
-        Tensor<DTYPE> *preprocessedLabels = NULL;
+        Tensor < DTYPE > *preprocessedImages = NULL;
+        Tensor < DTYPE > *preprocessedLabels = NULL;
 
         std::cout << "m_numOfTrainImage : " << m_numOfTrainImage << '\n';
         std::cout << "m_shuffledListForAll.size() : " << m_shuffledListForAll.size() << '\n';
@@ -533,87 +527,46 @@ public:
             pthread_create(&setOfThreadForPushData2Buffer, NULL, &ImageNetDataReader::ThreadFuncForPushData2Buffer, (void *)this);
 
             do {
-                // if (((m_recallnum + 1) * m_batchSize) >= m_numOfTrainImage) {
-                //     this->ShuffleImageNum();
-                //     m_recallnum = 0;
-                // }
-
                 if (m_useRandomCrop) {
                     FillshuffledListForCrop();
                     // srand(unsigned(time(0)));
-                    random_shuffle(m_shuffledListForCrop.begin(), m_shuffledListForCrop.end(), ImageNetDataReader<DTYPE>::random_generator);
+                    random_shuffle(m_shuffledListForCrop.begin(), m_shuffledListForCrop.end(), ImageNetDataReader < DTYPE > ::random_generator);
                 }
 
                 if (m_useRandomHorizontalFlip) {
                     FillshuffledListForHorizontalFlip();
                     // srand(unsigned(time(0)));
-                    random_shuffle(m_shuffledListForHorizontalFlip.begin(), m_shuffledListForHorizontalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
+                    random_shuffle(m_shuffledListForHorizontalFlip.begin(), m_shuffledListForHorizontalFlip.end(), ImageNetDataReader < DTYPE > ::random_generator);
                 }
 
                 if (m_useRandomVerticalFlip) {
                     FillshuffledListForVerticalFlip();
                     // srand(unsigned(time(0)));
-                    random_shuffle(m_shuffledListForVerticalFlip.begin(), m_shuffledListForVerticalFlip.end(), ImageNetDataReader<DTYPE>::random_generator);
+                    random_shuffle(m_shuffledListForVerticalFlip.begin(), m_shuffledListForVerticalFlip.end(), ImageNetDataReader < DTYPE > ::random_generator);
                 }
-
-                // std::cout << "test" << '\n';
-
-                // std::cout << "m_recallnum : " << m_recallnum << '\n';
 
                 for (int i = 0; i < m_batchSize; i++) {
                     index = i + m_recallnum * m_batchSize - threshold;
+
                     // std::cout << "\nindex : " << index << '\n';
-                    if(index >= m_shuffledListForAll.size()) {
+                    if (index >= m_shuffledListForAll.size()) {
                         // std::cout << "\nindex : " << index << '\n';
                         threshold = i;
                         this->ShuffleImageNum();
                         m_recallnum = 0;
-                        index = i + m_recallnum * m_batchSize - threshold;
+                        index       = i + m_recallnum * m_batchSize - threshold;
                     }
                     imgNum = m_shuffledListForAll[index];
 
-                    // classNum = m_shuffledList[i + m_recallnum * m_batchSize];
-                    // std::cout << classNum << ' ';
-                    // std::cout << i + m_recallnum * m_batchSize << ' ';
-                    // std::cout << classNum << ' ';
-                    // imgNum = rand() % m_aNumOfImageOfClass[classNum];  // random select from range(0, m_aNumOfImageOfClass[classNum])
-                    // std::cout << m_aNumOfImageOfClass[classNum] << " : " << imgNum << '\n';
-                    // m_aaSetOfImage->push(this->Image2Tensor(classNum, imgNum));
-                    // m_aaSetOfLabel->push(this->Label2Tensor(classNum));
                     sem_wait(&m_emptyForSelectedDataInformation);
                     sem_wait(&m_mutexForSelectedDataInformation);
 
-                    // m_selectedClassNum.push(classNum);
-                    // m_selectedimgNum.push(imgNum);
                     m_selectedimgNumForAll.push(imgNum);
 
                     sem_post(&m_mutexForSelectedDataInformation);
                     sem_post(&m_fullForSelectedDataInformation);
                     // std::cout << "\nindex : " << index << '\n';
                 }
-
-                // std::cout << "test" << '\n';
-
-                // sem_wait(&m_mutexForConcatenate);
-                //
-                // preprocessedImages = this->ConcatenateImage(m_aaSetOfImage);
-                // preprocessedLabels = this->ConcatenateLabel(m_aaSetOfLabel);
-                //
-                // sem_wait(&m_empty);
-                // sem_wait(&m_mutex);
-                //
-                // this->AddData2Buffer(preprocessedImages, preprocessedLabels);
-                //
-                // sem_post(&m_mutex);
-                // sem_post(&m_full);
-
-                // int empty_value = 0;
-                // int full_value  = 0;
-                //
-                // sem_getvalue(&m_empty, &empty_value);
-                // sem_getvalue(&m_full,  &full_value);
-                //
-                // printf("full : %d, empty : %d \n", full_value, empty_value);
 
                 m_recallnum++;
             } while (m_work);
@@ -667,7 +620,7 @@ public:
 
     // threadfunction의 모체가 되는 함수
     static void* ThreadFuncForData2Tensor(void *arg) {
-        ImageNetDataReader<DTYPE> *reader = (ImageNetDataReader<DTYPE> *)arg;
+        ImageNetDataReader < DTYPE > *reader = (ImageNetDataReader < DTYPE > *)arg;
 
         reader->Data2Tensor();
 
@@ -683,8 +636,8 @@ public:
         int classNum = 0;  // random class
         int imgNum   = 0;     // random image of above class
 
-        Tensor<DTYPE> *preprocessedImages = NULL;
-        Tensor<DTYPE> *preprocessedLabels = NULL;
+        Tensor < DTYPE > *preprocessedImages = NULL;
+        Tensor < DTYPE > *preprocessedLabels = NULL;
 
         if (m_isTrain) {
             do {
@@ -731,15 +684,15 @@ public:
     }
 
     static void* ThreadFuncForPushData2Buffer(void *arg) {
-        ImageNetDataReader<DTYPE> *reader = (ImageNetDataReader<DTYPE> *)arg;
+        ImageNetDataReader < DTYPE > *reader = (ImageNetDataReader < DTYPE > *)arg;
 
         reader->PushData2Buffer();
         return NULL;
     }
 
     int PushData2Buffer() {
-        Tensor<DTYPE> *preprocessedImages = NULL;
-        Tensor<DTYPE> *preprocessedLabels = NULL;
+        Tensor < DTYPE > *preprocessedImages = NULL;
+        Tensor < DTYPE > *preprocessedLabels = NULL;
 
         do {
             sem_wait(&m_mutexForConcatenate);
@@ -762,8 +715,8 @@ public:
     }
 
     int ChangeImageVectorSpace() {
-        queue<Tensor<DTYPE> *> *tempForImageSpace = m_aaSetOfImage;
-        queue<Tensor<DTYPE> *> *tempForLabelSpace = m_aaSetOfLabel;
+        queue < Tensor < DTYPE > * > *tempForImageSpace = m_aaSetOfImage;
+        queue < Tensor < DTYPE > * > *tempForLabelSpace = m_aaSetOfLabel;
 
         m_aaSetOfImage = m_aaSetOfImageForConcatenate;
         m_aaSetOfLabel = m_aaSetOfLabelForConcatenate;
@@ -780,12 +733,12 @@ public:
 
     void ShuffleClassNum() {
         // srand(unsigned(time(0)));
-        random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader<DTYPE>::random_generator);
+        random_shuffle(m_shuffledList.begin(), m_shuffledList.end(), ImageNetDataReader < DTYPE > ::random_generator);
     }
 
     void ShuffleImageNum() {
         // srand(unsigned(time(0)));
-        random_shuffle(m_shuffledListForAll.begin(), m_shuffledListForAll.end(), ImageNetDataReader<DTYPE>::random_generator);
+        random_shuffle(m_shuffledListForAll.begin(), m_shuffledListForAll.end(), ImageNetDataReader < DTYPE > ::random_generator);
     }
 
     void Resize(int channel, int oldHeight, int oldWidth, unsigned char *oldData, int newHeight, int newWidth, unsigned char *newData) {
@@ -808,7 +761,7 @@ public:
         }
     }
 
-    Tensor<DTYPE>* Image2Tensor(int classNum, int imgNum  /*Address of Image*/) {
+    Tensor < DTYPE > *Image2Tensor(int classNum, int imgNum  /*Address of Image*/) {
         int   width, height;
         int   ch, ro, co;
         char *inFormat, *outFormat;
@@ -825,25 +778,14 @@ public:
         const int colorDim           = 3; // channel
         unsigned char *imgReshapeBuf = NULL;
 
-        // string classDir = m_className[classNum];
-        // std::cout << classNum << '\n';
-
         string imgName = m_aImage[imgNum];
-        // string imgName = "n02865351/n02865351_2336.JPEG";
-        // std::cout << "imgName : " << imgName << '\n';
 
         // create file address
         string filePath = m_path + '/' + m_dirOfTrainImage + '/' + imgName;  // check with printf
-        // std::cout << filePath << '\n';
 
         const char *cstr = filePath.c_str();
 
-        // string _FILENAME     = "temp/" + imgName;
-        // const char *FILENAME = _FILENAME.c_str();
-
-        // std::cout << "filePath : " << filePath << '\n';
-
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, LENGTH_224, LENGTH_224);
+        Tensor < DTYPE > *temp = Tensor < DTYPE > ::Zeros(1, 1, colorDim, LENGTH_224, LENGTH_224);
 
         // Load image (no throw and catch)
         /* Read the JPEG file into memory. */
@@ -866,24 +808,6 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        // if ((width < LENGTH_256) || (height < LENGTH_256)) {
-        //     int newHeight = 0, newWidth = 0;
-        //
-        //     if (width < height) {
-        //         newHeight     = height * (float)LENGTH_256 / width;
-        //         newWidth      = LENGTH_256;
-        //         imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-        //     } else {
-        //         newHeight     = LENGTH_256;
-        //         newWidth      = width * (float)LENGTH_256 / height;
-        //         imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-        //     }
-        //     Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
-        //
-        //     width  = newWidth;
-        //     height = newHeight;
-        // }
-
         // printf("width %d height %d\n", width, height );
         if ((width < LENGTH_224) || (height < LENGTH_224)) {
             int newHeight = 0, newWidth = 0;
@@ -903,25 +827,12 @@ public:
             height = newHeight;
         }
 
-        // printf("width %d height %d\n", width, height );
-
         // convert image to tensor
-        //// if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
-        // if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
         if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
         else xOfImage = 0;
 
-        // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
-
-        //// if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
-        // if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
-        if (height != LENGTH_224)  yOfImage = random_generator(height - LENGTH_224);
+        if (height != LENGTH_224) yOfImage = random_generator(height - LENGTH_224);
         else yOfImage = 0;
-        // printf("xOfImage %d yOfImage %d\n", xOfImage, yOfImage );
-
-        // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
-
-        // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
         for (ro = 0; ro < LENGTH_224; ro++) {
@@ -935,11 +846,6 @@ public:
 
         if (m_useNormalization) {
             temp = Normalization(temp);
-        }
-
-        if (m_useRandomCrop) {
-            temp = Padding(temp);
-            temp = RandomCrop(temp);
         }
 
         if (m_useRandomHorizontalFlip) {
@@ -968,98 +874,7 @@ public:
         return temp;
     }
 
-    // void ResizeWithPadding(int channel, int oldHeight, int oldWidth, int lengthLimit, unsigned char *oldData, unsigned char *newData) {
-    // unsigned char *dest = newData;
-    // int newHeight = 0;
-    // int newWidth = 0;
-    //
-    // if(oldHeight > oldWidth){
-    // newHeight = lengthLimit;
-    // newWidth  = oldWidth * (float)lengthLimit / oldHeight;
-    //
-    // for (int newy = 0; newy < newHeight; newy++) {
-    // int oldy = newy * oldHeight / newHeight;
-    //// if(oldy >= oldHeight)
-    //// oldy = oldHeight - 1;			// for safety
-    // unsigned char *srcLine = oldData + oldy * oldWidth * channel;
-    //
-    //// 0 ~ (lengthLimit - newwidth) / 2
-    // for (int newx = 0; newx < (lengthLimit - newWidth) / 2; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
-    //
-    //// (lengthLimit - newWidth) / 2 ~ (lengthLimit + newWidth) / 2
-    // for (int newx = (lengthLimit - newWidth) / 2; newx < (lengthLimit + newWidth) / 2; newx++) {
-    // int oldx = (newx - (lengthLimit - newWidth) / 2) * oldWidth / newWidth;
-    //// if(oldx >= oldWidth)
-    //// oldx = oldWidth - 1;			// for safety
-    // unsigned char *src = srcLine + oldx * channel;
-    //
-    // for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-    // }
-    //
-    //// (lengthLimit + newWidth) / 2 ~ lengthLimit
-    // for (int newx = (lengthLimit + newWidth) / 2; newx < lengthLimit; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
-    // }
-    // }
-    // else if(oldHeight < oldWidth){
-    // newHeight = oldHeight * (float)lengthLimit / oldWidth;
-    // newWidth  = lengthLimit;
-    //// 0 ~ (lengthLimit - newHeight) / 2
-    // for (int newy = 0; newy < (lengthLimit - newHeight) / 2; newy++) {
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
-    // }
-    //
-    //// (lengthLimit - newHeight) / 2 ~ (lengthLimit + newHeight) / 2
-    // for (int newy = (lengthLimit - newHeight) / 2; newy < (lengthLimit + newHeight) / 2; newy++) {
-    // int oldy = (newy - (lengthLimit - newHeight) / 2) * oldHeight / newHeight;
-    //// if(oldy >= oldHeight)
-    //// oldy = oldHeight - 1;			// for safety
-    // unsigned char *srcLine = oldData + oldy * oldWidth * channel;
-    //
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // int oldx = newx * oldWidth / newWidth;
-    //// if(oldx >= oldWidth)
-    //// oldx = oldWidth - 1;			// for safety
-    // unsigned char *src = srcLine + oldx * channel;
-    //
-    // for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-    // }
-    // }
-    //
-    //// (lengthLimit + newHeight) / 2 ~ lengthLimit
-    // for (int newy = (lengthLimit + newHeight) / 2; newy < lengthLimit; newy++) {
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // for (int c = 0; c < channel; c++) *(dest++) = 0;
-    // }
-    // }
-    // }
-    // else{
-    // newHeight = lengthLimit;
-    // newWidth  = lengthLimit;
-    // for (int newy = 0; newy < newHeight; newy++) {
-    // int oldy = newy * oldHeight / newHeight;
-    //// if(oldy >= oldHeight)
-    //// oldy = oldHeight - 1;			// for safety
-    // unsigned char *srcLine = oldData + oldy * oldWidth * channel;
-    //
-    // for (int newx = 0; newx < newWidth; newx++) {
-    // int oldx = newx * oldWidth / newWidth;
-    //// if(oldx >= oldWidth)
-    //// oldx = oldWidth - 1;			// for safety
-    // unsigned char *src = srcLine + oldx * channel;
-    //
-    // for (int c = 0; c < channel; c++) *(dest++) = *(src++);
-    // }
-    // }
-    // }
-    // }
-
-    Tensor<DTYPE>* Image2Tensor(int classNum, string imgName  /*Address of Image*/) {
+    Tensor < DTYPE > *Image2Tensor(int classNum, string imgName  /*Address of Image*/) {
         int   width, height;
         int   ch, ro, co;
         char *inFormat, *outFormat;
@@ -1090,7 +905,7 @@ public:
 
         // std::cout << "filePath : " << filePath << '\n';
 
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, colorDim, LENGTH_224, LENGTH_224);
+        Tensor < DTYPE > *temp = Tensor < DTYPE > ::Zeros(1, 1, colorDim, LENGTH_224, LENGTH_224);
 
         // Load image (no throw and catch)
         /* Read the JPEG file into memory. */
@@ -1113,43 +928,6 @@ public:
         tjFree(jpegBuf); jpegBuf          = NULL;
         tjDestroy(tjInstance); tjInstance = NULL;
 
-        // if (width < height) {
-        //     newHeight     = height * (float)LENGTH_224 / width;
-        //     newWidth      = LENGTH_224;
-        //     imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-        // } else {
-        //     newHeight     = LENGTH_224;
-        //     newWidth      = width * (float)LENGTH_224 / height;
-        //     imgReshapeBuf = new unsigned char[colorDim * newHeight * newWidth];
-        // }
-        // Resize(colorDim, height, width, imgBuf, newHeight, newWidth, imgReshapeBuf);
-        // height = newHeight;
-        // width  = newWidth;
-
-        //
-        // // convert image to tensor
-        // // if (width != LENGTH_224) xOfImage = random_generator(width - LENGTH_224);
-        // xOfImage = (width - LENGTH_224) / 2;
-        //
-        // // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
-        //
-        // // if (height != LENGTH_224) yOfImage = random_generator(height - LENGTH_224);
-        // yOfImage = (height - LENGTH_224) / 2;
-        //
-        // // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
-        //
-        // // std::cout << temp->GetShape() << '\n';
-        //
-        // // should be modularized
-        // for (ro = 0; ro < LENGTH_224; ro++) {
-        //     for (co = 0; co < LENGTH_224; co++) {
-        //         for (ch = 0; ch < colorDim; ch++) {
-        //             (*temp)[Index5D(temp->GetShape(), 0, 0, ch, ro, co)] = imgReshapeBuf[(yOfImage + ro) * width * colorDim + (xOfImage + co) * colorDim + ch] / 255.0;
-        //         }
-        //     }
-        // }
-        //
-
         if ((width < LENGTH_256) || (height < LENGTH_256)) {
             int newHeight = 0, newWidth = 0;
 
@@ -1169,19 +947,9 @@ public:
         }
 
         // convert image to tensor
-        //// if (width != lengthLimit) xOfImage = random_generator(width - lengthLimit);
-        // if (width != lengthLimit) xOfImage = (width - lengthLimit) / 2;
         xOfImage = (width - LENGTH_224) / 2;
 
-        // printf("width - lengthLimit %d - %d\n", width, lengthLimit);
-
-        //// if (height != lengthLimit) yOfImage = random_generator(height - lengthLimit);
-        // if (height != lengthLimit) yOfImage = (height - lengthLimit) / 2;
         yOfImage = (height - LENGTH_224) / 2;
-
-        // printf("height - lengthLimit %d - %d\n", height, lengthLimit);
-
-        // std::cout << temp->GetShape() << '\n';
 
         // should be modularized
         for (ro = 0; ro < LENGTH_224; ro++) {
@@ -1210,7 +978,7 @@ public:
         return temp;
     }
 
-    void Tensor2Image(Tensor<DTYPE> *temp, const char *FILENAME, int colorDim, int height, int width) {
+    void Tensor2Image(Tensor < DTYPE > *temp, const char *FILENAME, int colorDim, int height, int width) {
         unsigned char *imgBuf   = new unsigned char[colorDim * height * width];
         int pixelFormat         = TJPF_RGB;
         unsigned char *jpegBuf  = NULL;  /* Dynamically allocate the JPEG buffer */
@@ -1252,18 +1020,18 @@ public:
 
     // #endif  // ifdef __TURBOJPEG__
 
-    Tensor<DTYPE>* Label2Tensor(int classNum  /*Address of Label*/) {
-        Tensor<DTYPE> *temp = Tensor<DTYPE>::Zeros(1, 1, 1, 1, NUMBER_OF_CLASS);
-        (*temp)[classNum] = (DTYPE)1;
+    Tensor < DTYPE > *Label2Tensor(int classNum  /*Address of Label*/) {
+        Tensor < DTYPE > *temp = Tensor < DTYPE > ::Zeros(1, 1, 1, 1, NUMBER_OF_CLASS);
+        (*temp)[classNum]      = (DTYPE)1;
         return temp;
     }
 
-    Tensor<DTYPE>* ConcatenateImage(queue<Tensor<DTYPE> *> *setOfImage) {
+    Tensor < DTYPE > *ConcatenateImage(queue < Tensor < DTYPE > * > *setOfImage) {
         // Do not consider efficiency
         int singleImageSize = setOfImage->front()->GetCapacity();
 
-        Tensor<DTYPE> *result      = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, singleImageSize);
-        Tensor<DTYPE> *singleImage = NULL;
+        Tensor < DTYPE > *result      = Tensor < DTYPE > ::Zeros(1, m_batchSize, 1, 1, singleImageSize);
+        Tensor < DTYPE > *singleImage = NULL;
 
         for (int batchNum = 0; batchNum < m_batchSize; batchNum++) {
             singleImage = setOfImage->front();
@@ -1284,10 +1052,10 @@ public:
         return result;
     }
 
-    Tensor<DTYPE>* ConcatenateLabel(queue<Tensor<DTYPE> *> *setOfLabel) {
+    Tensor < DTYPE > *ConcatenateLabel(queue < Tensor < DTYPE > * > *setOfLabel) {
         // Do not consider efficiency
-        Tensor<DTYPE> *result      = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, NUMBER_OF_CLASS);
-        Tensor<DTYPE> *singleLabel = NULL;
+        Tensor < DTYPE > *result      = Tensor < DTYPE > ::Zeros(1, m_batchSize, 1, 1, NUMBER_OF_CLASS);
+        Tensor < DTYPE > *singleLabel = NULL;
 
         for (int batchNum = 0; batchNum < m_batchSize; batchNum++) {
             singleLabel = setOfLabel->front();
@@ -1334,7 +1102,7 @@ public:
         return TRUE;
     }
 
-    Tensor<DTYPE>* Normalization(Tensor<DTYPE> *image) {
+    Tensor < DTYPE > *Normalization(Tensor < DTYPE > *image) {
         int numOfChannel     = NUMBER_OF_CHANNEL;
         int heightOfImg      = LEGNTH_OF_WIDTH_AND_HEIGHT;
         int widthOfImg       = LEGNTH_OF_WIDTH_AND_HEIGHT;
@@ -1392,7 +1160,7 @@ public:
         return TRUE;
     }
 
-    Tensor<DTYPE>* Padding(Tensor<DTYPE> *srcImage) {
+    Tensor < DTYPE > *Padding(Tensor < DTYPE > *srcImage) {
         int numOfChannel     = NUMBER_OF_CHANNEL;
         int heightOfImg      = LEGNTH_OF_WIDTH_AND_HEIGHT;
         int widthOfImg       = LEGNTH_OF_WIDTH_AND_HEIGHT;
@@ -1403,7 +1171,7 @@ public:
         int widthOfTensor     = widthOfImg + (2 * padding);
         int planeSizeOfTensor = heightOfTensor * widthOfTensor;
 
-        Tensor<DTYPE> *padedImg = Tensor<DTYPE>::Zeros(1, 1, numOfChannel, heightOfTensor, widthOfTensor);
+        Tensor < DTYPE > *padedImg = Tensor < DTYPE > ::Zeros(1, 1, numOfChannel, heightOfTensor, widthOfTensor);
 
         int srcIdx = 0;
         int idx    = 0;
@@ -1423,7 +1191,7 @@ public:
         return padedImg;
     }
 
-    Tensor<DTYPE>* RandomCrop(Tensor<DTYPE> *srcImage) {
+    Tensor < DTYPE > *RandomCrop(Tensor < DTYPE > *srcImage) {
         int numOfChannel           = NUMBER_OF_CHANNEL;
         int heightOfSrcImg         = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding);
         int widthOfSrcImg          = LEGNTH_OF_WIDTH_AND_HEIGHT + (2 * m_padding);
@@ -1432,7 +1200,7 @@ public:
         int widthOfImg             = LEGNTH_OF_WIDTH_AND_HEIGHT;
         int imageSizePerChannel    = heightOfImg * widthOfImg;
 
-        Tensor<DTYPE> *cropedImg = Tensor<DTYPE>::Zeros(1, 1, numOfChannel, heightOfImg, widthOfImg);
+        Tensor < DTYPE > *cropedImg = Tensor < DTYPE > ::Zeros(1, 1, numOfChannel, heightOfImg, widthOfImg);
 
         int startPosW = m_shuffledListForCrop.back();
         m_shuffledListForCrop.pop_back();
@@ -1469,7 +1237,7 @@ public:
         return TRUE;
     }
 
-    Tensor<DTYPE>* HorizontalFlip(Tensor<DTYPE> *image) {
+    Tensor < DTYPE > *HorizontalFlip(Tensor < DTYPE > *image) {
         int numOfChannel        = 3;
         int imageSizePerChannel = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
         int rowSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
@@ -1507,7 +1275,7 @@ public:
         return TRUE;
     }
 
-    Tensor<DTYPE>* VerticalFlip(Tensor<DTYPE> *image) {
+    Tensor < DTYPE > *VerticalFlip(Tensor < DTYPE > *image) {
         int numOfChannel        = 3;
         int imageSizePerChannel = LEGNTH_OF_WIDTH_AND_HEIGHT * LEGNTH_OF_WIDTH_AND_HEIGHT;
         int rowSizePerPlane     = LEGNTH_OF_WIDTH_AND_HEIGHT;
@@ -1532,8 +1300,8 @@ public:
         return image;
     }
 
-    int AddData2Buffer(Tensor<DTYPE> *setOfImage, Tensor<DTYPE> *setOfLabel) {
-        Tensor<DTYPE> **result = new Tensor<DTYPE> *[2];
+    int AddData2Buffer(Tensor < DTYPE > *setOfImage, Tensor < DTYPE > *setOfLabel) {
+        Tensor < DTYPE > **result = new Tensor < DTYPE > *[2];
 
         result[0] = setOfImage;
         result[1] = setOfLabel;
@@ -1543,11 +1311,11 @@ public:
         return TRUE;
     }
 
-    Tensor<DTYPE>** GetDataFromBuffer() {
+    Tensor < DTYPE > **GetDataFromBuffer() {
         sem_wait(&m_full);
         sem_wait(&m_mutex);
 
-        Tensor<DTYPE> **result = m_aaQForData->front();
+        Tensor < DTYPE > **result = m_aaQForData->front();
         m_aaQForData->pop();
 
         sem_post(&m_mutex);
