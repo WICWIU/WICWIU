@@ -173,69 +173,7 @@ public:
     }
 
 
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pGradientSquared) {
-        // Tensor<DTYPE> *trainable_data = pParameter->GetResult();
-        // Tensor<DTYPE> *gradient       = pParameter->GetGradient();
-        //
-        // Shape *shapeOfParam          = pGradientSquared->GetShape();
-        // shape = Tensor<DTYPE>::Constants(shapeOfParam, 1.f);
-        //
-        // cudnnTensorDescriptor_t dataDesc = trainable_data->GetDescriptor();
-        // cudnnTensorDescriptor_t gradDesc = gradient->GetDescriptor();
-        // cudnnTensorDescriptor_t gradsquaredDesc = pGradientSquared->GetDescriptor();
-        // cudnnTensorDescriptor_t shapeDesc = shape->GetDescriptor();
-        //
-        // DTYPE *m_pDevData = trainable_data->GetGPUData();
-        // DTYPE *m_pDevGrad = gradient->GetGPUData();
-        // DTYPE *m_pDevGradSquared = pGradientSquared->GetGPUData();
-        // DTYPE *m_pShape = shape->GetGPUData();
-        //
-        // float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
-        //
-        // float alpha  = 1.f;
-        // float beta   = 0.f;
-        // float slr    = signed_learning_rate;
-        // float eps    = m_epsilon;
-        //
-        // cudnnOpTensorDescriptor_t opTensorDescMul;
-        // checkCUDNN(cudnnCreateOpTensorDescriptor(&opTensorDescMul));
-        // checkCUDNN(cudnnSetOpTensorDescriptor(opTensorDescMul, CUDNN_OP_TENSOR_MUL, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
-        //
-        // //(*m_pGradientSquared)[i]       = ((*gradient)[i] * (*gradient)[i]);
-        // checkCUDNN(cudnnOpTensor(this->GetCudnnHandle(), opTensorDescMul,
-        //                           &alpha, gradDesc, m_pDevGrad,
-        //                           &alpha, gradDesc, m_pDevGrad,
-        //                           &beta, gradsquaredDesc, m_pDevGradSquared));
-        // //m_pDevData =                        +alpha * m_pDevData
-        // // (*trainable_data)[i]   +=
-        // //((signed_learning_rate * (*gradient)[i])
-        // // / std::sqrt((*m_pGradientSquared)[i] + m_epsilon));
-        // checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
-        //                           &eps, shapeDesc, m_pShape,
-        //                           &alpha, gradsquaredDesc, m_pDevGradSquared));
-
-        // int batch       = m_pGradientSquared->GetBatchSize();
-        // int channel     = m_pGradientSquared->GetChannelSize();
-        // int row         = m_pGradientSquared->GetRowSize();
-        // int col         = m_pGradientSquared->GetColSize();
-        //
-        //
-        // int capacity = batch * channel * row * col;
-        // rsquare<<<batch,capacity>>>(m_pDevGradSquared);
-
-        //
-        // checkCUDNN(cudnnOpTensor(this->GetCudnnHandle(),opTensorDescMul,
-        //                           &slr, gradDesc, m_pDevGrad,
-        //                           &alpha, gradsquaredDesc, m_pDevGradSquared,
-        //                           &beta, gradsquaredDesc,m_pDevGradSquared ));
-
-        // checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
-        //                           &alpha, gradsquaredDesc, m_pDevGradSquared,
-        //                           &alpha, dataDesc, m_pDevData));
-
-
-        return TRUE;
-    }
+    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pGradientSquared);
 
    //  __global__ void rsquare(DTYPE *myArrayGPU) {
    //   myArrayGPU[capacity] = pow((float) capacity, -0.5);
