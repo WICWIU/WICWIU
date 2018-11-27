@@ -1,16 +1,14 @@
 .SUFFIXES = .cpp .o
 
-CFLAGS = -O2 -std=c++11
+CFLAGS = -O2 -std=c++11 -g
 
 # if cuda device, cuda lib, or cuDNN is not installed, disable the following line
 ENABLE_CUDNN = -D__CUDNN__
 
-#DFLAGS = -g -D__DEBUG__
-
+#DFLAGS = -D__DEBUG__
 
 INCLUDE_PATH = -I/usr/local/cuda/include
 LIB_PATH = -L. -L/usr/local/cuda/lib64
-
 
 CC = g++
 ifdef ENABLE_CUDNN
@@ -20,7 +18,6 @@ else
 	LINKER = g++
 	LFLAGS = -lpthread
 endif
-
 
 WICWIU_LIB = ../../lib/libwicwiu.a
 
@@ -58,7 +55,6 @@ main: $(WICWIU_LIB) main.o
 
 #main: main.o $(WICWIU_LIB)
 #	$(LINKER) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) main.o
-
 
 $(WICWIU_LIB): $(WICWIU_SRC) $(WICWIU_CUDA_SRCS)
 	make -C ../..
