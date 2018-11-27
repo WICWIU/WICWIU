@@ -1,5 +1,5 @@
 
-#include "Operator.h"
+#include "Operator.hpp"
 
 template class Operator<int>;
 template class Operator<float>;

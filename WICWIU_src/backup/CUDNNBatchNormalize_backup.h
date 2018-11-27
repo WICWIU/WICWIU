@@ -3,7 +3,7 @@
 #ifndef __CUDNN_BATCH_NORMALIZE__
 # define __CUDNN_BATCH_NORMALIZE__    value
 
-# include "../Operator.h"
+# include "../Operator.hpp"
 
 # include <cmath>
 

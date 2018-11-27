@@ -1,6 +1,6 @@
-#include "net/my_Resnet.h"
-#include "net/my_CNN.h"
-#include "CIFAR10Reader.h"
+#include "net/my_Resnet.hpp"
+#include "net/my_CNN.hpp"
+#include "CIFAR10Reader.hpp"
 #include <time.h>
 #include <unistd.h>
 
@@ -8,14 +8,14 @@
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (50000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             2
+#define GPUID             1
 #define LOG_LENGTH        1
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
 
-    char filename[] = "20180825-03-31-resnet34.b";
+    char filename[] = "params.b";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 3072, "x");

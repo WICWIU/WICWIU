@@ -1,6 +1,6 @@
 #ifdef __CUDNN__
 
-#include "AdamOptimizer.h"
+#include "AdamOptimizer.hpp"
 
 // template class AdamOptimizer<int>;
 template class AdamOptimizer<float>;

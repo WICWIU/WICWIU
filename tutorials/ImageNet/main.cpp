@@ -1,6 +1,6 @@
-#include "net/my_Resnet.h"
+#include "net/my_Resnet.hpp"
 #include "net/my_Densenet.hpp"
-#include "ImageNetReader.h"
+#include "ImageNetReader.hpp"
 #include <time.h>
 #include <ctime>
 #include <unistd.h>
@@ -11,7 +11,7 @@
 #define LOOP_FOR_TRAIN                (1281144 / BATCH)
 #define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
 #define LOOP_FOR_TEST                 (50000 / BATCH)
-#define GPUID                         2
+#define GPUID                         1
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    10
@@ -23,18 +23,17 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[]      = "dn_lite";
-    char filename_info[] = "dn_lite_info";
+    char filename[]      = "params";
+    char filename_info[] = "params_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 1000, "label");
 
     // ======================= Select net ===================
-    // NeuralNetwork<float> *net = Resnet10<float>(x, label, NUMBER_OF_CLASS);
-    // NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
+    NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
     // NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
-    NeuralNetwork<float> *net = DenseNetLite<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = DenseNetLite<float>(x, label, NUMBER_OF_CLASS);
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================

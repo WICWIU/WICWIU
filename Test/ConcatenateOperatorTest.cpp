@@ -1,4 +1,4 @@
-#include "../WICWIU_src/NeuralNetwork.h"
+#include "../WICWIU_src/NeuralNetwork.hpp"
 
 
 int main(int argc, char const *argv[]) {

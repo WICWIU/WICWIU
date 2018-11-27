@@ -1,6 +1,6 @@
 #ifdef __CUDNN__
 
-#include "Concatenate.h"
+#include "Concatenate.hpp"
 
 // template class ConcatenateChannelWise<int>;
 template class ConcatenateChannelWise<float>;

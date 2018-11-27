@@ -1,6 +1,6 @@
 #ifdef __CUDNN__
 
-#include "RMSPropOptimizer.h"
+#include "RMSPropOptimizer.hpp"
 
 // template class RMSPropOptimizer<int>;
 template class RMSPropOptimizer<float>;

@@ -1,4 +1,4 @@
-#include "Optimizer.h"
+#include "Optimizer.hpp"
 
 template class Optimizer<int>;
 template class Optimizer<float>;

@@ -1,7 +1,7 @@
 #ifndef DENSENET_H_
 #define DENSENET_H_    0
 
-#include "../../../WICWIU_src/NeuralNetwork.h"
+#include "../../../WICWIU_src/NeuralNetwork.hpp"
 
 template<typename DTYPE> class DenseNetBlock : public Module<DTYPE>{
 private:

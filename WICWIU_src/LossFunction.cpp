@@ -1,4 +1,4 @@
-#include "LossFunction.h"
+#include "LossFunction.hpp"
 
 template class LossFunction<int>;
 template class LossFunction<float>;

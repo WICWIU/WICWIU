@@ -1,4 +1,4 @@
-#include "LongArray.h"
+#include "LongArray.hpp"
 
 template class LongArray<int>;
 template class LongArray<float>;
@@ -321,10 +321,16 @@ template<typename DTYPE> int LongArray<DTYPE>::Save(FILE *fileForSave) {
     std::cout << "save" << '\n';
     #endif  // __BINARY__
 
-    fwrite(&m_CapacityPerTime, sizeof(int), 1, fileForSave);
+    if (!fwrite(&m_CapacityPerTime, sizeof(int), 1, fileForSave)) {
+        printf("Failed to write Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+        exit(-1);
+    }
 
     for (int i = 0; i < m_TimeSize; i++) {
-        fwrite(m_aaHostLongArray[i], sizeof(DTYPE), m_CapacityPerTime, fileForSave);
+        if (!fwrite(m_aaHostLongArray[i], sizeof(DTYPE), m_CapacityPerTime, fileForSave)) {
+            printf("Failed to write Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+            exit(-1);
+        }
     }
 
     return TRUE;
@@ -355,12 +361,18 @@ template<typename DTYPE> int LongArray<DTYPE>::Load(FILE *fileForLoad) {
 
     int capacityOfData = 0;
 
-    fread(&capacityOfData, sizeof(int), 1, fileForLoad);
+    if (!fread(&capacityOfData, sizeof(int), 1, fileForLoad)) {
+        printf("Failed to read Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+        exit(-1);
+    }
 
     if (capacityOfData != 0) {
         if (capacityOfData <= m_CapacityPerTime) {
             for (int i = 0; i < m_TimeSize; i++) {
-                fread(m_aaHostLongArray[i], sizeof(DTYPE), capacityOfData, fileForLoad);
+                if (!fread(m_aaHostLongArray[i], sizeof(DTYPE), capacityOfData, fileForLoad)) {
+                    printf("Failed to read Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+                    exit(-1);
+                }
             }
         }
     }

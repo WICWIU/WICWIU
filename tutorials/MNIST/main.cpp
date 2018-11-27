@@ -1,14 +1,14 @@
-#include "net/my_CNN.h"
-#include "net/my_NN.h"
-#include "net/my_Resnet.h"
-#include "MNIST_Reader.h"
+#include "net/my_CNN.hpp"
+#include "net/my_NN.hpp"
+#include "net/my_Resnet.hpp"
+#include "MNIST_Reader.hpp"
 #include <time.h>
 
 #define BATCH             100
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             4
+#define GPUID             1
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
@@ -32,9 +32,6 @@ int main(int argc, char const *argv[]) {
     // label->SetDeviceGPU(GPUID);
     net->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
-
-    // int temp;
-    // std::cin >> temp;
 
     net->PrintGraphInformation();
 
@@ -96,43 +93,6 @@ int main(int argc, char const *argv[]) {
         endTime            = clock();
         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
-
-        // // ======================= Accumulating =======================
-        // train_accuracy = 0.f;
-        // train_avg_loss = 0.f;
-        //
-        // net->SetModeAccumulate();
-        //
-        // startTime = clock();
-        //
-        // for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-        //     dataset->CreateTrainDataPair(BATCH);
-        //
-        //     Tensor<float> *x_t = dataset->GetTrainFeedImage();
-        //     Tensor<float> *l_t = dataset->GetTrainFeedLabel();
-        //
-        // #ifdef __CUDNN__
-        //     x_t->SetDeviceGPU(GPUID); // 추후 자동화 필요
-        //     l_t->SetDeviceGPU(GPUID);
-        // #endif  // __CUDNN__
-        //     // std::cin >> temp;
-        //     net->FeedInputTensor(2, x_t, l_t);
-        //     net->ResetParameterGradient();
-        //     net->Test();
-        //     // std::cin >> temp;
-        //     train_accuracy += net->GetAccuracy();
-        //     train_avg_loss += net->GetLoss();
-        //
-        //     printf("\rAccumulating complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
-        //            j + 1, LOOP_FOR_TRAIN,
-        //            train_avg_loss / (j + 1),
-        //            train_accuracy / (j + 1)
-        //            /*nProcessExcuteTime*/);
-        //     fflush(stdout);
-        // }
-        // endTime            = clock();
-        // nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
-        // printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
         // ======================= Test ======================
         float test_accuracy = 0.f;

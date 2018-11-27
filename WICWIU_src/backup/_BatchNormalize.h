@@ -1,7 +1,7 @@
 #ifndef __BATCH_NORMALIZE__
 #define __BATCH_NORMALIZE__    value
 
-#include "../Operator.h"
+#include "../Operator.hpp"
 
 template<typename DTYPE>
 class BatchNormalize : public Operator<DTYPE>{

@@ -1,4 +1,4 @@
-#include "NeuralNetwork.h"
+#include "NeuralNetwork.hpp"
 
 template class NeuralNetwork<int>;
 template class NeuralNetwork<float>;

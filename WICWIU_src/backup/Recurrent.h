@@ -1,7 +1,7 @@
 #ifndef RECURRENT_H_
 #define RECURRENT_H_    value
 
-#include "..//Operator.h"
+#include "..//Operator.hpp"
 #include "MatMul.h"
 #include "Add.h"
 #include "Tanh.h"

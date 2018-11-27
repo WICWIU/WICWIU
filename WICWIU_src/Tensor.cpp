@@ -1,4 +1,4 @@
-#include "Tensor.h"
+#include "Tensor.hpp"
 
 template class Tensor<int>;
 template class Tensor<float>;

@@ -1,6 +1,6 @@
 #ifdef __CUDNN__
 
-#include "NagOptimizer.h"
+#include "NagOptimizer.hpp"
 
 // template class NagOptimizer<int>;
 template class NagOptimizer<float>;

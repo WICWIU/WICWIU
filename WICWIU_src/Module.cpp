@@ -1,4 +1,4 @@
-#include "Module.h"
+#include "Module.hpp"
 
 template class Module<int>;
 template class Module<float>;
