@@ -11,7 +11,7 @@ private:
     Operator<DTYPE> *m_pLastOperator;
 
     Device m_Device;
-    unsigned int m_idOfDevice = 0;
+    unsigned int m_idOfDevice;
 
 private:
     int  Alloc();
@@ -107,6 +107,7 @@ template<typename DTYPE> Module<DTYPE>::Module(std::string pName) : Operator<DTY
     m_aaExcutableOperator    = NULL;
     m_numOfExcutableOperator = 0;
     m_pLastOperator          = NULL;
+    m_idOfDevice             = -1;
 
     Alloc();
 }
@@ -296,7 +297,6 @@ template<typename DTYPE> int Module<DTYPE>::SetModeInference() {
     return TRUE;
 }
 
-
 template<typename DTYPE> int Module<DTYPE>::ForwardPropagate(int pTime) {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->ForwardPropagate(pTime);
@@ -326,17 +326,17 @@ template<typename DTYPE> int Module<DTYPE>::ResetGradient() {
 }
 
 // template<typename DTYPE> void Module<DTYPE>::PrintInformation() {
-//     std::cout << this->GetName() << " : ";
-//     std::cout << this->GetResult()->GetShape() << '\n';
+// std::cout << this->GetName() << " : ";
+// std::cout << this->GetResult()->GetShape() << '\n';
 //
-//     for (int i = 0; i < m_numOfExcutableOperator; i++) {
-//         std::cout << "-- ";
-//         (*m_aaExcutableOperator)[i]->PrintInformation();
-//     }
+// for (int i = 0; i < m_numOfExcutableOperator; i++) {
+// std::cout << "-- ";
+// (*m_aaExcutableOperator)[i]->PrintInformation();
+// }
 // }
 
 template<typename DTYPE> void Module<DTYPE>::PrintInformation(int level) {
-    for(int j = 0; j < level; j++){
+    for (int j = 0; j < level; j++) {
         std::cout << "-- ";
     }
     std::cout << this->GetName() << " : ";

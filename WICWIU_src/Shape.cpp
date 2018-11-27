@@ -141,8 +141,9 @@ Shape::Shape(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4) {
     std::cout << "Shape::Shape(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4)" << '\n';
     #endif  // __DEBUG__
 
-    m_Rank = 0;
-    m_aDim = NULL;
+    m_Rank       = 0;
+    m_aDim       = NULL;
+    m_idOfDevice = -1;
 #ifdef __CUDNN__
     m_desc = NULL;
 #endif  // if __CUDNN__
@@ -155,8 +156,9 @@ Shape::Shape(int pSize0, int pSize1, int pSize2, int pSize3) {
     std::cout << "Shape::Shape(int pSize0, int pSize1, int pSize2, int pSize3)" << '\n';
     #endif  // __DEBUG__
 
-    m_Rank = 0;
-    m_aDim = NULL;
+    m_Rank       = 0;
+    m_aDim       = NULL;
+    m_idOfDevice = -1;
 #ifdef __CUDNN__
     m_desc = NULL;
 #endif  // if __CUDNN__
@@ -169,8 +171,9 @@ Shape::Shape(int pSize0, int pSize1, int pSize2) {
     std::cout << "Shape::Shape(int pSize0, int pSize1, int pSize2, int pSize3)" << '\n';
     #endif  // __DEBUG__
 
-    m_Rank = 0;
-    m_aDim = NULL;
+    m_Rank       = 0;
+    m_aDim       = NULL;
+    m_idOfDevice = -1;
 #ifdef __CUDNN__
     m_desc = NULL;
 #endif  // if __CUDNN__
@@ -183,8 +186,9 @@ Shape::Shape(int pSize0, int pSize1) {
     std::cout << "Shape::Shape(int pSize0, int pSize1)" << '\n';
     #endif  // __DEBUG__
 
-    m_Rank = 0;
-    m_aDim = NULL;
+    m_Rank       = 0;
+    m_aDim       = NULL;
+    m_idOfDevice = -1;
 #ifdef __CUDNN__
     m_desc = NULL;
 #endif  // if __CUDNN__
@@ -197,8 +201,9 @@ Shape::Shape(int pSize0) {
     std::cout << "Shape::Shape(int pSize0)" << '\n';
     #endif  // __DEBUG__
 
-    m_Rank = 0;
-    m_aDim = NULL;
+    m_Rank       = 0;
+    m_aDim       = NULL;
+    m_idOfDevice = -1;
 #ifdef __CUDNN__
     m_desc = NULL;
 #endif  // if __CUDNN__
@@ -211,8 +216,9 @@ Shape::Shape(Shape *pShape) {
     std::cout << "Shape::Shape(Shape *pShape)" << '\n';
     #endif  // __DEBUG__
 
-    m_Rank = 0;
-    m_aDim = NULL;
+    m_Rank       = 0;
+    m_aDim       = NULL;
+    m_idOfDevice = -1;
 #ifdef __CUDNN__
     m_desc = NULL;
 #endif  // if __CUDNN__

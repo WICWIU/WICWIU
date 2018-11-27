@@ -17,7 +17,7 @@ private:
     Container<Operator<DTYPE> *> *m_ppTrainableTensors;
     int m_TrainableTensorDegree;
 
-    int m_idOfDevice = -1;
+    int m_idOfDevice;
 
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
@@ -72,6 +72,7 @@ template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Operator<DTYPE> *
     m_ppTrainableTensors    = NULL;
     m_TrainableTensorDegree = 0;
     m_weightDecayRate       = 0.f;
+    m_idOfDevice            = -1;
 
     Alloc(pTrainableTensors, pLearningRate, pOptimizeDirection);
 }
@@ -85,6 +86,7 @@ template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Operator<DTYPE> *
     m_ppTrainableTensors    = NULL;
     m_TrainableTensorDegree = 0;
     m_weightDecayRate       = 0.f;
+    m_idOfDevice            = -1;
 
     Alloc(pTrainableTensors, pLearningRate, pWeightDecayRate, pOptimizeDirection);
 }
@@ -210,6 +212,5 @@ template<typename DTYPE> int Optimizer<DTYPE>::ResetParameterGradient() {
 
     return TRUE;
 }
-
 
 #endif  // OPTIMIZER_H_

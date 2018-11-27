@@ -14,7 +14,7 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 
-#include "Utils.h"
+#include "Utils.hpp"
 
 int gNoCudaDevice = 0;
 cudaDeviceProp gCudaDeviceProp[MAX_CUDA_DEVICE];

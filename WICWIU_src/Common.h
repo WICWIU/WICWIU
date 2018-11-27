@@ -19,7 +19,7 @@
 #include <pthread.h>
 
 // Custom code
-#include "Utils.h"
+#include "Utils.hpp"
 
 // define
 #ifndef TRUE

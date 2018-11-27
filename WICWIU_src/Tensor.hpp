@@ -14,7 +14,7 @@ private:
     Shape *m_aShape;
     LongArray<DTYPE> *m_aLongArray;
     Device m_Device;
-    int m_idOfDevice = -1;
+    int m_idOfDevice;
     IsUseTime m_IsUseTime;
 
 private:
@@ -167,6 +167,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     m_aShape     = NULL;
     m_aLongArray = NULL;
     m_Device     = CPU;
+    m_idOfDevice = -1;
     Alloc(new Shape(pSize0, pSize1, pSize2, pSize3, pSize4), pAnswer);
 }
 
@@ -178,6 +179,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     m_aShape     = NULL;
     m_aLongArray = NULL;
     m_Device     = CPU;
+    m_idOfDevice = -1;
     Alloc(new Shape(pSize0, pSize1, pSize2, pSize3), pAnswer);
 }
 
@@ -189,6 +191,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, int pSize
     m_aShape     = NULL;
     m_aLongArray = NULL;
     m_Device     = CPU;
+    m_idOfDevice = -1;
     Alloc(new Shape(pSize0, pSize1, pSize2), pAnswer);
 }
 
@@ -200,6 +203,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, int pSize1, IsUseTime
     m_aShape     = NULL;
     m_aLongArray = NULL;
     m_Device     = CPU;
+    m_idOfDevice = -1;
     Alloc(new Shape(pSize0, pSize1), pAnswer);
 }
 
@@ -211,6 +215,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(int pSize0, IsUseTime pAnswer) {
     m_aShape     = NULL;
     m_aLongArray = NULL;
     m_Device     = CPU;
+    m_idOfDevice = -1;
     Alloc(new Shape(pSize0), pAnswer);
 }
 
@@ -222,6 +227,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(Shape *pShape, IsUseTime pAnswer)
     m_aShape     = NULL;
     m_aLongArray = NULL;
     m_Device     = CPU;
+    m_idOfDevice = -1;
     Alloc(pShape, pAnswer);
 }
 
@@ -233,6 +239,7 @@ template<typename DTYPE> Tensor<DTYPE>::Tensor(Tensor *pTensor) {
     m_aShape     = NULL;
     m_aLongArray = NULL;
     m_Device     = CPU;
+    m_idOfDevice = -1;
     Alloc(pTensor);
 }
 
@@ -766,7 +773,6 @@ template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Constants(Shape *pShape, 
 
     return temp;
 }
-
 
 inline unsigned int Index5D(Shape *pShape, int ti, int ba, int ch, int ro, int co) {
     return (((ti * (*pShape)[1] + ba) * (*pShape)[2] + ch) * (*pShape)[3] + ro) * (*pShape)[4] + co;

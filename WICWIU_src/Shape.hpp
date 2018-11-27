@@ -12,7 +12,7 @@ private:
     int m_Rank;
     int *m_aDim;
     Device m_Device;
-    int m_idOfDevice = -1;
+    int m_idOfDevice;
 
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t m_desc;

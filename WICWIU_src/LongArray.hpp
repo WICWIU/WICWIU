@@ -12,7 +12,7 @@ private:
     int m_CapacityPerTime;
 
     Device m_Device;
-    int m_idOfDevice = -1;
+    int m_idOfDevice;
 
 #ifdef __CUDNN__
     DTYPE **m_aaDevLongArray;
@@ -223,7 +223,7 @@ template<typename DTYPE> LongArray<DTYPE>::LongArray(unsigned int pTimeSize, uns
     m_CapacityPerTime = 0;
     m_aaHostLongArray = NULL;
     m_Device          = CPU;
-    m_idOfDevice      = 0;
+    m_idOfDevice      = -1;
 #ifdef __CUDNN__
     m_aaDevLongArray = NULL;
 #endif  // __CUDNN
@@ -238,7 +238,7 @@ template<typename DTYPE> LongArray<DTYPE>::LongArray(LongArray *pLongArray) {
     m_CapacityPerTime = 0;
     m_aaHostLongArray = NULL;
     m_Device          = CPU;
-    m_idOfDevice      = 0;
+    m_idOfDevice      = -1;
 #ifdef __CUDNN__
     m_aaDevLongArray = NULL;
 #endif  // __CUDNN

@@ -19,7 +19,7 @@ private:
     Optimizer<DTYPE> *m_aOptimizer;
 
     Device m_Device;
-    int m_idOfDevice = -1;  // 추후 수정
+    int m_idOfDevice;
 
 #ifdef __CUDNN__
     cudnnHandle_t m_cudnnHandle;
@@ -180,8 +180,8 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::AllocOnGPU() {
 }
 
 template<typename DTYPE> void NeuralNetwork<DTYPE>::DeleteOnGPU() {
-    // // checkCudaErrors(cudaDeviceSynchronize());
-    // // checkCudaErrors(cudaDeviceSynchronize());
+    //// checkCudaErrors(cudaDeviceSynchronize());
+    //// checkCudaErrors(cudaDeviceSynchronize());
     if (m_cudnnHandle) checkCUDNN(cudnnDestroy(m_cudnnHandle));
 }
 
@@ -208,7 +208,8 @@ template<typename DTYPE> NeuralNetwork<DTYPE>::NeuralNetwork() {
     m_aLossFunction = NULL;
     m_aOptimizer    = NULL;
 
-    m_Device = CPU;
+    m_Device     = CPU;
+    m_idOfDevice = -1;
 
 #ifdef __CUDNN__
     m_cudnnHandle = NULL;
@@ -592,10 +593,9 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetTop5Accuracy(int numOfCl
 
     float top5Accuracy = 0.f;
 
-
     for (int ba = 0; ba < batchsize; ba++) {
         for (int ti = 0; ti < timesize; ti++) {
-            int pred_index[5] = { 0, }; // for Initialize
+            int pred_index[5] = { 0, };  // for Initialize
             int ans_index     = 0;
 
             GetTop5Index(pred, pred_index, ba, ti, numOfClass);

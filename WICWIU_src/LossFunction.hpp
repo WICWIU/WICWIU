@@ -16,7 +16,7 @@ private:
     std::string m_name;
 
     Device m_Device;
-    int m_idOfDevice = -1;
+    int m_idOfDevice;
 
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
@@ -89,6 +89,7 @@ template<typename DTYPE> LossFunction<DTYPE>::LossFunction(std::string pName) {
     m_pLabel         = NULL;
     m_name           = pName;
     m_Device         = CPU;
+    m_idOfDevice     = -1;
 }
 
 template<typename DTYPE> LossFunction<DTYPE>::LossFunction(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) {
@@ -102,6 +103,7 @@ template<typename DTYPE> LossFunction<DTYPE>::LossFunction(Operator<DTYPE> *pOpe
     m_pLabel         = NULL;
     m_name           = pName;
     m_Device         = CPU;
+    m_idOfDevice     = -1;
     Alloc(pOperator, pLabel);
 }
 

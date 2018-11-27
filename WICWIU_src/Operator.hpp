@@ -18,7 +18,7 @@ private:
     Container<Tensor<DTYPE> *> *m_aaGradient;
     std::string m_name;
     Device m_Device;
-    int m_idOfDevice = -1;
+    int m_idOfDevice;
     Mode m_Mode;
     int m_isParameter;
     int m_isTrainable;
@@ -143,32 +143,32 @@ template<typename DTYPE> int Operator<DTYPE>::Alloc(int numInput, ...) {
     int null_count = 0;
 
     for (int i = 0; i < numInput; i++) {
-         temp = va_arg(ap, Operator<DTYPE> *);
+        temp = va_arg(ap, Operator<DTYPE> *);
 
-         if (!temp) {
-           null_count++;
-         } else{
-           this->AddEdgebetweenOperators(temp);
-         }
+        if (!temp) {
+            null_count++;
+        } else {
+            this->AddEdgebetweenOperators(temp);
+        }
     }
 
     va_end(ap);
 
-    if(null_count){
-      numInput = numInput - null_count;
-      for (int i = 0; i < numInput; i++) {
-          delete (*m_apInput)[i];
-      }
-      delete m_apInput;
-      m_apInput = NULL;
+    if (null_count) {
+        numInput = numInput - null_count;
 
-      printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
-      return FALSE;
+        for (int i = 0; i < numInput; i++) {
+            delete (*m_apInput)[i];
+        }
+        delete m_apInput;
+        m_apInput = NULL;
+
+        printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+        return FALSE;
     }
 
     return TRUE;
 }
-
 
 template<typename DTYPE> void Operator<DTYPE>::Delete() {
     #ifdef __DEBUG__
@@ -253,6 +253,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
     m_Mode        = TRAIN;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
+    m_idOfDevice  = -1;
     Alloc();
 }
 
@@ -269,6 +270,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_Mode        = TRAIN;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
+    m_idOfDevice  = -1;
     Alloc();
     AddEdgebetweenOperators(1, pInput);
 }
@@ -286,6 +288,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_Mode        = TRAIN;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
+    m_idOfDevice  = -1;
     Alloc();
     AddEdgebetweenOperators(2, pInput0, pInput1);
 }
@@ -303,6 +306,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_Mode        = TRAIN;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
+    m_idOfDevice  = -1;
     Alloc();
     AddEdgebetweenOperators(3, pInput0, pInput1, pInput2);
 }
@@ -320,6 +324,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {
     m_Mode        = TRAIN;
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
+    m_idOfDevice  = -1;
     Alloc();
 
     va_list ap;
@@ -351,26 +356,26 @@ template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(int numInp
     int null_count = 0;
 
     for (int i = 0; i < numInput; i++) {
-         temp = va_arg(ap, Operator<DTYPE> *);
+        temp = va_arg(ap, Operator<DTYPE> *);
 
-         if (!temp) {
-           null_count++;
-         } else{
-           this->AddEdgebetweenOperators(temp);
-         }
+        if (!temp) {
+            null_count++;
+        } else {
+            this->AddEdgebetweenOperators(temp);
+        }
     }
 
+    if (null_count) {
+        numInput = numInput - null_count;
 
-    if(null_count){
-      numInput = numInput - null_count;
-      for (int i = 0; i < numInput; i++) {
-          delete (*m_apInput)[i];
-      }
-      delete m_apInput;
-      m_apInput = NULL;
+        for (int i = 0; i < numInput; i++) {
+            delete (*m_apInput)[i];
+        }
+        delete m_apInput;
+        m_apInput = NULL;
 
-      printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
-      return FALSE;
+        printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+        return FALSE;
     }
 
     return TRUE;
@@ -388,27 +393,28 @@ template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(int numInp
     int null_count = 0;
 
     for (int i = 0; i < numInput; i++) {
-         temp = va_arg(ap, Operator<DTYPE> *);
+        temp = va_arg(ap, Operator<DTYPE> *);
 
-         if (!temp) {
-           null_count++;
-         } else{
-           this->AddEdgebetweenOperators(temp);
-         }
+        if (!temp) {
+            null_count++;
+        } else {
+            this->AddEdgebetweenOperators(temp);
+        }
     }
 
     va_end(ap);
 
-    if(null_count){
-      numInput = numInput - null_count;
-      for (int i = 0; i < numInput; i++) {
-          delete (*m_apInput)[i];
-      }
-      delete m_apInput;
-      m_apInput = NULL;
+    if (null_count) {
+        numInput = numInput - null_count;
 
-      printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
-      return FALSE;
+        for (int i = 0; i < numInput; i++) {
+            delete (*m_apInput)[i];
+        }
+        delete m_apInput;
+        m_apInput = NULL;
+
+        printf("Receive NULL pointer of Operator<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+        return FALSE;
     }
 
     return TRUE;
@@ -619,12 +625,12 @@ template<typename DTYPE> int Operator<DTYPE>::ResetGradient() {
 }
 
 // template<typename DTYPE> void Operator<DTYPE>::PrintInformation() {
-//     std::cout << this->GetName() << " : ";
-//     std::cout << this->GetResult()->GetShape() << '\n';
+// std::cout << this->GetName() << " : ";
+// std::cout << this->GetResult()->GetShape() << '\n';
 // }
 
 template<typename DTYPE> void Operator<DTYPE>::PrintInformation(int level) {
-    for(int j = 0; j < level; j++){
+    for (int j = 0; j < level; j++) {
         std::cout << "-- ";
     }
     std::cout << this->GetName() << " : ";
