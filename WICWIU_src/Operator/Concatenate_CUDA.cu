@@ -23,7 +23,6 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::ForwardPropagateOnGP
     int channelsize = result->GetChannelSize();
     int rowsize     = result->GetRowSize();
     int colsize     = result->GetColSize();
-    int capacity    = result->GetCapacity();
 
     Shape *resultTenShape = result->GetShape();
 
@@ -56,21 +55,10 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::ForwardPropagateOnGP
 }
 
 __global__ void ConcatenateChannelWise_BackPropagate_kernel(int sizeOfResultImg, int sizeOfInputImg, int timesize, int batchsize, float *delta_gpu, float *input_delta_gpu, int preSize) {
-    int indexOfResult = 0;
-    int indexOfInput  = 0;
-    int cnt           = preSize;
-
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < sizeOfInputImg; idx += blockDim.x * gridDim.x) {
         for (int ba = 0; ba < batchsize; ba++) {
-            // indexOfResult = ba * sizeOfResultImg + (preSize + blockIdx.x + cnt) * blockDim.x + threadIdx.x;
-            indexOfResult = ba * sizeOfResultImg + idx + cnt * blockDim.x;
-            indexOfInput  = ba * sizeOfInputImg + idx;
-
-            input_delta_gpu[indexOfInput] = delta_gpu[indexOfResult];
-            // input_delta_gpu[0] = delta_gpu[0];
+            input_delta_gpu[ba * sizeOfInputImg + idx] += delta_gpu[ba * sizeOfResultImg + idx + preSize];
         }
-
-        cnt += gridDim.x;
     }
 }
 
@@ -86,25 +74,24 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::BackPropagateOnGPU(i
 
     Shape *resultTenShape = this_delta->GetShape();
 
-    int noBlock         = 0;
-    int threadsPerBlock = rowsize * colsize;
-    int sizeOfPlane     = threadsPerBlock;
+    int sizeOfPlane     = rowsize * colsize;
     int sizeOfResultImg = channelsize * sizeOfPlane;
     int sizeOfInputImg  = 0;
 
     DTYPE *delta_gpu       = this_delta->GetGPUData();
     DTYPE *input_delta_gpu = NULL;
 
-    int preSize = 0;
+    int preSize          = 0;
+    int inputChannelSize = 0;
 
     for (int opnum = 0; opnum < m_noOperator; opnum++) {
-        input_delta     = this->GetInput()[opnum]->GetDelta();
-        input_delta_gpu = input_delta->GetGPUData();
-        noBlock         = input_delta->GetChannelSize();
-        preSize         = m_aAccumulate[opnum];
-        sizeOfInputImg  = noBlock * sizeOfPlane;
+        input_delta      = this->GetInput()[opnum]->GetDelta();
+        input_delta_gpu  = input_delta->GetGPUData();
+        inputChannelSize = input_delta->GetChannelSize();
+        preSize          = m_aAccumulate[opnum] * sizeOfPlane;;
+        sizeOfInputImg   = inputChannelSize * sizeOfPlane;
 
-        ConcatenateChannelWise_BackPropagate_kernel << < noBlock, threadsPerBlock >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, delta_gpu, input_delta_gpu, preSize);
+        ConcatenateChannelWise_BackPropagate_kernel << < 3, 128 >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, delta_gpu, input_delta_gpu, preSize);
     }
 
 
