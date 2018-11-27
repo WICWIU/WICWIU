@@ -25,7 +25,7 @@
 #define LEGNTH_OF_WIDTH_AND_HEIGHT    224
 #define CAPACITY_OF_PLANE             50176
 #define CAPACITY_OF_IMAGE             150528
-#define NUMBER_OF_THREAD              4
+#define NUMBER_OF_THREAD              8
 #define LENGTH_224                    224
 #define LENGTH_256                    256
 

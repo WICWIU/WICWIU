@@ -6,12 +6,12 @@
 #include <unistd.h>
 
 #define NUMBER_OF_CLASS               1000
-#define BATCH                         40
+#define BATCH                         30
 #define EPOCH                         1000
 #define LOOP_FOR_TRAIN                (1281144 / BATCH)
 #define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
 #define LOOP_FOR_TEST                 (50000 / BATCH)
-#define GPUID                         0
+#define GPUID                         2
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    10
@@ -23,8 +23,8 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[]      = "test_final";
-    char filename_info[] = "test_final_info";
+    char filename[]      = "dn_lite";
+    char filename_info[] = "dn_lite_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
@@ -32,16 +32,16 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Select net ===================
     // NeuralNetwork<float> *net = Resnet10<float>(x, label, NUMBER_OF_CLASS);
-    NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
     // NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
-    // NeuralNetwork<float> *net = DenseNetNew<float>(x, label, NUMBER_OF_CLASS);
+    NeuralNetwork<float> *net = DenseNetLite<float>(x, label, NUMBER_OF_CLASS);
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
     train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
-    train_data_reader->UseRandomVerticalFlip();
+    // train_data_reader->UseRandomVerticalFlip();
 
     ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 25, FALSE);
     test_data_reader->UseNormalization(TRUE, mean, stddev);
@@ -59,29 +59,30 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    std::cout << "Loading..." << '\n';
-    FILE *fp = fopen(filename, "rb");
-    net->Load(fp);
-    fclose(fp);
-
-    FILE *fp_info = fopen(filename_info, "rb");
-    fread(&best_acc, sizeof(float), 1, fp_info);
-    fread(&epoch,    sizeof(int),   1, fp_info);
-    fclose(fp_info);
-    std::cout << "Done!" << '\n';
+    // std::cout << "Loading..." << '\n';
+    // FILE *fp = fopen(filename, "rb");
+    // net->Load(fp);
+    // fclose(fp);
+    //
+    // FILE *fp_info = fopen(filename_info, "rb");
+    // fread(&best_acc, sizeof(float), 1, fp_info);
+    // fread(&epoch,    sizeof(int),   1, fp_info);
+    // fclose(fp_info);
+    // std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
     std::cout << "filename_info : " << filename_info << '\n';
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
 
-    // if (epoch / LEARNING_RATE_DECAY_TIMING) {
-    //     float lr = net->GetOptimizer()->GetLearningRate();
-    //     net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / LEARNING_RATE_DECAY_TIMING)));
-    //     std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / LEARNING_RATE_DECAY_TIMING)) << '\n';
-    // }
+    if (epoch / LEARNING_RATE_DECAY_TIMING) {
+        float lr = net->GetOptimizer()->GetLearningRate();
+        net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / LEARNING_RATE_DECAY_TIMING)));
+        std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / LEARNING_RATE_DECAY_TIMING)) << '\n';
+    }
 
-    net->GetOptimizer()->SetLearningRate(0.0001);
+    // net->GetOptimizer()->SetLearningRate(0.000001);
+    epoch = 0;
 
     for (int i = epoch + 1; i < EPOCH; i++) {
         std::cout << "EPOCH : " << i << '\n';

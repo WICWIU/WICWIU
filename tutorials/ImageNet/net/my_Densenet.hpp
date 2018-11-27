@@ -136,7 +136,7 @@ public:
         // ======================= Select Optimizer ===================
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.000001, 0.9, 5e-4, MINIMIZE));
         // this->SetOptimizer(new GradientDescentOptimizer<float>(this->GetParameter(), 0.001, MINIMIZE));
-        this->SetOptimizer(new AdamOptimizer<float>(this->GetParameter(), 0.01, 0.9, 0.999, 1e-08, 5e-4, MINIMIZE));
+        this->SetOptimizer(new AdamOptimizer<float>(this->GetParameter(), 0.001, 0.9, 0.999, 1e-08, 5e-4, MINIMIZE));
 
         return TRUE;
     }
@@ -163,8 +163,8 @@ template<typename DTYPE> NeuralNetwork<DTYPE>* DenseNet121(Tensorholder<DTYPE> *
     return new DenseNet<DTYPE>(pInput, pLabel, "DenseNetBlock", 6, 12, 24, 16, 12, 0.5, pNumOfClass);
 }
 
-template<typename DTYPE> NeuralNetwork<DTYPE>* DenseNetNew(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
-    return new DenseNet<DTYPE>(pInput, pLabel, "DenseNetBlock", 2, 3, 6, 4, 12, 0.5, pNumOfClass);
+template<typename DTYPE> NeuralNetwork<DTYPE>* DenseNetLite(Tensorholder<DTYPE> *pInput, Tensorholder<DTYPE> *pLabel, int pNumOfClass) {
+    return new DenseNet<DTYPE>(pInput, pLabel, "DenseNetBlock", 2, 3, 6, 4, 32, 0.5, pNumOfClass);
 }
 
 #endif  // ifndef DENSENET_H_
