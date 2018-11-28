@@ -46,11 +46,6 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::ForwardPropagateOnGP
 
         ConcatenateChannelWise_ForwardPropagate_kernel << < 3, 128 >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, result_gpu, input_gpu, preSize);
     }
-    result->SetDeviceCPU();
-
-    // int a;
-    // std::cout << "result\n" << result << '\n';
-    // std::cin >> a;
     return TRUE;
 }
 
@@ -93,8 +88,6 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::BackPropagateOnGPU(i
 
         ConcatenateChannelWise_BackPropagate_kernel << < 3, 128 >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, delta_gpu, input_delta_gpu, preSize);
     }
-
-
     return TRUE;
 }
 
