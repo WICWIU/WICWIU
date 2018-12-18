@@ -203,14 +203,14 @@ private:
 #endif  // __CUDNN__
 
 public:
-    AvaragePooling2D(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
         std::cout << "AvaragePooling2D::AvaragePooling2D(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol);
     }
 
-    AvaragePooling2D(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, int padding, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
         std::cout << "AvaragePooling2D::AvaragePooling2D(Operator<DTYPE> *, int, int, std::string)" << '\n';
         #endif  // __DEBUG__

@@ -74,7 +74,7 @@ public:
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
         out = new Relu<DTYPE>(out, "Relu0");
 
-        out = new Maxpooling2D<float>(out, 2, 2, 3, 3, 1, "MaxPool_2");
+        out = new Maxpooling2D<float>(out, 3, 3, 2, 2, 1, "MaxPool_2");
         // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
 
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 1, "Block1");

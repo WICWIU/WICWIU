@@ -107,7 +107,7 @@ public:
 
             // Test of effect of the Max pool
             if (pStride > 1) {
-                out = new Maxpooling2D<float>(out, pStride, pStride, 2, 2, "MaxPool_2");
+                out = new Maxpooling2D<float>(out, 2, 2, pStride, pStride, "MaxPool_2");
             }
 
             out = new BasicBlock<DTYPE>(out, m_numInputChannel, pNumOfChannel, 1, pName);
