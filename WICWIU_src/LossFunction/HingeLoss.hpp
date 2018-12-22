@@ -138,7 +138,7 @@ public:
             for (int j = 0, index = 0; j < capacity; j++) {
                 index = i * capacity + j;
 
-                (*input_delta)[index] += (*m_aindexForBackProp)[index] / batchSize;
+                (*input_delta)[index] += (*m_aindexForBackProp)[index];
             }
         }
 

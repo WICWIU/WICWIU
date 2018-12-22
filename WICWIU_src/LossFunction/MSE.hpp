@@ -84,7 +84,7 @@ public:
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index                  = i * capacity + j;
-                (*input_delta)[index] += ((*input)[index] - (*label)[index]) / batchsize;
+                (*input_delta)[index] += ((*input)[index] - (*label)[index]);
             }
         }
 

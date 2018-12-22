@@ -179,7 +179,7 @@ public:
             end   = start + capacity;
 
             for (int i = start; i < end; i++) {
-                (*input_delta)[i] = ((*softmaxresult)[i] - (*label)[i]) / batchsize;
+                (*input_delta)[i] = ((*softmaxresult)[i] - (*label)[i]);
             }
         }
 
