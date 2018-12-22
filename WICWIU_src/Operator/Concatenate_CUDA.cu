@@ -46,7 +46,7 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::ForwardPropagateOnGP
         sizeOfInputImg   = inputChannelSize * sizeOfPlane;
         // std::cout << "check" << '\n';
         GetKernelParameters(sizeOfInputImg, &noBlock, &threadsPerBlock);
-        printf("%d, %d\n", noBlock, threadsPerBlock);
+        // printf("%d, %d\n", noBlock, threadsPerBlock);
 
         ConcatenateChannelWise_ForwardPropagate_kernel << < 64, 128 >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, result_gpu, input_gpu, preSize);
     }
