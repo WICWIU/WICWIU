@@ -28,7 +28,8 @@ template<typename DTYPE> int AdamOptimizer<DTYPE>::UpdateParameterOnGPU(Operator
 
     int m_parameterDim = pParameter->GetResult()->GetCapacity();
 
-    // GetKernelParameters(m_parameterDim, &noBlock, &threadsPerBlock);
+    GetKernelParameters(m_parameterDim, &noBlock, &threadsPerBlock);
+    // printf("%d, %d\n", noBlock, threadsPerBlock);
 
     float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
     float weightDecayRate = this->GetWeightDecayRate();

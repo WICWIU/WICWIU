@@ -35,6 +35,7 @@ void GetKernelParameters(int totalThread, int *pNoBlock, int *pThreadsPerBlock, 
     // printf("GetKernelParameters\n");
     int curDevice = GetCurrentCudaDevice();
     // printf("curDevice : %d\n", curDevice);
+    cudaGetDeviceProperties(&gCudaDeviceProp[curDevice], curDevice);
 
     if (totalThread < 32) {
         *pThreadsPerBlock = totalThread;

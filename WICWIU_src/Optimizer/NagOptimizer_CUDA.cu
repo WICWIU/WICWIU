@@ -24,7 +24,7 @@ template<typename DTYPE> int NagOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<
 
     int m_parameterDim = pParameter->GetResult()->GetCapacity();
 
-    // GetKernelParameters(m_parameterDim, &noBlock, &threadsPerBlock);
+    GetKernelParameters(m_parameterDim, &noBlock, &threadsPerBlock);
 
     float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
     float weightDecayRate = this->GetWeightDecayRate();
