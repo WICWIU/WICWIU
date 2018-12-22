@@ -15,6 +15,8 @@ __global__ void ConcatenateChannelWise_ForwardPropagate_kernel(int sizeOfResultI
 }
 
 template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::ForwardPropagateOnGPU(int pTime) {
+    int noBlock = 3, threadsPerBlock = 128;
+
     Tensor<DTYPE> *result = this->GetResult();
     Tensor<DTYPE> *input  = NULL;
 
@@ -43,6 +45,8 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::ForwardPropagateOnGP
         preSize          = m_aAccumulate[opnum] * sizeOfPlane;
         sizeOfInputImg   = inputChannelSize * sizeOfPlane;
         // std::cout << "check" << '\n';
+        GetKernelParameters(sizeOfInputImg, &noBlock, &threadsPerBlock);
+        printf("%d, %d\n", noBlock, threadsPerBlock);
 
         ConcatenateChannelWise_ForwardPropagate_kernel << < 64, 128 >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, result_gpu, input_gpu, preSize);
     }
