@@ -36,7 +36,7 @@ public:
         Delete();
     }
 
-    virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) {
+    int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::Alloc(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
@@ -69,9 +69,9 @@ public:
     }
 
     #ifdef __CUDNN__
-        void InitializeAttributeForGPU(unsigned int idOfDevice) {
-            m_aSoftmaxResult->SetDeviceGPU(idOfDevice);
-        }
+    void InitializeAttributeForGPU(unsigned int idOfDevice) {
+        m_aSoftmaxResult->SetDeviceGPU(idOfDevice);
+    }
 
     #endif  // if __CUDNN__
 
@@ -116,8 +116,6 @@ public:
             max[ti][ba] = 0.f;
         }
 
-
-        int numOfOutputDim = 0;
 
         int capacity = colsize;
 
@@ -188,46 +186,48 @@ public:
 
 #ifdef __CUDNN__
 
-    Tensor<DTYPE>* ForwardPropagateOnGPU(int pTime = 0) {
-        Tensor<DTYPE> *input         = this->GetTensor();
-        Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
-        Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
-        Tensor<DTYPE> *result        = this->GetResult();
+    Tensor<DTYPE>* ForwardPropagateOnGPU(int pTime = 0);
+    // {
+    // Tensor<DTYPE> *input         = this->GetTensor();
+    // Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
+    // Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
+    // Tensor<DTYPE> *result        = this->GetResult();
+    //
+    // int batchsize = input->GetBatchSize();
+    // int colsize   = input->GetColSize();
+    //
+    // float alpha = 1.f;
+    // float beta  = 0.f;
+    //
+    // cudnnTensorDescriptor_t pInputDesc   = input->GetDescriptor();
+    // cudnnTensorDescriptor_t pSoftMaxDesc = softmaxresult->GetDescriptor();
+    //
+    // DTYPE *pDevInput   = input->GetGPUData(pTime);
+    // DTYPE *pDevSoftMax = softmaxresult->GetGPUData(pTime);
+    //
+    // checkCUDNN(cudnnSoftmaxForward(this->GetCudnnHandle(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
+    // &alpha, pInputDesc, pDevInput,
+    // &beta, pSoftMaxDesc, pDevSoftMax));
+    //
+    // int start = 0;
+    // int end   = 0;
+    //
+    // for (int ba = 0; ba < batchsize; ba++) {
+    // start = (pTime * batchsize + ba) * colsize;
+    // end   = start + colsize;
+    //
+    // for (int i = start; i < end; i++) {
+    // (*result)[pTime * batchsize + ba] += -(*label)[i] * log((*softmaxresult)[i] + m_epsilon);
+    // }
+    // }
+    //
+    // return result;
+    // }
 
-        int batchsize = input->GetBatchSize();
-        int colsize   = input->GetColSize();
-
-        float alpha = 1.f;
-        float beta  = 0.f;
-
-        cudnnTensorDescriptor_t pInputDesc   = input->GetDescriptor();
-        cudnnTensorDescriptor_t pSoftMaxDesc = softmaxresult->GetDescriptor();
-
-        DTYPE *pDevInput   = input->GetGPUData(pTime);
-        DTYPE *pDevSoftMax = softmaxresult->GetGPUData(pTime);
-
-        checkCUDNN(cudnnSoftmaxForward(this->GetCudnnHandle(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
-                                       &alpha, pInputDesc, pDevInput,
-                                       &beta, pSoftMaxDesc, pDevSoftMax));
-
-        int start = 0;
-        int end   = 0;
-
-        for (int ba = 0; ba < batchsize; ba++) {
-            start = (pTime * batchsize + ba) * colsize;
-            end   = start + colsize;
-
-            for (int i = start; i < end; i++) {
-                (*result)[pTime * batchsize + ba] += -(*label)[i] * log((*softmaxresult)[i] + m_epsilon);
-            }
-        }
-
-        return result;
-    }
-
-    Tensor<DTYPE>* BackPropagateOnGPU(int pTime = 0) {
-        return this->BackPropagate(pTime);
-    }
+    Tensor<DTYPE>* BackPropagateOnGPU(int pTime = 0);
+    // {
+    // return this->BackPropagate(pTime);
+    // }
 
 #endif  // __CUDNN__
 
