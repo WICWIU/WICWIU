@@ -55,8 +55,35 @@ template<typename DTYPE> Tensor<DTYPE> *SoftmaxCrossEntropy<DTYPE>::ForwardPropa
     return result;
 }
 
+__global__ void SoftmaxCrossEntropy_BackPropagate_kernel(int time, int capacity, float *input_delta, float *label, float *softmaxresult) {
+    int idx = 0;
+
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < capacity; idx += blockDim.x * gridDim.x) {
+        idx = time * capacity + idx;
+
+        input_delta[idx] = softmaxresult[idx] - label[idx];
+    }
+}
+
 template<typename DTYPE> Tensor<DTYPE> *SoftmaxCrossEntropy<DTYPE>::BackPropagateOnGPU(int pTime) {
-    return this->BackPropagate(pTime);
+    Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
+    Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
+    Tensor<DTYPE> *input_delta   = this->GetOperator()->GetDelta();
+
+    int batchsize = input_delta->GetBatchSize();
+    int colsize   = input_delta->GetColSize();
+    int capacity  = batchsize * colsize;
+
+    DTYPE *pDevSoftMax    = softmaxresult->GetGPUData(pTime);
+    DTYPE *pDevLabel      = label->GetGPUData(pTime);
+    DTYPE *pDevInputDelta = input_delta->GetGPUData(pTime);
+
+    int noBlock = 3, threadsPerBlock = 128;
+    GetKernelParameters(capacity, &noBlock, &threadsPerBlock);
+
+    SoftmaxCrossEntropy_BackPropagate_kernel << < noBlock, threadsPerBlock >> > (pTime, capacity, pDevInputDelta, pDevLabel, pDevSoftMax);
+
+    return NULL;
 }
 
 #endif  // ifdef __CUDNN__
