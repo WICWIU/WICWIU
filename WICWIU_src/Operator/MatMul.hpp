@@ -126,19 +126,19 @@ public:
                                               rowsizeOfWeight, 1, 1, colsizeOfWeight));
 
         checkCUDNN(cudnnSetConvolution2dDescriptor(convDesc, 0, 0, 1, 1,
-                                                   1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+                                                   1, 1, CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
 
         checkCUDNN(cudnnGetConvolutionForwardAlgorithm(this->GetCudnnHandle(), inputTensorDesc, filterDesc, convDesc, outputTensorDesc,
-                                                       CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, 0, &m_algo));
+                                                       CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &m_algo));
 
         checkCUDNN(cudnnGetConvolutionForwardWorkspaceSize(this->GetCudnnHandle(), inputTensorDesc, filterDesc, convDesc,
                                                            outputTensorDesc, m_algo, &m_sizeInBytes));
 
         checkCUDNN(cudnnGetConvolutionBackwardDataAlgorithm(this->GetCudnnHandle(), filterDesc, deltaDesc, convDesc, inputDeltaDesc,
-                                                            CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, 0, &m_dataAlgo));
+                                                            CUDNN_CONVOLUTION_BWD_DATA_PREFER_FASTEST, 0, &m_dataAlgo));
 
         checkCUDNN(cudnnGetConvolutionBackwardFilterAlgorithm(this->GetCudnnHandle(), inputTensorDesc, deltaDesc, convDesc, filterDeltaDesc,
-                                                              CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, 0, &m_filterAlgo));
+                                                              CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, 0, &m_filterAlgo));
 
         checkCUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(this->GetCudnnHandle(), filterDesc, deltaDesc, convDesc, inputDeltaDesc, m_dataAlgo, &m_dataSizeInBytes));
 
