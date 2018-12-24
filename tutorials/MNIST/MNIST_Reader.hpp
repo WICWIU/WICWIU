@@ -161,15 +161,16 @@ public:
             do {
                 this->CreateTrainDataPair(m_batchsize);
 
-                sem_wait(&m_empty);
-                sem_wait(&m_mutex);
-
 #ifdef __CUDNN__
                 if (m_isGPUData != -1) {
                     m_aTrainImageFeed->SetDeviceGPU(m_isGPUData);
                     m_aTrainLabelFeed->SetDeviceGPU(m_isGPUData);
                 }
 #endif  // __CUDNN__
+
+                sem_wait(&m_empty);
+                sem_wait(&m_mutex);
+
                 this->AddData2Buffer(m_aTrainImageFeed, m_aTrainLabelFeed);
 
                 sem_post(&m_mutex);
@@ -182,15 +183,15 @@ public:
             do {
                 this->CreateTestDataPair(m_batchsize);
 
-                sem_wait(&m_empty);
-                sem_wait(&m_mutex);
-
 #ifdef __CUDNN__
                 if (m_isGPUData != -1) {
                     m_aTestImageFeed->SetDeviceGPU(m_isGPUData);
                     m_aTestLabelFeed->SetDeviceGPU(m_isGPUData);
                 }
 #endif  // __CUDNN__
+
+                sem_wait(&m_empty);
+                sem_wait(&m_mutex);
 
                 this->AddData2Buffer(m_aTestImageFeed, m_aTestLabelFeed);
 
