@@ -72,7 +72,15 @@ $ cd WICWIU/tutorials/MNIST
 $ make
 $ ./main
 ```
-
+## CPU 동작을 원하시면 다음과 같은 방법으로 실행할 수 있습니다. (처음 받으시면 GPU로 환경설정이 되어 있습니다.)
+```bash 
+$ cd WICWIU/
+* makefile에서 ENABLE_CUDNN = -D__CUDNN__ 주석 처리 
+$ make 
+$ cd tutorials/MNIST
+$ make
+$ ./main
+```
 자세한 사용방법은 예제파일을 참고하여 주시고, 추후 자료를 보강하도록 하겠습니다.
 
 
