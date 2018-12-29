@@ -4,9 +4,6 @@
 #include <vector>
 #include <ctime>
 #include <cstdlib>
-#include <queue>
-#include <semaphore.h>
-#include <pthread.h>
 
 #include "../../WICWIU_src/Tensor.hpp"
 
@@ -50,29 +47,14 @@ private:
     Tensor<DTYPE> *m_aTrainImageFeed;
     Tensor<DTYPE> *m_aTrainLabelFeed;
 
-    queue<Tensor<DTYPE> **> *m_aaQForData;  // buffer Size is independently define here
-
-    pthread_t m_thread;
-    sem_t m_full;
-    sem_t m_empty;
-    sem_t m_mutex;
-
     vector<int> *m_ShuffledListTest;
     vector<int> *m_ShuffledListTrain;
 
     int m_RecallNumOfTest;
     int m_RecallNumOfTrain;
 
-    int m_AsTrainData;
-
-    int m_batchsize;
-
-    int m_work;
-
-    int m_isGPUData;
-
 public:
-    MNISTDataSet(int pAsTrainData = TRUE, int bufferSize = 10, int batchSize = 100, int isGPUData = -1) {
+    MNISTDataSet() {
         m_aaTestImage  = NULL;
         m_aaTestLabel  = NULL;
         m_aaTrainImage = NULL;
@@ -88,16 +70,6 @@ public:
 
         m_RecallNumOfTest  = 0;
         m_RecallNumOfTrain = 0;
-
-        m_AsTrainData = pAsTrainData;
-
-        sem_init(&m_full,  0, 0);
-        sem_init(&m_empty, 0, bufferSize);
-        sem_init(&m_mutex, 0, 1);
-
-        m_batchsize = batchSize;
-        m_work      = TRUE;
-        m_isGPUData = isGPUData;
 
         Alloc();
     }
@@ -116,8 +88,6 @@ public:
 
         m_ShuffledListTest  = new vector<int>(aNumTest, aNumTest + NUMOFTESTDATA);
         m_ShuffledListTrain = new vector<int>(aNumTrain, aNumTrain + NUMOFTRAINDATA);
-
-        m_aaQForData = new queue<Tensor<DTYPE> **> ();
     }
 
     void Delete() {
@@ -142,92 +112,6 @@ public:
         // delete m_aTestLabelFeed;
         // delete m_aTrainImageFeed;
         // delete m_aTrainLabelFeed;
-    }
-
-    void StartProduce() {
-        pthread_create(&m_thread, NULL, &MNISTDataSet::ThreadFuncForDataPreprocess, (void *)this);
-    }
-
-    static void* ThreadFuncForDataPreprocess(void *arg) {
-        MNISTDataSet<DTYPE> *reader = (MNISTDataSet<DTYPE> *)arg;
-
-        reader->DataPreprocess();
-
-        return NULL;
-    }
-
-    int DataPreprocess() {
-        if (m_AsTrainData) {
-            do {
-                this->CreateTrainDataPair(m_batchsize);
-
-#ifdef __CUDNN__
-                if (m_isGPUData != -1) {
-                    m_aTrainImageFeed->SetDeviceGPU(m_isGPUData);
-                    m_aTrainLabelFeed->SetDeviceGPU(m_isGPUData);
-                }
-#endif  // __CUDNN__
-
-                sem_wait(&m_empty);
-                sem_wait(&m_mutex);
-
-                this->AddData2Buffer(m_aTrainImageFeed, m_aTrainLabelFeed);
-
-                sem_post(&m_mutex);
-                sem_post(&m_full);
-
-                m_aTrainImageFeed = NULL;
-                m_aTrainLabelFeed = NULL;
-            } while (m_work);
-        } else {
-            do {
-                this->CreateTestDataPair(m_batchsize);
-
-#ifdef __CUDNN__
-                if (m_isGPUData != -1) {
-                    m_aTestImageFeed->SetDeviceGPU(m_isGPUData);
-                    m_aTestLabelFeed->SetDeviceGPU(m_isGPUData);
-                }
-#endif  // __CUDNN__
-
-                sem_wait(&m_empty);
-                sem_wait(&m_mutex);
-
-                this->AddData2Buffer(m_aTestImageFeed, m_aTestLabelFeed);
-
-                sem_post(&m_mutex);
-                sem_post(&m_full);
-
-                m_aTestImageFeed = NULL;
-                m_aTestLabelFeed = NULL;
-            } while (m_work);
-        }
-
-        return TRUE;
-    }
-
-    int AddData2Buffer(Tensor<DTYPE> *setOfImage, Tensor<DTYPE> *setOfLabel) {
-        Tensor<DTYPE> **result = new Tensor<DTYPE> *[2];
-
-        result[0] = setOfImage;
-        result[1] = setOfLabel;
-
-        m_aaQForData->push(result);
-
-        return TRUE;
-    }
-
-    Tensor<DTYPE>** GetDataFromBuffer() {
-        sem_wait(&m_full);
-        sem_wait(&m_mutex);
-
-        Tensor<DTYPE> **result = m_aaQForData->front();
-        m_aaQForData->pop();
-
-        sem_post(&m_mutex);
-        sem_post(&m_empty);
-
-        return result;
     }
 
     void CreateTestDataPair(int pBatchSize) {
@@ -451,21 +335,13 @@ DTYPE** ReShapeData(OPTION pOption) {
 }
 
 template<typename DTYPE>
-MNISTDataSet<DTYPE>* CreateMNISTTrainDataSet(int bufferSize = 10, int batchSize = 100, int isGPUData = -1) {
-    MNISTDataSet<DTYPE> *dataset = new MNISTDataSet<DTYPE>(TRUE, bufferSize, batchSize, isGPUData);
-
-    dataset->SetTrainImage(ReShapeData<DTYPE>(TRAINIMAGE));
-    dataset->SetTrainLabel(ReShapeData<DTYPE>(TRAINLABEL));
-
-    return dataset;
-}
-
-template<typename DTYPE>
-MNISTDataSet<DTYPE>* CreateMNISTTestDataSet(int bufferSize = 10, int batchSize = 100, int isGPUData = -1) {
-    MNISTDataSet<DTYPE> *dataset = new MNISTDataSet<DTYPE>(FALSE, bufferSize, batchSize, isGPUData);
+MNISTDataSet<DTYPE>* CreateMNISTDataSet() {
+    MNISTDataSet<DTYPE> *dataset = new MNISTDataSet<DTYPE>();
 
     dataset->SetTestImage(ReShapeData<DTYPE>(TESTIMAGE));
     dataset->SetTestLabel(ReShapeData<DTYPE>(TESTLABEL));
+    dataset->SetTrainImage(ReShapeData<DTYPE>(TRAINIMAGE));
+    dataset->SetTrainLabel(ReShapeData<DTYPE>(TRAINLABEL));
 
     return dataset;
 }

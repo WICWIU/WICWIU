@@ -8,7 +8,7 @@
 #define EPOCH             1000
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             0
+#define GPUID             1
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
@@ -25,11 +25,7 @@ int main(int argc, char const *argv[]) {
     // NeuralNetwork<float> *net = Resnet14<float>(x, label);
 
     // ======================= Prepare Data ===================
-    MNISTDataSet<float> *train_dataset = CreateMNISTTrainDataSet<float>(10, 100, GPUID);
-    train_dataset->StartProduce();
-    MNISTDataSet<float> *test_dataset  = CreateMNISTTestDataSet<float>(10, 100, GPUID);
-    test_dataset->StartProduce();
-    Tensor<float> **data = NULL;
+    MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
 
 #ifdef __CUDNN__
     // x->SetDeviceGPU(GPUID);
@@ -67,19 +63,18 @@ int main(int argc, char const *argv[]) {
 
         net->SetModeTrain();
 
-        nProcessExcuteTime = 0;
         startTime = clock();
-        for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-            data = train_dataset->GetDataFromBuffer();
-            Tensor<float> *x_t = data[0];
-            Tensor<float> *l_t = data[1];
-            delete data;
-            data = NULL;
 
-// #ifdef __CUDNN__
-//             x_t->SetDeviceGPU(GPUID);  // 추후 자동화 필요
-//             l_t->SetDeviceGPU(GPUID);
-// #endif  // __CUDNN__
+        for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
+            dataset->CreateTrainDataPair(BATCH);
+
+            Tensor<float> *x_t = dataset->GetTrainFeedImage();
+            Tensor<float> *l_t = dataset->GetTrainFeedLabel();
+
+#ifdef __CUDNN__
+            x_t->SetDeviceGPU(GPUID);  // 추후 자동화 필요
+            l_t->SetDeviceGPU(GPUID);
+#endif  // __CUDNN__
             // std::cin >> temp;
             net->FeedInputTensor(2, x_t, l_t);
             net->ResetParameterGradient();
@@ -95,8 +90,8 @@ int main(int argc, char const *argv[]) {
                    /*nProcessExcuteTime*/);
             fflush(stdout);
         }
-        endTime = clock();
-        nProcessExcuteTime += ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
+        endTime            = clock();
+        nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
         // ======================= Test ======================
@@ -106,16 +101,15 @@ int main(int argc, char const *argv[]) {
         net->SetModeInference();
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
-            data = test_dataset->GetDataFromBuffer();
-            Tensor<float> *x_t = data[0];
-            Tensor<float> *l_t = data[1];
-            delete data;
-            data = NULL;
+            dataset->CreateTestDataPair(BATCH);
 
-// #ifdef __CUDNN__
-//             x_t->SetDeviceGPU(GPUID);
-//             l_t->SetDeviceGPU(GPUID);
-// #endif  // __CUDNN__
+            Tensor<float> *x_t = dataset->GetTestFeedImage();
+            Tensor<float> *l_t = dataset->GetTestFeedLabel();
+
+#ifdef __CUDNN__
+            x_t->SetDeviceGPU(GPUID);
+            l_t->SetDeviceGPU(GPUID);
+#endif  // __CUDNN__
 
             net->FeedInputTensor(2, x_t, l_t);
             net->Test();
@@ -143,8 +137,7 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-    delete train_dataset;
-    delete test_dataset;
+    delete dataset;
     delete net;
 
     return 0;
