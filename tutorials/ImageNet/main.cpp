@@ -17,7 +17,7 @@
 #define LEARNING_RATE_DECAY_TIMING    10
 
 int main(int argc, char const *argv[]) {
-    time_t startTime; //
+    time_t startTime;
     struct tm *curr_tm;
     double     nProcessExcuteTime;
     float mean[]   = { 0.485, 0.456, 0.406 };
