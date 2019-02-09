@@ -6,6 +6,13 @@
 template<typename DTYPE>
 class Sigmoid : public Operator<DTYPE>{
 public:
+    /*!
+    @brief Sigmoid의 생성자.
+    @details 파라미터로 받은 pInput으로 Alloc한다.
+    @param pInput Alloc할 대상 Operator
+    @param pName Operator에 사용자가 부여한 이름.
+    @ref int Alloc(Operator<DTYPE> *pInput)
+    */
     Sigmoid(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
         std::cout << "Sigmoid::Sigmoid(Operator *)" << '\n';
@@ -13,10 +20,19 @@ public:
         this->Alloc(pInput);
     }
 
+    /*!
+    @brief Sigmoid의 소멸자.
+    */
     ~Sigmoid() {
         std::cout << "Sigmoid::~Sigmoid()" << '\n';
     }
 
+    /*!
+    @brief 파라미터로 받은 pInput으로부터 맴버 변수들을 초기화 한다.
+    @details Result와 Gradient를 저장하기 위해 pInput의 Shape과 같은 dim을 갖는 Tensor를 생성한다.
+    @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
+    @return 성공 시 TRUE.
+    */
     int Alloc(Operator<DTYPE> *pInput) {
         #ifdef __DEBUG__
         std::cout << "Sigmoid::Alloc(Operator *, Operator *)" << '\n';
@@ -35,6 +51,12 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief Sigmoid의 ForwardPropagate 매소드.
+    @details input의 Tensor값들을  SIGMOID값을 취한 뒤 result에 저장한다.
+    @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
@@ -64,6 +86,12 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief SIGMOID의 BackPropagate 매소드.
+    @details result값으로 Sigmoid 미분 값을 계산하여 input_delta에 더한다.
+    @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *result      = this->GetResult();
         Tensor<DTYPE> *this_delta  = this->GetDelta();
@@ -109,6 +137,12 @@ public:
 
 #endif  // __CUDNN__
 
+    /*!
+    @brief SIGMOID 함수
+    @details 1.0/(1.0 + e^(-x))
+    @param data SIGMOID할 값
+    @return data를 SIGMOID함수에 넣은 결과 값.
+    */
     inline DTYPE SIGMOID(DTYPE data) {
         return 1.F / (1.F + (DTYPE)exp(-data));
     }

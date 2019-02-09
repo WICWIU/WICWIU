@@ -20,6 +20,13 @@ private:
 
 
 public:
+    /*!
+    @brief LRelu의 생성자.
+    @details 파라미터로 받은 pInput, negativeSlope으로 Alloc한다.
+    @param pInput Alloc할 대상 Operator
+    @param negativeSlope 입력값이 음수일 경우 사용하는 기울기
+    @ref int Alloc(Operator<DTYPE> *pInput, float negativeSlope)
+    */
     LRelu(Operator<DTYPE> *pInput, float negativeSlope) : Operator<DTYPE>(pInput) {
         #ifdef __DEBUG__
         std::cout << "LRelu::LRelu(Operator<DTYPE> *)" << '\n';
@@ -27,6 +34,14 @@ public:
         this->Alloc(pInput, negativeSlope);
     }
 
+    /*!
+    @brief LRelu의 생성자.
+    @details 파라미터로 받은 pInput, negativeSlope으로 Alloc한다.
+    @param pInput Alloc할 대상 Operator
+    @param negativeSlope 입력값이 음수일 경우 사용하는 기울기
+    @param pName Operator에 사용자가 부여한 이름.
+    @ref int Alloc(Operator<DTYPE> *pInput, float negativeSlope)
+    */
     LRelu(Operator<DTYPE> *pInput, float negativeSlope, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
         std::cout << "LRelu::LRelu(Operator<DTYPE> *)" << '\n';
@@ -35,6 +50,10 @@ public:
 
     }
 
+    /*!
+    @brief LRelu의 소멸자.
+    @see void Delete()
+    */
     ~LRelu() {
         #ifdef __DEBUG__
         std::cout << "LRelu::~LRelu()" << '\n';
@@ -43,6 +62,14 @@ public:
         Delete();
     }
 
+    /*!
+    @brief 파라미터로 받은 pinput으로부터 맴버 변수들을 초기화 한다.
+    @details Result와 Gradient를 저장하기 위해 pInput의 Shape과 같은 dim을 갖는 Tensor를 생성한다.
+    @details  negativeSlope은 m_negativeSlope에 저장한다.
+    @param pInput 생성할 Tensor의 Shape정보를 가진 Operator
+    @param negativeSlope 입력값이 음수일 경우 사용하는 기울기
+    @return 성공 시 TRUE.
+    */
     int Alloc(Operator<DTYPE> *pInput, float negativeSlope) {
         #ifdef __DEBUG__
         std::cout << "LRelu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
@@ -131,6 +158,13 @@ public:
 #endif  // if __CUDNN__
     }
 
+    /*!
+    @brief LRelu의 ForwardPropagate 매소드.
+    @details input의 Tensor값들 중 0.f이상의 값은 그대로 result에 저장하고,
+    @details 0.f미만의 값은 m_negativeSlope을 곱한 후 저장한다.
+    @param pTime pInput의 m_timesize값, default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
@@ -229,6 +263,13 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief LRelu의 BackPropagate 매소드.
+    @details result값이 0보다 클 경우 input_delta에 더하고,
+    @details 0보다 작을 경우 input_delta에 m_negativeSlope을 곱한 후 더한다.
+    @param pTime pInput의 m_timesize값, default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *result      = this->GetResult();
         Tensor<DTYPE> *this_delta  = this->GetGradient();

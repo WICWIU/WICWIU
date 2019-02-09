@@ -3,18 +3,38 @@
 
 #include "../LossFunction.hpp"
 
+/*!
+@class SoftmaxCrossEntropy Cross Entropy를 이용해 뉴럴 네트워크의 손실 함수를 계산하는 클래스
+@details Cross Entropy 계산 식을 이용해 뉴럴 네트워크의 순전파를 통해 계산된 출력 Tensor와 레이블 값의 손실 함수를 계산한다
+@details Softmax Function을 뉴럴 네트워크의 마지막 Operator로 사용해 뉴럴 네트워크의 Gradient 계산을 용이하게 한다
+*/
 template<typename DTYPE>
 class SoftmaxCrossEntropy : public LossFunction<DTYPE>{
 private:
     Tensor<DTYPE> *m_aSoftmaxResult;
+    ///< Softmax 연산의 Result 텐서에 대한 포인터
     DTYPE m_epsilon;  // for backprop
+    ///< translation 요소 멤버 변수
 
     int m_timesize;
+    ///< Time 축의 사이즈 멤버 변수
 
     DTYPE **sum;
+    ///< 텐서의 합을 저장하기 위한 이중 포인터
     DTYPE **max;
+    ///< 텐서의 최댓값을 저장하기 위한 이중 포인터
 
 public:
+    /*!
+    @brief SoftmaxCrossEntropy LossFunction 클래스 생성자
+    @details LossFunction 클래스의 생성자를 호출하고, Operator와 epsilon을 매개변수로 전달하여 SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) 메소드를 호출한다.
+    @param pOperator SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) 메소드의 매개변수로 전달할 Operator
+    @param pLabel LossFunction의 입력 레이블에 해당하는 Operator
+    @param epsilon 연산에 대한 translation 요소
+    @param pName LossFunction의 이름, 지정하지 않을 시 "NO NAME"으로 초기화
+    @return 없음
+    @see SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon)
+    */
     SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon, std::string pName = "NO NAME") : LossFunction<DTYPE>(pOperator, pLabel, pName) {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::SoftmaxCrossEntropy(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
@@ -22,6 +42,15 @@ public:
         Alloc(pOperator, epsilon);
     }
 
+    /*!
+    @brief SoftmaxCrossEntropy LossFunction 클래스 생성자
+    @details LossFunction 클래스의 생성자를 호출하고, Operator와 1e-6f에 해당하는 epsilon 값을 매개변수로 전달하여 SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) 메소드를 호출한다.
+    @param pOperator SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) 메소드의 매개변수로 전달할 Operator
+    @param pLabel LossFunction의 입력 레이블에 해당하는 Operator
+    @param pName LossFunction의 이름, 지정하지 않을 시 "NO NAME"으로 초기화
+    @return 없음
+    @see SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon)
+    */
     SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName = "NO NAME") : LossFunction<DTYPE>(pOperator, pLabel, pName) {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::SoftmaxCrossEntropy(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
@@ -29,6 +58,11 @@ public:
         Alloc(pOperator, 1e-6f);
     }
 
+    /*!
+    @brief SoftmaxCrossEntropy LossFunction 클래스 소멸자
+    @details SoftmaxCrossEntropy<DTYPE>::Delete() 메소드를 호출하고 클래스를 소멸시킨다
+    @return 없음
+    */
     virtual ~SoftmaxCrossEntropy() {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::~SoftmaxCrossEntropy()" << '\n';
@@ -36,6 +70,13 @@ public:
         Delete();
     }
 
+    /*!
+    @brief SoftmaxCrossEntropy 클래스의 멤버 변수들을 초기화하는 메소드
+    @details SoftmaxCrossEntropy 클래스의 멤버 변수들의 값을 초기화 하고 포인터 멤버 변수들에 동적으로 메모리를 할당한다.
+    @param pOperator SoftmaxCrossEntropy 클래스에 대한 입력 Operator
+    @param epsilon 연산에 대한 translation 요소
+    @return TRUE
+    */
     int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::Alloc(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
@@ -69,12 +110,22 @@ public:
     }
 
     #ifdef __CUDNN__
+    /*!
+    @brief GPU 연산을 위해 softmax Result 텐서의 GPU Device 정보를 번경하는 메소드
+    @param idOfDevice 학습에 이용하고자 하는 GPU의 장치 번호
+    @return 없음
+    */
     void InitializeAttributeForGPU(unsigned int idOfDevice) {
         m_aSoftmaxResult->SetDeviceGPU(idOfDevice);
     }
 
     #endif  // if __CUDNN__
 
+    /*!
+    @brief 동적으로 할당한 멤버 변수들을 메모리 해제하는 메소드
+    @details softmax Result 텐서 포인터, sum 포인터, max 포인터를 할당 해제한다
+    @return 없음
+    */
     virtual void Delete() {
         if (m_aSoftmaxResult) {
             delete m_aSoftmaxResult;
@@ -98,6 +149,13 @@ public:
         }
     }
 
+    /*!
+    @brief SoftmaxCrossEntropy LossFunction의 순전파를 수행하는 메소드
+    @details LossFunction의 입력 Operator의 Tensor 값에 대해서 softmax 함수 값을 계산하고 이를 레이블 값과 비교해 Cross Entropy를 구한다
+    @details 연산을 용이하게 하기 위해 Max값과 epsilon 값을 사용한다
+    @param pTime 입력 Tensor의 Time 축의 Dimension
+    @return LossFunction의 입력 Operator에 대한 Softmax Cross Entropy
+    */
     Tensor<DTYPE>* ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input         = this->GetTensor();
         Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
@@ -156,6 +214,12 @@ public:
         return result;
     }
 
+    /*!
+    @brief Softmax CrossEntropy LossFunction의 역전파를 수행하는 메소드
+    @details 구성한 뉴럴 네트워크에서 얻어진 Softmax CrossEntropy LossFunction에 대한 입력 Tensor의 Gradient를 계산한다
+    @param pTime 입력 Tensor의 Time 축의 Dimension
+    @return NULL
+    */
     Tensor<DTYPE>* BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
         Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
@@ -232,6 +296,13 @@ public:
 #endif  // __CUDNN__
 
 
+    /*!
+    @brief 지정된 범위 안에서 입력 Tensor의 데이터 값 중 최댓값을 반환하는 메소드
+    @param input 입력 Tensor의 포인터
+    @param start 범위의 시작 인덱스
+    @param end 범위 종료 인덱스
+    @return 지정된 범위 안에서 입력 Tensor의 데이터 값의 최댓값
+    */
     DTYPE Max(Tensor<DTYPE> *input, int start, int end) {
         DTYPE max = (*input)[start];
 

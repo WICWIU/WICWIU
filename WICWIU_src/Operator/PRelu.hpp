@@ -22,6 +22,13 @@ private:
 #endif  // __CUDNN__
 
 public:
+    /*!
+    @brief PRelu의 생성자.
+    @details 파라미터로 받은 pInput, pWeight으로 Alloc한다.
+    @param pInput Alloc할 대상 Operator
+    @param pWeight 입력값이 음수일 경우 사용하는 기울기
+    @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight)
+    */
     PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight) : Operator<DTYPE>(pInput, pWeight) {
         #ifdef __DEBUG__
         std::cout << "PRelu::PRelu(Operator<DTYPE> *)" << '\n';
@@ -29,6 +36,14 @@ public:
         this->Alloc(pInput, pWeight);
     }
 
+    /*!
+    @brief PRelu의 생성자.
+    @details 파라미터로 받은 pInput, pWeight으로 Alloc한다.
+    @param pInput Alloc할 대상 Operator
+    @param pWeight 입력값이 음수일 경우 사용하는 기울기
+    @param pName Operator에 사용자가 부여한 이름.
+    @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight)
+    */
     PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, std::string pName) : Operator<DTYPE>(pInput, pWeight, pName) {
         #ifdef __DEBUG__
         std::cout << "PRelu::PRelu(Operator<DTYPE> *)" << '\n';
@@ -36,6 +51,10 @@ public:
         this->Alloc(pInput, pWeight);
     }
 
+    /*!
+    @brief LRelu의 소멸자.
+    @see void Delete()
+    */
     ~PRelu() {
         #ifdef __DEBUG__
         std::cout << "PRelu::~PRelu()" << '\n';
@@ -44,6 +63,13 @@ public:
         Delete();
     }
 
+    /*!
+    @brief 파라미터로 받은 pinput으로부터 맴버 변수들을 초기화 한다.
+    @details Result와 Gradient를 저장하기 위해 pInput의 Shape과 같은 dim을 갖는 Tensor를 생성한다.
+    @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
+    @param pWeight 입력값이 음수일 경우 사용하는 Tensor의 정보를 가진 Operator
+    @return 성공 시 TRUE.
+    */
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight) {
         #ifdef __DEBUG__
         std::cout << "PRelu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
@@ -123,6 +149,13 @@ public:
 #endif  // if __CUDNN__
 
 
+    /*!
+    @brief PRelu의 ForwardPropagate 매소드.
+    @details input의 Tensor값들 중 0.f이상의 값은 그대로 result에 저장하고,
+    @details 0.f미만의 값은 weight Tensor의 값과 곱한 후 저장한다.
+    @param pTime pInput의 m_timesize값, default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight  = this->GetInput()[1]->GetResult();
@@ -170,6 +203,15 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief PRelu의 BackPropagate 매소드.
+    @details input_delta는 result값이 0보다 클 경우 input_delta에 더하고,
+    @details 0보다 작을 경우 input_delta에 weight을 곱한 후 더한다.
+    @details weight_delta는 result값이 0보다 클 경우 0에 더하고,
+    @details 0보다 작을 경우 input_delta에 input을 곱한 후 더한다.
+    @param pTime pInput의 m_timesize값, default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight  = this->GetInput()[1]->GetResult();

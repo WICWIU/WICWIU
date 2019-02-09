@@ -6,6 +6,12 @@
 template<typename DTYPE>
 class Tanh : public Operator<DTYPE>{
 public:
+    /*!
+    @brief Tanh의 생성자
+    @details 파라미터로 받은 pInput으로 Alloc한다.
+    @param pInput Alloc할 대상 Operator
+    @param pName Operator에 사용자가 부여한 이름.
+    */
     Tanh(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
         #ifdef __DEBUG__
         std::cout << "Tanh::Tanh(Operator *)" << '\n';
@@ -13,10 +19,19 @@ public:
         this->Alloc(pInput);
     }
 
+    /*!
+    @brief Tanh의 소멸자.
+    */
     ~Tanh() {
         std::cout << "Tanh::~Tanh()" << '\n';
     }
 
+    /*!
+    @brief 파라미터로 받은 pInput으로부터 맴버 변수들을 초기화 한다.
+    @details Result와 Gradient를 저장하기 위해 pInput의 Shape과 같은 dim을 갖는 Tensor를 생성한다.
+    @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
+    @return 성공 시 TRUE.
+    */
     int Alloc(Operator<DTYPE> *pInput) {
         #ifdef __DEBUG__
         std::cout << "Tanh::Alloc(Operator *, Operator *)" << '\n';
@@ -35,6 +50,12 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief Tanh의 ForwardPropagate 매소드
+    @details input의 Tensor값들을 Tanh을 취한 뒤 result에 저장한다.
+    @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
@@ -64,6 +85,12 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief Tanh의 BackPropagate 매소드.
+    @details result값으로 tanh의 미분 값을 계산하여 input_delta에 더한다.
+    @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *result      = this->GetResult();
         Tensor<DTYPE> *this_delta  = this->GetDelta();

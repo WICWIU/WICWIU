@@ -8,29 +8,52 @@ template<typename DTYPE> class MatMul : public Operator<DTYPE>{
 private:
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, outputTensorDesc, deltaDesc, inputDeltaDesc;
+    ///< GPU내의 Tensor값들을 가르키기 위한 descriptor.
     cudnnConvolutionDescriptor_t convDesc;
+    ///< Convolution에 대한 description을 포함하는 구조체 포인터.
     cudnnFilterDescriptor_t filterDesc, filterDeltaDesc;
+    ///< 필터 데이터셋을 가리키는 구조체 포인터.
     DTYPE *m_pDevInput, *m_pDevOutput, *m_pDevFilter, *m_pDevInputDelta, *m_pDevDelta, *m_pDevFilterDelta;
+    ///<  cudnn 연산에서 사용 할 데이터를 가리키는 맴버 변수.
     // DTYPE *m_pHostInput, *m_pHostOutput, *m_pHostFilter, *m_pHostInputDelta, *m_pHostDelta, *m_pHostFilterDelta;
 
     cudnnConvolutionFwdAlgo_t m_algo;
+    ///< ForwardPropagate Convolution연산을 하기 위한 다양한 알고리즘을 제공하는 변수.
     cudnnConvolutionBwdFilterAlgo_t m_filterAlgo;
+    ///< BackwardPropagate Convolution연산을 하기 위한 다양한 알고리즘을 제공하는 변수.
     cudnnConvolutionBwdDataAlgo_t m_dataAlgo;
+    ///< BackwardPropagate Convolution연산을 하기 위한 다양한 알고리즘을 제공하는 변수.
 
     size_t m_sizeInBytes;
+    ///< Convolution 연산에 필요한 메모리를 계산하여 저장하기 위한 맴버변수.
     size_t m_dataSizeInBytes;
+    ///< Convolution 연산에 필요한 메모리를 계산하여 저장하기 위한 맴버변수.
     size_t m_filterSizeInBytes;
+    ///< Convolution 연산에 필요한 메모리를 계산하여 저장하기 위한 맴버변수.
 
     DTYPE m_alpha;
+    ///< 연산 간 두 Operand의 가중치를 표현하기 위한 변수. ex) z = α*x + β*y
     DTYPE m_beta;
+    ///< 연산 간 두 Operand의 가중치를 표현하기 위한 변수. ex) z = α*x + β*y
 
     void *m_devWorkSpace;
+    ///< Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
     void *m_dataDevWorkSpace;
+    ///<  Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
     void *m_filterDevWorkSpace;
+    ///<  Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
 
 #endif  // __CUDNN__
 
 public:
+    /*!
+    @brief MatMul의 생성자.
+    @details 파라미터로 받은 pWeight와 pInput으로 Alloc한다.
+    @param pWeight MatMul할 weight.
+    @param pInput Matmul할 input Operator.
+    @param pName 사용자가 부여한 Operator이름.
+    @ref int Alloc(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput)
+    */
     MatMul(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pWeight, pInput, pName) {
         #ifdef __DEBUG__
         std::cout << "MatMul::MatMul(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
@@ -38,6 +61,11 @@ public:
         this->Alloc(pWeight, pInput);
     }
 
+    /*!
+    @brief MatMul의 소멸자
+    @details Delete매소드를 사용해 GPU에 할당했던 값들을 해제한다.
+    @ref void Delete()
+    */
     virtual ~MatMul() {
         #ifdef __DEBUG__
         std::cout << "Convolution2D::~Convolution2D()" << '\n';
@@ -45,6 +73,15 @@ public:
         Delete();
     }
 
+    /*!
+    @brief 파라미터로 받은 pWeight, pInput으로 맴버 변수들을 초기화 한다.
+    @details timesize, batchsize, channelsize, row_size는 pInput의 Shape과 같게,  colsize는 pWeight와 같게 초기화한다.
+    @details input x weight을 하기 때문에 rowsize는 pInput의 Shape을, colsize는 pWeight의 Shape을 받는다.
+    @details Result와 Delta를 저장하기 위해 input의 rowsize, weight의 colsize를 갖는 Tensor를 생성한다.
+    @param pWeight MatMul할 weight.
+    @param pInput Matmul할 input Operator.
+    @return 성공 시 TRUE.
+    */
     int Alloc(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput) {
         #ifdef __DEBUG__
         std::cout << "MatMul::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
@@ -64,6 +101,12 @@ public:
     }
 
 #ifdef __CUDNN__
+    /*!
+    @brief cudnn을 사용하기 전 관련 맴버변수들을 초기화 한다.
+    @details TensorDesriptor들을 생성하고, TensorDesriptor들의 데이터가 batch, channel, row, col 순서로 배치되도록 지정한다.
+    @details Convolution연산에 필요한 알고리즘을 정의하고, 연산에 필요한 메모리공간을 할당 받는다. MatMul은 Convolution연산을 이용한다.
+    @param idOfDevice 사용할 GPU의 id
+    */
     void InitializeAttributeForGPU(unsigned int idOfDevice) {
         Operator<DTYPE> *pWeight = this->GetInput()[0];
         Operator<DTYPE> *pInput  = this->GetInput()[1];
@@ -177,6 +220,11 @@ public:
 #endif  // if __CUDNN__
 
 
+    /*!
+    @brief GPU에 할당했던 메모리를 해제하고 각 포인터들을 NULL로 초기화한다.
+    @details inputTensorDesc, outputTensorDesc,deltaDesc, inputDeltaDesc, convDesc, filterDesc,filterDeltaDesc들을 삭제하고 NULL로 초기화한다.
+    @details m_devWorkSpace, m_dataDevWorkSpace, m_filterDevWorkSpace들이 가리키는 메모리를 해제한다.
+    */
     void Delete() {
 #ifdef __CUDNN__
 
@@ -218,6 +266,13 @@ public:
 #endif  // if __CUDNN__
     }
 
+    /*!
+    @brief MatMul의 ForwardPropagate매소드.
+    @details weight의 각 row의 값들과 input의 Colunm의 각 값들을 곱하여 result에 더한다.
+    @details [2 x 3] x [3 x 1]일때  3이 hiddensize
+    @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int ForwardPropagate(int pTime = 0) {
         Tensor<DTYPE> *weight = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input  = this->GetInput()[1]->GetResult();
@@ -259,6 +314,13 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief MatMul의 BackPropagate 매소드.
+    @details input_delta에 weight * this_delta값을 더해주고,
+    @details weight_gradient에는 input * this_delta값을 더해준다.
+    @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+    @return 성공 시 TRUE.
+    */
     int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *weight = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input  = this->GetInput()[1]->GetResult();
@@ -306,6 +368,13 @@ public:
     }
 
 #ifdef __CUDNN__
+    /*!
+    @brief GPU에서 동작하는 ForwardPropagate 메소드.
+    @details cudnn이 제공하는 Convolution ForwardPropagate 메소드를 이용하여 MatMul의 ForwardPropagate연산을 한다.
+    @details MatMul의 ForwardPropagate결과는 m_pDevOutput에 저장된다.
+    @param pTime 연산 할 Tensor가 위치한 Time값.
+    @return 성공 시 TRUE.
+    */
     int ForwardPropagateOnGPU(int pTime = 0) {
         Tensor<DTYPE> *weight = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *input  = this->GetInput()[1]->GetResult();
@@ -323,6 +392,13 @@ public:
         return TRUE;
     }
 
+    /*!
+    @brief GPU에서 동작하는 BackwardPropagate 메소드.
+    @details cudnn이 제공하는 Convolution BackwardPropagate 메소드를 아용하여 MatMul의 BackwardPropagate연산을 한다.
+    @details Convolution의 BackwardPropagate결과는 m_pDevInputDelta와 m_pDevFilterDelta에 저장된다.
+    @param pTime 연산 할 Tensor가 위치한 Time값.
+    @return 성공 시 TRUE.
+    */
     int BackPropagateOnGPU(int pTime = 0) {
         Tensor<DTYPE> *weight          = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *weight_gradient = this->GetInput()[0]->GetGradient();
