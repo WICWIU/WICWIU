@@ -2,9 +2,9 @@
 #define __MODULE_UTIL_H__    value
 
 #include "Module/LinearLayer.hpp"
-#include "Module/ConvoulutionLayer.hpp"
+#include "Module/ConvolutionLayer.hpp"
 #include "Module/BatchNormalizeLayer.hpp"
 // #include "Module/CUDNNBatchNormalizeLayer.h"
-#include "Module/TransposedConvoulutionLayer.hpp"
+#include "Module/TransposedConvolutionLayer.hpp"
 
 #endif // ifndef __MODULE_UTIL_H__

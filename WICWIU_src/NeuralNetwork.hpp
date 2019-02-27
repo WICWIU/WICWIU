@@ -115,7 +115,7 @@ public:
 
     int                           ResetParameterGradient();
 
-    Operator<DTYPE>             * SerchOperator(std::string pName);
+    Operator<DTYPE>             * SearchOperator(std::string pName);
 
     int                           Save(FILE *fileForSave);
     int                           Load(FILE *fileForLoad);
@@ -959,7 +959,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::ResetParameterGradient() {
     return TRUE;
 }
 
-template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SerchOperator(std::string pName) {
+template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(std::string pName) {
     std::string name = "NULL";
 
     for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
