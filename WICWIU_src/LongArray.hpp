@@ -418,11 +418,11 @@ template<typename DTYPE> int LongArray<DTYPE>::Load(unsigned int idxOfParameter)
     std::cout << "load" << '\n';
     #endif  // __BINARY__
 
-    int capacityOfData = 0;
+    int capacityOfData = idxOfParameter;
     char filename[idxOfParameter];
     sprintf(filename, "%d", idxOfParameter);
 
-    FILE *fp = fopen(filename, "wb");
+    FILE *fp = fopen(filename, "rb");
 
     std::cout << "idx" << '\n';
     std::cout << idxOfParameter << '\n';

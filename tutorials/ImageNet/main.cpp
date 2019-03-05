@@ -11,7 +11,7 @@
 #define LOOP_FOR_TRAIN                (1281144 / BATCH)
 #define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
 #define LOOP_FOR_TEST                 (50000 / BATCH)
-#define GPUID                         1
+#define GPUID                         0
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    10
@@ -23,8 +23,7 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[]      = "params";
-    char filename_info[] = "params_info";
+    char filename[]      = "ImageNet_parmas";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
@@ -58,19 +57,11 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    // std::cout << "Loading..." << '\n';
-    // FILE *fp = fopen(filename, "rb");
-    // net->Load(fp);
-    // fclose(fp);
-    //
-    // FILE *fp_info = fopen(filename_info, "rb");
-    // fread(&best_acc, sizeof(float), 1, fp_info);
-    // fread(&epoch,    sizeof(int),   1, fp_info);
-    // fclose(fp_info);
-    // std::cout << "Done!" << '\n';
+    std::cout << "Loading..." << '\n';
+    net->Load();
+    std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
-    std::cout << "filename_info : " << filename_info << '\n';
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
 
@@ -100,65 +91,65 @@ int main(int argc, char const *argv[]) {
             std::cout << "lr : " << lr << '\n';
         }
         // ======================= Train =======================
-        float train_avg_accuracy      = 0.f;
-        float train_avg_top5_accuracy = 0.f;
-        float train_cur_accuracy      = 0.f;
-        float train_cur_top5_accuracy = 0.f;
-        float train_avg_loss          = 0.f;
-        float train_cur_loss          = 0.f;
-
-        net->SetModeTrain();
-
-        for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-            data = train_data_reader->GetDataFromBuffer();
-
-    #ifdef __CUDNN__
-            data[0]->SetDeviceGPU(GPUID);  // 추후 자동화 필요
-            // std::cout << data[0]->GetShape() << '\n';
-            data[1]->SetDeviceGPU(GPUID);
-            // std::cout << data[1]->GetShape() << '\n';
-    #endif  // __CUDNN__
-
-            // std::cin >> temp;
-            // std::cout << "test" << '\n';
-            net->FeedInputTensor(2, data[0], data[1]);
-            // std::cout << "test" << '\n';
-            delete data;
-            data = NULL;
-            net->ResetParameterGradient();
-            // std::cout << "test" << '\n';
-            net->Train();
-            // std::cout << "test" << '\n';
-            // std::cin >> temp;
-            train_cur_accuracy      = net->GetAccuracy(NUMBER_OF_CLASS);
-            train_cur_top5_accuracy = net->GetTop5Accuracy(NUMBER_OF_CLASS);
-            train_cur_loss          = net->GetLoss();
-
-            train_avg_accuracy      += train_cur_accuracy;
-            train_avg_top5_accuracy += train_cur_top5_accuracy;
-            train_avg_loss          += train_cur_loss;
-
-            printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.4f, cur_acc : %0.5f, avg_acc : %0.5f, cur_top5_acc : %0.5f, avg_top5_acc : %0.5f"  /*(ExcuteTime : %f)*/,
-                   j + 1, LOOP_FOR_TRAIN,
-                   train_cur_loss,
-                   train_avg_loss / (j + 1),
-                   train_cur_accuracy,
-                   train_avg_accuracy / (j + 1),
-                   train_cur_top5_accuracy,
-                   train_avg_top5_accuracy / (j + 1));
-            fflush(stdout);
-
-            // if (train_cur_accuracy > train_cur_top5_accuracy) {
-            // std::cout << "anomaly" << '\n';
-            // int temp  = 0;
-            // std::cin >> temp;
-            // }
-            // sleep(30);
-            if (j % (LOOP_FOR_TRAIN / LOG_LENGTH) == (LOOP_FOR_TRAIN / LOG_LENGTH) - 1) {
-                std::cout << '\n';
-            }
-        }
-        std::cout << '\n';
+    //     float train_avg_accuracy      = 0.f;
+    //     float train_avg_top5_accuracy = 0.f;
+    //     float train_cur_accuracy      = 0.f;
+    //     float train_cur_top5_accuracy = 0.f;
+    //     float train_avg_loss          = 0.f;
+    //     float train_cur_loss          = 0.f;
+    //
+    //     net->SetModeTrain();
+    //
+    //     for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
+    //         data = train_data_reader->GetDataFromBuffer();
+    //
+    // #ifdef __CUDNN__
+    //         data[0]->SetDeviceGPU(GPUID);  // 추후 자동화 필요
+    //         // std::cout << data[0]->GetShape() << '\n';
+    //         data[1]->SetDeviceGPU(GPUID);
+    //         // std::cout << data[1]->GetShape() << '\n';
+    // #endif  // __CUDNN__
+    //
+    //         // std::cin >> temp;
+    //         // std::cout << "test" << '\n';
+    //         net->FeedInputTensor(2, data[0], data[1]);
+    //         // std::cout << "test" << '\n';
+    //         delete data;
+    //         data = NULL;
+    //         net->ResetParameterGradient();
+    //         // std::cout << "test" << '\n';
+    //         net->Train();
+    //         // std::cout << "test" << '\n';
+    //         // std::cin >> temp;
+    //         train_cur_accuracy      = net->GetAccuracy(NUMBER_OF_CLASS);
+    //         train_cur_top5_accuracy = net->GetTop5Accuracy(NUMBER_OF_CLASS);
+    //         train_cur_loss          = net->GetLoss();
+    //
+    //         train_avg_accuracy      += train_cur_accuracy;
+    //         train_avg_top5_accuracy += train_cur_top5_accuracy;
+    //         train_avg_loss          += train_cur_loss;
+    //
+    //         printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.4f, cur_acc : %0.5f, avg_acc : %0.5f, cur_top5_acc : %0.5f, avg_top5_acc : %0.5f"  /*(ExcuteTime : %f)*/,
+    //                j + 1, LOOP_FOR_TRAIN,
+    //                train_cur_loss,
+    //                train_avg_loss / (j + 1),
+    //                train_cur_accuracy,
+    //                train_avg_accuracy / (j + 1),
+    //                train_cur_top5_accuracy,
+    //                train_avg_top5_accuracy / (j + 1));
+    //         fflush(stdout);
+    //
+    //         // if (train_cur_accuracy > train_cur_top5_accuracy) {
+    //         // std::cout << "anomaly" << '\n';
+    //         // int temp  = 0;
+    //         // std::cin >> temp;
+    //         // }
+    //         // sleep(30);
+    //         if (j % (LOOP_FOR_TRAIN / LOG_LENGTH) == (LOOP_FOR_TRAIN / LOG_LENGTH) - 1) {
+    //             std::cout << '\n';
+    //         }
+    //     }
+    //     std::cout << '\n';
 
 
         // ======================= Test ======================
@@ -193,20 +184,18 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
         }
 
-        if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
-            std::cout << "\nsave parameters...";
-            FILE *fp = fopen(filename, "wb");
-            net->Save(fp);
-            fclose(fp);
-
-            FILE *fp_info = fopen(filename_info, "wb");
-            best_acc = test_avg_accuracy / LOOP_FOR_TEST;
-            fwrite(&best_acc, sizeof(float), 1, fp_info);
-            fwrite(&i,        sizeof(int),   1, fp_info);
-            fclose(fp_info);
-
-            std::cout << "done" << "\n\n";
-        } else std::cout << "\n\n";
+        // if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
+        //     std::cout << "\nsave parameters...";
+        //     net->Save();
+        //
+        //     // FILE *fp_info = fopen(filename_info, "wb");
+        //     // best_acc = test_avg_accuracy / LOOP_FOR_TEST;
+        //     // fwrite(&best_acc, sizeof(float), 1, fp_info);
+        //     // fwrite(&i,        sizeof(int),   1, fp_info);
+        //     // fclose(fp_info);
+        //
+        //     std::cout << "done" << "\n\n";
+        // } else std::cout << "\n\n";
     }
 
     train_data_reader->StopProduce();

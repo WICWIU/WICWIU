@@ -15,7 +15,6 @@ int main(int argc, char const *argv[]) {
     double  nProcessExcuteTime;
 
     char filename[]      = "MNIST_parameter";
-    char filename_info[] = "MNIST_parameter_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
@@ -63,35 +62,35 @@ int main(int argc, char const *argv[]) {
         net->SetModeTrain();
 
         startTime = clock();
-
-        for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-            dataset->CreateTrainDataPair(BATCH);
-
-            Tensor<float> *x_t = dataset->GetTrainFeedImage();
-            Tensor<float> *l_t = dataset->GetTrainFeedLabel();
-
-#ifdef __CUDNN__
-            x_t->SetDeviceGPU(GPUID);  // 추후 자동화 필요
-            l_t->SetDeviceGPU(GPUID);
-#endif  // __CUDNN__
-            // std::cin >> temp;
-            net->FeedInputTensor(2, x_t, l_t);
-            net->ResetParameterGradient();
-            net->Train();
-            // std::cin >> temp;
-            train_accuracy += net->GetAccuracy();
-            train_avg_loss += net->GetLoss();
-
-            printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
-                   j + 1, LOOP_FOR_TRAIN,
-                   train_avg_loss / (j + 1),
-                   train_accuracy / (j + 1)
-                   /*nProcessExcuteTime*/);
-            fflush(stdout);
-        }
-        endTime            = clock();
-        nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
-        printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
+//
+//         for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
+//             dataset->CreateTrainDataPair(BATCH);
+//
+//             Tensor<float> *x_t = dataset->GetTrainFeedImage();
+//             Tensor<float> *l_t = dataset->GetTrainFeedLabel();
+//
+// #ifdef __CUDNN__
+//             x_t->SetDeviceGPU(GPUID);  // 추후 자동화 필요
+//             l_t->SetDeviceGPU(GPUID);
+// #endif  // __CUDNN__
+//             // std::cin >> temp;
+//             net->FeedInputTensor(2, x_t, l_t);
+//             net->ResetParameterGradient();
+//             net->Train();
+//             // std::cin >> temp;
+//             train_accuracy += net->GetAccuracy();
+//             train_avg_loss += net->GetLoss();
+//
+//             printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
+//                    j + 1, LOOP_FOR_TRAIN,
+//                    train_avg_loss / (j + 1),
+//                    train_accuracy / (j + 1)
+//                    /*nProcessExcuteTime*/);
+//             fflush(stdout);
+//         }
+//         endTime            = clock();
+//         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
+//         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
         // ======================= Test ======================
         float test_accuracy = 0.f;
