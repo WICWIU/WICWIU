@@ -117,8 +117,8 @@ public:
 
     Operator<DTYPE>             * SearchOperator(std::string pName);
 
-    int                           Save(FILE *fileForSave);
-    int                           Load(FILE *fileForLoad);
+    int                           Save();
+    int                           Load();
 
 #ifdef __CUDNN__
     int                           ForwardPropagateOnGPU(int pTime = 0);
@@ -971,18 +971,18 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(s
     return NULL;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Save(FILE *fileForSave) {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Save() {
     for (int i = 0; i < m_ParameterDegree; i++) {
         // important order
-        (*m_apParameter)[i]->Save(fileForSave);
+        (*m_apParameter)[i]->Save();
     }
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(FILE *fileForLoad) {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::Load() {
     for (int i = 0; i < m_ParameterDegree; i++) {
         // important order
-        (*m_apParameter)[i]->Load(fileForLoad);
+        (*m_apParameter)[i]->Load();
     }
     return TRUE;
 }

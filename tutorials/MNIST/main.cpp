@@ -5,7 +5,7 @@
 #include <time.h>
 
 #define BATCH             100
-#define EPOCH             1000
+#define EPOCH             10
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             1
@@ -13,6 +13,8 @@
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
+
+    char filename[]      = "MNIST_parameter";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
@@ -39,11 +41,7 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    // FILE *fp = fopen("parameters.b", "rb");
-    // net->Load(fp);
-    // fread(&best_acc, sizeof(float), 1, fp);
-    // fread(&epoch,    sizeof(int),   1, fp);
-    // fclose(fp);
+    // net->Load();
 
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
@@ -72,7 +70,7 @@ int main(int argc, char const *argv[]) {
             Tensor<float> *l_t = dataset->GetTrainFeedLabel();
 
 #ifdef __CUDNN__
-            x_t->SetDeviceGPU(GPUID);  // 추후 자동화 필요
+            x_t->SetDeviceGPU(GPUID);  // 異뷀썑 ?먮룞???꾩슂
             l_t->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
             // std::cin >> temp;
@@ -126,14 +124,7 @@ int main(int argc, char const *argv[]) {
         std::cout << "\n\n";
 
         if ((best_acc < (test_accuracy / LOOP_FOR_TEST))) {
-            std::cout << "save parameters...";
-            FILE *fp = fopen("parameters.b", "wb");
-            net->Save(fp);
-            best_acc = (test_accuracy / LOOP_FOR_TEST);
-            fwrite(&best_acc, sizeof(float), 1, fp);
-            fwrite(&i,        sizeof(int),   1, fp);
-            fclose(fp);
-            std::cout << "done" << "\n\n";
+            net->Save();
         }
     }
 

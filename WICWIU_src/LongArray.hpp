@@ -60,8 +60,8 @@ public:
 
     int    SetDeviceCPU();
 
-    int    Save(FILE *fileForSave);
-    int    Load(FILE *fileForLoad);
+    int    Save(unsigned int idxOfParameter);
+    int    Load(unsigned int idxOfParameter);
 #ifdef __CUDNN__
     int    SetDeviceGPU(unsigned int idOfDevice);
 
@@ -458,7 +458,8 @@ template<typename DTYPE> int LongArray<DTYPE>::SetDeviceCPU() {
 @return 성공 시 TRUE.
 @see LongArray<DTYPE>::SetDeviceCPU()
 */
-template<typename DTYPE> int LongArray<DTYPE>::Save(FILE *fileForSave) {
+
+template<typename DTYPE> int LongArray<DTYPE>::Save(unsigned int idxOfParameter) {
     #ifdef __CUDNN__
     # if __DEBUG__
 
@@ -481,30 +482,27 @@ template<typename DTYPE> int LongArray<DTYPE>::Save(FILE *fileForSave) {
     std::cout << "save" << '\n';
     #endif  // __BINARY__
 
-    if (!fwrite(&m_CapacityPerTime, sizeof(int), 1, fileForSave)) {
+    char filename[idxOfParameter];
+    sprintf(filename, "%d", idxOfParameter);
+    FILE *fp = fopen(filename, "wb");
+
+    if (!fwrite(&m_CapacityPerTime, sizeof(int), 1, fp)) {
         printf("Failed to write Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
         exit(-1);
     }
 
     for (int i = 0; i < m_TimeSize; i++) {
-        if (!fwrite(m_aaHostLongArray[i], sizeof(DTYPE), m_CapacityPerTime, fileForSave)) {
+        if (!fwrite(m_aaHostLongArray[i], sizeof(DTYPE), m_CapacityPerTime, fp)) {
             printf("Failed to write Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
             exit(-1);
         }
     }
+    fclose(fp);
 
     return TRUE;
 }
 
-/*!
-@brief LongArray에 저장된 데이터를 불러오는 메소드.
-@details fread함수를 통해 *fileForLoad가 가리키는 파일에 저장된 데이터를 LongArray에 쓴다.
-@details 단, m_Device가 GPU일 시 CPU로 바꿔 준 후 값을 찾아 반환한다.
-@param *fileForLoad 불러올 데이터를 가진 file을 가리키는 포인터.
-@return 성공 시 TRUE.
-@see LongArray<DTYPE>::SetDeviceCPU()
-*/
-template<typename DTYPE> int LongArray<DTYPE>::Load(FILE *fileForLoad) {
+template<typename DTYPE> int LongArray<DTYPE>::Load(unsigned int idxOfParameter) {
     #ifdef __CUDNN__
     # if __DEBUG__
 
@@ -527,9 +525,16 @@ template<typename DTYPE> int LongArray<DTYPE>::Load(FILE *fileForLoad) {
     std::cout << "load" << '\n';
     #endif  // __BINARY__
 
-    int capacityOfData = 0;
+    int capacityOfData = idxOfParameter;
+    char filename[idxOfParameter];
+    sprintf(filename, "%d", idxOfParameter);
 
-    if (!fread(&capacityOfData, sizeof(int), 1, fileForLoad)) {
+    FILE *fp = fopen(filename, "rb");
+
+    printf("%s\n", filename);
+    int filesize = ftell(fp);
+
+    if (!fread(&capacityOfData, sizeof(int), 1, fp)) {
         printf("Failed to read Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
         exit(-1);
     }
@@ -537,13 +542,15 @@ template<typename DTYPE> int LongArray<DTYPE>::Load(FILE *fileForLoad) {
     if (capacityOfData != 0) {
         if (capacityOfData <= m_CapacityPerTime) {
             for (int i = 0; i < m_TimeSize; i++) {
-                if (!fread(m_aaHostLongArray[i], sizeof(DTYPE), capacityOfData, fileForLoad)) {
+                if (!fread(m_aaHostLongArray[i], sizeof(DTYPE), capacityOfData, fp)) {
                     printf("Failed to read Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
                     exit(-1);
                 }
             }
         }
     }
+
+    fclose(fp);
 
     return TRUE;
 }
