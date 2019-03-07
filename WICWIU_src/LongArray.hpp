@@ -375,8 +375,6 @@ template<typename DTYPE> int LongArray<DTYPE>::Save(unsigned int idxOfParameter)
 
     char filename[idxOfParameter];
     sprintf(filename, "%d", idxOfParameter);
-    // std::cout << "filename" << '\n';
-    // printf("%s\n", filename);
     FILE *fp = fopen(filename, "wb");
 
     if (!fwrite(&m_CapacityPerTime, sizeof(int), 1, fp)) {

@@ -8,6 +8,7 @@
 #include <exception>
 #include <string>
 #include <cmath>
+#include <zlib.h>
 // #include <thread>
 
 // C header

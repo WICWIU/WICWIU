@@ -740,6 +740,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Save() {
         // important order
         (*m_apParameter)[i]->Save(i);
     }
+
     return TRUE;
 }
 
