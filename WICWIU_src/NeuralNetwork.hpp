@@ -974,7 +974,7 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(s
 template<typename DTYPE> int NeuralNetwork<DTYPE>::Save() {
     for (int i = 0; i < m_ParameterDegree; i++) {
         // important order
-        (*m_apParameter)[i]->Save();
+        (*m_apParameter)[i]->Save(i);
     }
     return TRUE;
 }
@@ -982,7 +982,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Save() {
 template<typename DTYPE> int NeuralNetwork<DTYPE>::Load() {
     for (int i = 0; i < m_ParameterDegree; i++) {
         // important order
-        (*m_apParameter)[i]->Load();
+        (*m_apParameter)[i]->Load(i);
     }
     return TRUE;
 }

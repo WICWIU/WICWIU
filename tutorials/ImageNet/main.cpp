@@ -184,11 +184,11 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
         }
 
-        // if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
-        //     std::cout << "\nsave parameters...";
-        //     net->Save();
-        //     std::cout << "done" << "\n\n";
-        // } else std::cout << "\n\n";
+        if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
+            std::cout << "\nsave parameters...";
+            net->Save();
+            std::cout << "done" << "\n\n";
+        } else std::cout << "\n\n";
     }
 
     train_data_reader->StopProduce();
