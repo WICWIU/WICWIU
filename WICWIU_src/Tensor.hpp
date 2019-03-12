@@ -78,8 +78,8 @@ public:
 
     void                     SetDeviceCPU();
 
-    int                      Save(unsigned int idxOfParameter);
-    int                      Load(unsigned int idxOfParameter);
+    int                      Save(char *nameOfFile);
+    int                      Load(char *nameOfFile);
 #ifdef __CUDNN__
     void                     SetDeviceGPU(unsigned int idOfDevice);
 
@@ -767,7 +767,7 @@ template<typename DTYPE> void Tensor<DTYPE>::SetDeviceCPU() {
 *@return 성공 시 TRUE
 *@see LongArray<DTYPE>::Save(FILE *fileForSave), Tensor<DTYPE>::SetDeviceCPU()
 */
-template<typename DTYPE> int Tensor<DTYPE>::Save(unsigned int idxOfParameter) {
+template<typename DTYPE> int Tensor<DTYPE>::Save(char *nameOfFile) {
     #ifdef __CUDNN__
     # if __DEBUG__
     std::cout << "Tensor<DTYPE>::Save(FILE *fileForSave)" << '\n';
@@ -787,7 +787,7 @@ template<typename DTYPE> int Tensor<DTYPE>::Save(unsigned int idxOfParameter) {
     # endif // __DEBUG__
     #endif  // __CUDNN__
 
-    m_aLongArray->Save(idxOfParameter);
+    m_aLongArray->Save(nameOfFile);
 
 
     return TRUE;
@@ -800,7 +800,7 @@ template<typename DTYPE> int Tensor<DTYPE>::Save(unsigned int idxOfParameter) {
 *@return 성공 시 TRUE
 *@see LongArray<DTYPE>::Load(FILE *fileForSave), Tensor<DTYPE>::SetDeviceCPU()
 */
-template<typename DTYPE> int Tensor<DTYPE>::Load(unsigned int idxOfParameter) {
+template<typename DTYPE> int Tensor<DTYPE>::Load(char *nameOfFile) {
     #ifdef __CUDNN__
     # if __DEBUG__
     std::cout << "Tensor<DTYPE>::Load(FILE *fileForSave)" << '\n';
@@ -820,7 +820,7 @@ template<typename DTYPE> int Tensor<DTYPE>::Load(unsigned int idxOfParameter) {
     # endif // __DEBUG__
     #endif  // __CUDNN__
 
-    m_aLongArray->Load(idxOfParameter);
+    m_aLongArray->Load(nameOfFile);
 
     return TRUE;
 }

@@ -17,6 +17,10 @@
 #include <math.h>
 #include <time.h>
 #include <pthread.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 // Custom code
 #include "Utils.hpp"

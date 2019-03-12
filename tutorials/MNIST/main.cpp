@@ -14,7 +14,7 @@ int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
 
-    char filename[]      = "MNIST_parameter";
+    char filename[]      = "./MNIST_parameter";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
@@ -41,7 +41,7 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    // net->Load();
+    // net->Load(filename);
 
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
@@ -124,7 +124,7 @@ int main(int argc, char const *argv[]) {
         std::cout << "\n\n";
 
         if ((best_acc < (test_accuracy / LOOP_FOR_TEST))) {
-            net->Save();
+            net->Save(filename);
         }
     }
 

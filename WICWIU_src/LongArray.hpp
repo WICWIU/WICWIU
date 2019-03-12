@@ -60,8 +60,8 @@ public:
 
     int    SetDeviceCPU();
 
-    int    Save(unsigned int idxOfParameter);
-    int    Load(unsigned int idxOfParameter);
+    int    Save(char *nameOfFile);
+    int    Load(char *nameOfFile);
 #ifdef __CUDNN__
     int    SetDeviceGPU(unsigned int idOfDevice);
 
@@ -459,7 +459,7 @@ template<typename DTYPE> int LongArray<DTYPE>::SetDeviceCPU() {
 @see LongArray<DTYPE>::SetDeviceCPU()
 */
 
-template<typename DTYPE> int LongArray<DTYPE>::Save(unsigned int idxOfParameter) {
+template<typename DTYPE> int LongArray<DTYPE>::Save(char *nameOfFile) {
     #ifdef __CUDNN__
     # if __DEBUG__
 
@@ -482,9 +482,9 @@ template<typename DTYPE> int LongArray<DTYPE>::Save(unsigned int idxOfParameter)
     std::cout << "save" << '\n';
     #endif  // __BINARY__
 
-    char filename[idxOfParameter];
-    sprintf(filename, "%d", idxOfParameter);
-    FILE *fp = fopen(filename, "wb");
+    // char filename[idxOfParameter];
+    // sprintf(filename, "%d", idxOfParameter);
+    FILE *fp = fopen(nameOfFile, "wb");
 
     if (!fwrite(&m_CapacityPerTime, sizeof(int), 1, fp)) {
         printf("Failed to write Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
@@ -502,7 +502,7 @@ template<typename DTYPE> int LongArray<DTYPE>::Save(unsigned int idxOfParameter)
     return TRUE;
 }
 
-template<typename DTYPE> int LongArray<DTYPE>::Load(unsigned int idxOfParameter) {
+template<typename DTYPE> int LongArray<DTYPE>::Load(char *nameOfFile) {
     #ifdef __CUDNN__
     # if __DEBUG__
 
@@ -525,13 +525,13 @@ template<typename DTYPE> int LongArray<DTYPE>::Load(unsigned int idxOfParameter)
     std::cout << "load" << '\n';
     #endif  // __BINARY__
 
-    int capacityOfData = idxOfParameter;
-    char filename[idxOfParameter];
-    sprintf(filename, "%d", idxOfParameter);
+    int capacityOfData = 0;
+    // char filename[idxOfParameter];
+    // sprintf(filename, "%d", idxOfParameter);
 
-    FILE *fp = fopen(filename, "rb");
+    FILE *fp = fopen(nameOfFile, "rb");
 
-    printf("%s\n", filename);
+    // printf("%s\n", filename);
     int filesize = ftell(fp);
 
     if (!fread(&capacityOfData, sizeof(int), 1, fp)) {

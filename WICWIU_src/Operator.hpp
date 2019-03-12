@@ -119,8 +119,8 @@ public:
     virtual int                           SetResultOnCPU();
     virtual int                           SetGradientOnCPU();
 
-    int                                   Save(unsigned int idxOfParameter);
-    int                                   Load(unsigned int idxOfParameter);
+    int                                   Save(char *nameOfFile);
+    int                                   Load(char *nameOfFile);
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     virtual int                           SetResultOnGPU(unsigned int idOfDevice);
@@ -794,21 +794,21 @@ template<typename DTYPE> int Operator<DTYPE>::SetGradientOnCPU() {
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::Save(unsigned int idxOfParameter) {
+template<typename DTYPE> int Operator<DTYPE>::Save(char *nameOfFile) {
     int size = m_aaResult->GetSize();
 
     for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->Save(idxOfParameter);
+        (*m_aaResult)[i]->Save(nameOfFile);
     }
 
     return TRUE;
 }
 
-template<typename DTYPE> int Operator<DTYPE>::Load(unsigned int idxOfParameter) {
+template<typename DTYPE> int Operator<DTYPE>::Load(char *nameOfFile) {
     int size = m_aaResult->GetSize();
 
     for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->Load(idxOfParameter);
+        (*m_aaResult)[i]->Load(nameOfFile);
     }
 
     return TRUE;
