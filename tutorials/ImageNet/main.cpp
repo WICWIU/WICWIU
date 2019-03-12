@@ -58,7 +58,7 @@ int main(int argc, char const *argv[]) {
 
     // @ When load parameters
     // std::cout << "Loading..." << '\n';
-    // net->Load();
+    // net->Load(filename);
     // std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
@@ -186,7 +186,7 @@ int main(int argc, char const *argv[]) {
 
         if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
             std::cout << "\nsave parameters...";
-            net->Save();
+            net->Save(filename);
             std::cout << "done" << "\n\n";
         } else std::cout << "\n\n";
     }
