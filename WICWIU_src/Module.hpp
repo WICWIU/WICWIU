@@ -12,8 +12,11 @@ template<typename DTYPE> class Module : public Operator<DTYPE>{
 private:
     Container<Operator<DTYPE> *> *m_aaExcutableOperator;
     ///< Module을 구성하는 Operator들 중, 연산에 참여하는 Operator들의 포인터를 저장하는 Container 멤버 변수
+    Container<Operator<DTYPE> *> *m_apModuleInput;
+
     int m_numOfExcutableOperator;
     ///< Module을 구성하는 Operator들 중, 연산에 참여하는 Operator들의 개수
+    int m_ModuleInputDegree;
 
     Operator<DTYPE> *m_pLastOperator;
     ///< Module을 구성하는 Operator들 중, 순전파 순서 상 마지막에 해당하는 operator의 포인터
@@ -42,6 +45,9 @@ public:
 
     Container<Operator<DTYPE> *>      * GetExcutableOperatorContainer();
     int                                 GetNumOfExcutableOperator();
+
+    Container<Operator<DTYPE> *>*       GetModuleInputContainer();
+    int                                 GetModuleInputDegree();
 
     virtual Tensor<DTYPE>             * GetResult() const;
     virtual Container<Tensor<DTYPE> *>* GetResultContainer();
@@ -93,6 +99,7 @@ public:
 */
 template<typename DTYPE> int Module<DTYPE>::Alloc() {
     m_aaExcutableOperator = new Container<Operator<DTYPE> *>();
+    m_apModuleInput       = new Container<Operator<DTYPE> *>();
     return TRUE;
 }
 
@@ -133,6 +140,7 @@ template<typename DTYPE> Module<DTYPE>::Module(std::string pName) : Operator<DTY
     #endif  // __DEBUG__
     m_aaExcutableOperator    = NULL;
     m_numOfExcutableOperator = 0;
+    m_ModuleInputDegree      = 0;
     m_pLastOperator          = NULL;
     m_idOfDevice             = -1;
 
@@ -154,6 +162,8 @@ template<typename DTYPE> Module<DTYPE>::~Module() {
 }
 
 template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::SetInput(Operator<DTYPE> *pInput) {
+    m_apModuleInput->Push(pInput);
+    m_ModuleInputDegree++;
     this->AddEdgebetweenOperators(pInput);
 
     return pInput;
@@ -305,6 +315,14 @@ template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetExcutab
 
 template<typename DTYPE> int Module<DTYPE>::GetNumOfExcutableOperator() {
     return m_numOfExcutableOperator;
+}
+
+template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetModuleInputContainer() {
+    return m_apModuleInput;
+}
+
+template<typename DTYPE> int Module<DTYPE>::GetModuleInputDegree() {
+    return m_ModuleInputDegree;
 }
 
 template<typename DTYPE> Tensor<DTYPE> *Module<DTYPE>::GetResult() const {
