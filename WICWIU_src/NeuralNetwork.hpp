@@ -1020,11 +1020,11 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Save(char *nameOfDir) {
     //     (*m_apParameter)[i]->Save(filename);
     //     filename[0] = '\0';
     // }
-    for (int i = 0; i < this->GetInputContainer()->GetSize(); i++) {
+    for (int i = 0; i < this->GetInputContainer()->GetSize() - this->GetModuleInputDegree(); i++) {
         // important order
         sprintf(filename, "%s/%d.p", nameOfDir, i);
         // std::cout << filename << '\n';
-        (*this->GetInputContainer())[i]->Save(filename);
+        (*this->GetInputContainer())[this->GetModuleInputDegree() + i]->Save(filename);
         filename[0] = '\0';
     }
     return TRUE;
@@ -1040,11 +1040,11 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(char *nameOfDir) {
     //     (*m_apParameter)[i]->Load(filename);
     //     filename[0] = '\0';
     // }
-    for (int i = 0; i < this->GetInputContainer()->GetSize(); i++) {
+    for (int i = 0; i < this->GetInputContainer()->GetSize() - this->GetModuleInputDegree(); i++) {
         // important order
         sprintf(filename, "%s/%d.p", nameOfDir, i);
         // std::cout << filename << '\n';
-        (*this->GetInputContainer())[i]->Load(filename);
+        (*this->GetInputContainer())[this->GetModuleInputDegree() + i]->Load(filename);
         filename[0] = '\0';
     }
     return TRUE;
