@@ -81,8 +81,8 @@ public:
 
     Optimizer<DTYPE>            * GetOptimizer();
 
-    int                           ForwardPropagate(int pTime = 0);
-    int                           BackPropagate(int pTime = 0);
+    // int                           ForwardPropagate(int pTime = 0);
+    // int                           BackPropagate(int pTime = 0);
 
     void                          SetDeviceCPU();
 
@@ -121,8 +121,8 @@ public:
     int                           Load(char *nameOfDir);
 
 #ifdef __CUDNN__
-    int                           ForwardPropagateOnGPU(int pTime = 0);
-    int                           BackPropagateOnGPU(int pTime = 0);
+    // int                           ForwardPropagateOnGPU(int pTime = 0);
+    // int                           BackPropagateOnGPU(int pTime = 0);
 
     void                          SetDeviceGPU(unsigned int idOfDevice);
     int                           SetDeviceID(unsigned int idOfDevice);
@@ -522,17 +522,16 @@ template<typename DTYPE> Optimizer<DTYPE> *NeuralNetwork<DTYPE>::GetOptimizer() 
  * @param pTime 각 ForwardPropagate 메소드에 전달할 Time의 인덱스
  * @return TRUE
  */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagate(int pTime) {
-    // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-    //     (*m_apExcutableOperator)[i]->ForwardPropagate(pTime);
-    // }
-    for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
-        (*this->GetExcutableOperatorContainer())[i]->ForwardPropagate(pTime);
-    }
-    m_aLossFunction->ForwardPropagate(pTime);
-
-    return TRUE;
-}
+// template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagate(int pTime) {
+//     // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
+//     //     (*m_apExcutableOperator)[i]->ForwardPropagate(pTime);
+//     // }
+//     for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
+//         (*this->GetExcutableOperatorContainer())[i]->ForwardPropagate(pTime);
+//     }
+//
+//     return TRUE;
+// }
 
 /*!
  * @brief 신경망 그래프의 역전파를 수행하는 메소드
@@ -540,17 +539,17 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagate(int pTime) {
  * @param pTime 각 ForwardPropagate 메소드에 전달할 Time의 인덱스
  * @return TRUE
  */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagate(int pTime) {
-    m_aLossFunction->BackPropagate(pTime);
-
-    // for (int i = m_ExcutableOperatorDegree - 1; i >= 0; i--) {
-    //     (*m_apExcutableOperator)[i]->BackPropagate(pTime);
-    // }
-    for (int i = this->GetNumOfExcutableOperator() - 1; i >= 0; i--) {
-        (*this->GetExcutableOperatorContainer())[i]->BackPropagate(pTime);
-    }
-    return TRUE;
-}
+// template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagate(int pTime) {
+//     m_aLossFunction->BackPropagate(pTime);
+//
+//     // for (int i = m_ExcutableOperatorDegree - 1; i >= 0; i--) {
+//     //     (*m_apExcutableOperator)[i]->BackPropagate(pTime);
+//     // }
+//     for (int i = this->GetNumOfExcutableOperator() - 1; i >= 0; i--) {
+//         (*this->GetExcutableOperatorContainer())[i]->BackPropagate(pTime);
+//     }
+//     return TRUE;
+// }
 
 /*!
  * @brief 신경망 그래프 학습에 사용되는 장치를 CPU로 전환하는 메소드
@@ -649,6 +648,8 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
     this->ResetLossFunctionGradient();
 
     this->ForwardPropagate();
+    m_aLossFunction->ForwardPropagate();
+    m_aLossFunction->BackPropagate();
     this->BackPropagate();
 
     m_aOptimizer->UpdateParameter();
@@ -669,6 +670,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnCPU() {
     this->ResetLossFunctionResult();
 
     this->ForwardPropagate();
+    m_aLossFunction->ForwardPropagate();
     return TRUE;
 }
 
@@ -691,6 +693,8 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnGPU() {
     this->ResetLossFunctionGradient();
 
     this->ForwardPropagateOnGPU();
+    m_aLossFunction->ForwardPropagateOnGPU();
+    m_aLossFunction->BackPropagateOnGPU();
     this->BackPropagateOnGPU();
 
     m_aOptimizer->UpdateParameterOnGPU();
@@ -716,6 +720,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnGPU() {
     this->ResetLossFunctionResult();
 
     this->ForwardPropagateOnGPU();
+    m_aLossFunction->ForwardPropagateOnGPU();
 #else  // __CUDNN__
     std::cout << "There is no GPU option!" << '\n';
     exit(-1);
@@ -1058,17 +1063,17 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(char *nameOfDir) {
  * @param pTime 각 ForwardPropagateOnGPU 메소드에 전달할 Time의 인덱스
  * @return TRUE
  */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagateOnGPU(int pTime) {
-    // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-    //     (*m_apExcutableOperator)[i]->ForwardPropagateOnGPU(pTime);
-    // }
-    for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
-        (*this->GetExcutableOperatorContainer())[i]->ForwardPropagateOnGPU(pTime);
-    }
-    m_aLossFunction->ForwardPropagateOnGPU(pTime);
-
-    return TRUE;
-}
+// template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagateOnGPU(int pTime) {
+//     // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
+//     //     (*m_apExcutableOperator)[i]->ForwardPropagateOnGPU(pTime);
+//     // }
+//     for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
+//         (*this->GetExcutableOperatorContainer())[i]->ForwardPropagateOnGPU(pTime);
+//     }
+//     m_aLossFunction->ForwardPropagateOnGPU(pTime);
+//
+//     return TRUE;
+// }
 
 /*!
  * @brief GPU를 활용해 신경망 그래프의 역전파를 수행하는 메소드
@@ -1076,17 +1081,17 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagateOnGPU(int pTi
  * @param pTime 각 ForwardPropagateOnGPU 메소드에 전달할 Time의 인덱스
  * @return TRUE
  */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagateOnGPU(int pTime) {
-    m_aLossFunction->BackPropagateOnGPU(pTime);
-
-    // for (int i = m_ExcutableOperatorDegree - 1; i >= 0; i--) {
-    //     (*m_apExcutableOperator)[i]->BackPropagateOnGPU(pTime);
-    // }
-    for (int i = this->GetNumOfExcutableOperator() - 1; i >= 0; i--) {
-        (*this->GetExcutableOperatorContainer())[i]->BackPropagateOnGPU(pTime);
-    }
-    return TRUE;
-}
+// template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagateOnGPU(int pTime) {
+//     m_aLossFunction->BackPropagateOnGPU(pTime);
+//
+//     // for (int i = m_ExcutableOperatorDegree - 1; i >= 0; i--) {
+//     //     (*m_apExcutableOperator)[i]->BackPropagateOnGPU(pTime);
+//     // }
+//     for (int i = this->GetNumOfExcutableOperator() - 1; i >= 0; i--) {
+//         (*this->GetExcutableOperatorContainer())[i]->BackPropagateOnGPU(pTime);
+//     }
+//     return TRUE;
+// }
 
 /*!
  * @brief 신경망 그래프 학습에 사용되는 장치를 GPU로 전환하는 메소드
