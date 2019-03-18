@@ -9,24 +9,6 @@
  */
 template<typename DTYPE> class NeuralNetwork : public Module<DTYPE>{
 private:
-    // Container<Operator<DTYPE> *> *m_aaOperator;
-    /////< 신경망의 전체 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수  //// Excutable + Input + Parameter
-    // Container<Operator<DTYPE> *> *m_apExcutableOperator;
-    /////< 순전파 시 연산을 수행하는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
-    Container<Operator<DTYPE> *> *m_apInput;
-    /////< 신경망의 최초 Input이 되는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
-    Container<Operator<DTYPE> *> *m_apParameter;
-    /////< 신경망의 학습이 가능한 파라미터에 해당하는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
-
-    // int m_Operatordegree;
-    /////< 해당 클래스의 Operator Container 멤버 변수의 Element의 개수
-    // int m_ExcutableOperatorDegree;
-    /////< 해당 클래스의 Excutable Operator Container 멤버 변수의 Element의 개수
-    int m_InputDegree;
-    /////< 해당 클래스의 Input Container 멤버 변수의 Element의 개수
-    int m_ParameterDegree;
-    /////< 해당 클래스의 Parameter Container 멤버 변수의 Element의 개수
-
     LossFunction<DTYPE> *m_aLossFunction;
     ///< 신경망의 손실함수에 해당하는 LossFunction의 포인터 멤버 변수
     Optimizer<DTYPE> *m_aOptimizer;
@@ -55,62 +37,48 @@ public:
     NeuralNetwork();
     virtual ~NeuralNetwork();
 
-    virtual int                   SetInput(int pNumOfInput, ...);
-    virtual Operator<DTYPE>     * SetInput(Operator<DTYPE> *pInput);
-    virtual Operator<DTYPE>     * SetParameter(Operator<DTYPE> *pParameter);
+    LossFunction<DTYPE>* SetLossFunction(LossFunction<DTYPE> *pLossFunction);
+    Optimizer<DTYPE>   * SetOptimizer(Optimizer<DTYPE> *pOptimizer);
 
-    LossFunction<DTYPE>         * SetLossFunction(LossFunction<DTYPE> *pLossFunction);
-    Optimizer<DTYPE>            * SetOptimizer(Optimizer<DTYPE> *pOptimizer);
-    int                           FeedInputTensor(int pNumOfInput, ...);
+    Operator<DTYPE>    * GetResultOperator();
+    Operator<DTYPE>    * GetResult();
 
+    LossFunction<DTYPE>* GetLossFunction();
 
-    Operator<DTYPE>             * GetResultOperator();
-    Operator<DTYPE>             * GetResult();
+    Optimizer<DTYPE>   * GetOptimizer();
 
 
-    Container<Operator<DTYPE> *>* GetParameterContainer();
-    Container<Operator<DTYPE> *>* GetParameter();
+    void                 SetDeviceCPU();
+    void                 SetDeviceCPUOnNeuralNetwork();
 
-    LossFunction<DTYPE>         * GetLossFunction();
+    int                  Train();
+    int                  Test();
 
-    Optimizer<DTYPE>            * GetOptimizer();
+    int                  TrainOnCPU();
+    int                  TestOnCPU();
 
+    int                  TrainOnGPU();
+    int                  TestOnGPU();
 
-    void                          SetDeviceCPU();
+    float                GetAccuracy(int numOfClass = 10);
+    int                  GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
+    float                GetTop5Accuracy(int numOfClass);
+    void                 GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
+    float                GetLoss();
 
-    int                           Train();
-    int                           Test();
+    void                 PrintGraphInformation();
 
-    int                           TrainOnCPU();
-    int                           TestOnCPU();
+    int                  ResetLossFunctionResult();
+    int                  ResetLossFunctionGradient();
 
-    int                           TrainOnGPU();
-    int                           TestOnGPU();
+    int                  ResetParameterGradient();
 
-    float                         GetAccuracy(int numOfClass = 10);
-    int                           GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
-    float                         GetTop5Accuracy(int numOfClass);
-    void                          GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
-    float                         GetLoss();
-
-    void                          PrintGraphInformation();
-
-
-    int                           ResetLossFunctionResult();
-    int                           ResetLossFunctionGradient();
-
-    int                           ResetParameterGradient();
-
-    Operator<DTYPE>             * SearchOperator(std::string pName);
-
-    int                           Save(char *nameOfDir);
-    int                           Load(char *nameOfDir);
+    Operator<DTYPE>    * SearchOperator(std::string pName);
 
 #ifdef __CUDNN__
-    // int                           ForwardPropagateOnGPU(int pTime = 0);
-    // int                           BackPropagateOnGPU(int pTime = 0);
 
     void SetDeviceGPU(unsigned int idOfDevice);
+    void SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
     int  SetDeviceID(unsigned int idOfDevice);
 #endif  // __CUDNN__
 };
@@ -124,10 +92,6 @@ public:
  * @return TRUE
  */
 template<typename DTYPE> int NeuralNetwork<DTYPE>::Alloc() {
-    // m_aaOperator          = new Container<Operator<DTYPE> *>();
-    // m_apExcutableOperator = new Container<Operator<DTYPE> *>();
-    m_apInput     = new Container<Operator<DTYPE> *>();
-    m_apParameter = new Container<Operator<DTYPE> *>();
     return TRUE;
 }
 
@@ -141,35 +105,6 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::Delete() {
     std::cout << "NeuralNetwork<DTYPE>::Delete()" << '\n';
     #endif  // __DEBUG__
     // int size = 0;
-
-    // if (m_aaOperator) {
-    // size = m_aaOperator->GetSize();
-    // Operator<DTYPE> **OperatorContainer = m_aaOperator->GetRawData();
-    //
-    // for (int i = 0; i < size; i++) {
-    // if ((*m_aaOperator)[i]) {
-    // delete OperatorContainer[i];
-    // OperatorContainer[i] = NULL;
-    // }
-    // }
-    // delete m_aaOperator;
-    // m_aaOperator = NULL;
-    // }
-
-    // if (m_apExcutableOperator) {
-    // delete m_apExcutableOperator;
-    // m_apExcutableOperator = NULL;
-    // }
-
-    if (m_apInput) {
-        delete m_apInput;
-        m_apInput = NULL;
-    }
-
-    if (m_apParameter) {
-        delete m_apParameter;
-        m_apParameter = NULL;
-    }
 
     if (m_aLossFunction) {
         delete m_aLossFunction;
@@ -224,16 +159,6 @@ template<typename DTYPE> NeuralNetwork<DTYPE>::NeuralNetwork() : Module<DTYPE>()
     std::cout << "NeuralNetwork<DTYPE>::NeuralNetwork()" << '\n';
     #endif  // __DEBUG__
 
-    // m_aaOperator          = NULL;
-    // m_apExcutableOperator = NULL;
-    m_apInput     = NULL;
-    m_apParameter = NULL;
-
-    // m_Operatordegree          = 0;
-    // m_ExcutableOperatorDegree = 0;
-    m_InputDegree     = 0;
-    m_ParameterDegree = 0;
-
     m_aLossFunction = NULL;
     m_aOptimizer    = NULL;
 
@@ -261,36 +186,6 @@ template<typename DTYPE> NeuralNetwork<DTYPE>::~NeuralNetwork() {
     this->Delete();
 }
 
-template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SetInput(Operator<DTYPE> *pInput) {
-    m_apInput->Push(pInput);
-    m_InputDegree++;
-    this->AddEdgebetweenOperators(pInput);
-
-    return pInput;
-}
-
-template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SetParameter(Operator<DTYPE> *pParameter) {
-    m_apParameter->Push(pParameter);
-    m_ParameterDegree++;
-    this->AddEdgebetweenOperators(pParameter);
-    return pParameter;
-}
-
-template<typename DTYPE> int NeuralNetwork<DTYPE>::SetInput(int pNumOfInput, ...) {
-    Operator<DTYPE> *temp = NULL;
-
-    va_list ap;
-    va_start(ap, pNumOfInput);
-
-    for (int i = 0; i < pNumOfInput; i++) {
-        temp = va_arg(ap, Operator<DTYPE> *);
-        this->SetInput(temp);
-    }
-
-    va_end(ap);
-    return TRUE;
-}
-
 /*!
  * @brief 특정 Loss Function을 매개 변수로 받아 이를 신경망의 Loss Function로 지정해주는 메소드
  * @param pLossFunction 신경망의 Loss Function로 지정하고자 하는 Loss Function
@@ -311,34 +206,6 @@ template<typename DTYPE> Optimizer<DTYPE> *NeuralNetwork<DTYPE>::SetOptimizer(Op
     return pOptimizer;
 }
 
-/*!
- * @brief 신경망에 Input 리스트를 추가하는 메소드
- * @details 매개변수로 받은 Tensor들을 순서대로 NeuralNetwork의 Input Container에 담겨 있는 Operator들의 Result로 설정한다.
- * @param pNumOfInput Input Container에 추가하고 싶은 Tensor들의 개수
- * @param ... Input Container에 추가하고 싶은 Tensor들의 리스트
- * @return TRUE
- * @see Operator<DTYPE>::SetResult(Tensor<DTYPE> *pTensor)
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::FeedInputTensor(int pNumOfInput, ...) {
-    Tensor<DTYPE> *temp = NULL;
-
-    va_list ap;
-    va_start(ap, pNumOfInput);
-
-    for (int i = 0; i < pNumOfInput; i++) {
-        temp = va_arg(ap, Tensor<DTYPE> *);
-        // (*m_apInput)[i]->SetResult(temp);
-        (*m_apInput)[i]->SetResult(temp);
-    }
-
-    va_end(ap);
-    return TRUE;
-}
-
-// template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetInputContainer() {
-// return m_apInput;
-// }
-
 template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::GetResultOperator() {
     return this->GetResult();
 }
@@ -346,20 +213,6 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::GetResultOperato
 template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::GetResult() {
     // return m_apExcutableOperator->GetLast();
     return this->GetExcutableOperatorContainer()->GetLast();
-}
-
-// template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetExcutableOperatorContainer() {
-// return m_apExcutableOperator;
-// }
-
-template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetParameterContainer() {
-    return m_apParameter;
-    // return this->GetInputContainer();
-}
-
-template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetParameter() {
-    return m_apParameter;
-    // return this->GetInputContainer();
 }
 
 template<typename DTYPE> LossFunction<DTYPE> *NeuralNetwork<DTYPE>::GetLossFunction() {
@@ -376,25 +229,12 @@ template<typename DTYPE> Optimizer<DTYPE> *NeuralNetwork<DTYPE>::GetOptimizer() 
  * @return 없음
  */
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPU() {
+    if (m_Device != CPU) this->SetDeviceCPUOnNeuralNetwork();
+}
+
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPUOnNeuralNetwork() {
     m_Device = CPU;
-
-    // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-    // (*m_apExcutableOperator)[i]->SetDeviceCPU();
-    // }
-    for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
-        (*this->GetExcutableOperatorContainer())[i]->SetDeviceCPU();
-    }
-
-    for (int i = 0; i < m_ParameterDegree; i++) {
-        // important order
-        (*m_apParameter)[i]->SetDeviceCPU();
-    }
-
-    for (int i = 0; i < m_InputDegree; i++) {
-        // important order
-        (*m_apInput)[i]->SetDeviceCPU();
-    }
-
+    this->SetDeviceCPUOnModule();
     m_aLossFunction->SetDeviceCPU();
 }
 
@@ -719,11 +559,6 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetLoss() {
 template<typename DTYPE> void NeuralNetwork<DTYPE>::PrintGraphInformation() {
     std::cout << "Graph Structure: " << "\n\n";
 
-    // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-    // (*m_apExcutableOperator)[i]->PrintInformation(0);
-    // std::cout << '\n';
-    // }
-
     for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
         (*this->GetExcutableOperatorContainer())[i]->PrintInformation(0);
         std::cout << '\n';
@@ -781,53 +616,6 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(s
     return NULL;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Save(char *nameOfDir) {
-    char filename[256];
-
-    if (access(nameOfDir, 00) == -1) {
-        if (mkdir(nameOfDir, 0766) == -1) {
-            printf("mkdir fail\n");
-            exit(-1);
-        }
-    }
-
-    // for (int i = 0; i < m_ParameterDegree; i++) {
-    //// important order
-    // sprintf(filename, "%s/%d.p", nameOfDir, i);
-    //// std::cout << filename << '\n';
-    // (*m_apParameter)[i]->Save(filename);
-    // filename[0] = '\0';
-    // }
-    for (int i = 0; i < m_ParameterDegree; i++) {
-        // important order
-        sprintf(filename, "%s/%d.p", nameOfDir, i);
-        // std::cout << filename << '\n';
-        (*m_apParameter)[i]->Save(filename);
-        filename[0] = '\0';
-    }
-    return TRUE;
-}
-
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(char *nameOfDir) {
-    char filename[256];
-
-    // for (int i = 0; i < m_ParameterDegree; i++) {
-    //// important order
-    // sprintf(filename, "%s/%d.p", nameOfDir, i);
-    //// std::cout << filename << '\n';
-    // (*m_apParameter)[i]->Load(filename);
-    // filename[0] = '\0';
-    // }
-    for (int i = 0; i < m_ParameterDegree; i++) {
-        // important order
-        sprintf(filename, "%s/%d.p", nameOfDir, i);
-        // std::cout << filename << '\n';
-        (*m_apParameter)[i]->Load(filename);
-        filename[0] = '\0';
-    }
-    return TRUE;
-}
-
 #ifdef __CUDNN__
 
 /*!
@@ -839,34 +627,17 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(char *nameOfDir) {
  * @return 없음
  */
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
-    // std::cout << "NeuralNetwork<DTYPE>::SetModeGPU()" << '\n';
-    checkCudaErrors(cudaSetDevice(idOfDevice));
-
-    m_Device = GPU;
-    this->AllocOnGPU();
-
-    // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-    //// important order
-    // (*m_apExcutableOperator)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-    // }
-    for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
-        // important order
-        (*this->GetExcutableOperatorContainer())[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+    if (m_Device != GPU) {
+        checkCudaErrors(cudaSetDevice(idOfDevice));
+        m_Device = GPU;
+        this->AllocOnGPU();
+        this->SetDeviceGPUOnModule(m_cudnnHandle, idOfDevice);
+        this->SetDeviceGPUOnNeuralNetwork(m_cudnnHandle, idOfDevice);
     }
+}
 
-    for (int i = 0; i < m_ParameterDegree; i++) {
-        // important order
-        (*m_apParameter)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-    }
-
-    for (int i = 0; i < m_InputDegree; i++) {
-        // important order
-        (*m_apInput)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-    }
-
-
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
     m_aLossFunction->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-
     m_aOptimizer->SetDeviceGPU(m_cudnnHandle, idOfDevice);
 }
 

@@ -10,9 +10,17 @@
  */
 template<typename DTYPE> class Module : public Operator<DTYPE>{
 private:
+    /////< 신경망의 최초 Input이 되는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
+    Container<Operator<DTYPE> *> *m_apInput;
+    /////< 신경망의 학습이 가능한 파라미터에 해당하는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
+    Container<Operator<DTYPE> *> *m_apParameter;
     ///< Module을 구성하는 Operator들 중, 연산에 참여하는 Operator들의 포인터를 저장하는 Container 멤버 변수
     Container<Operator<DTYPE> *> *m_aaExcutableOperator;
 
+    /////< 해당 클래스의 Input Container 멤버 변수의 Element의 개수
+    int m_InputDegree;
+    /////< 해당 클래스의 Parameter Container 멤버 변수의 Element의 개수
+    int m_ParameterDegree;
     ///< Module을 구성하는 Operator들 중, 연산에 참여하는 Operator들의 개수
     int m_numOfExcutableOperator;
 
@@ -38,10 +46,10 @@ public:
     virtual Operator<DTYPE>           * SetExecutableOperater(Operator<DTYPE> *pExecutableOperater);
 
     int                                 IsInput(Operator<DTYPE> *pOperator);
-
     int                                 IsValid(Operator<DTYPE> *pOperator); // Graph 분석 시 node에 추가할 것인지 확인한다.
 
     Operator<DTYPE>                   * AnalyzeGraph(Operator<DTYPE> *pResultOperator);
+    int                                 FeedInputTensor(int pNumOfInput, ...);
 
     Container<Operator<DTYPE> *>      * GetExcutableOperatorContainer();
     int                                 GetNumOfExcutableOperator();
@@ -55,6 +63,9 @@ public:
     virtual Tensor<DTYPE>             * GetDelta() const;
     virtual Container<Tensor<DTYPE> *>* GetDeltaContainer();
 
+    Container<Operator<DTYPE> *>      * GetParameterContainer();
+    Container<Operator<DTYPE> *>      * GetParameter();
+
     int                                 SetModeTrain();
     int                                 SetModeAccumulate();
     int                                 SetModeInference();
@@ -65,24 +76,21 @@ public:
     int                                 ResetResult();
     int                                 ResetGradient();
 
-    // void                                PrintInformation();
     void                                PrintInformation(int level);
 
-    void                                SetDeviceCPU();
+    virtual void                        SetDeviceCPU();
+    void                                SetDeviceCPUOnModule();
 
+    virtual int                         Save(char *nameOfDir);
+    virtual int                         Load(char *nameOfDir);
 
-    // int                                 SetResultOnCPU();
-    // int                                 SetGradientOnCPU();
 #ifdef __CUDNN__
-    // int                                 SetResultOnGPU();
-    // int                                 SetGradientOnGPU();
 
-    // void SetDeviceGPU(unsigned int idOfDevice);
-    void SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
-    // void InitializeAttributeForGPU(unsigned int idOfDevice);
+    virtual void SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    void         SetDeviceGPUOnModule(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
 
-    int  ForwardPropagateOnGPU(int pTime = 0);
-    int  BackPropagateOnGPU(int pTime = 0);
+    int          ForwardPropagateOnGPU(int pTime = 0);
+    int          BackPropagateOnGPU(int pTime = 0);
 #endif  // if __CUDNN__
 };
 
@@ -95,7 +103,10 @@ public:
  * @return 없음
  */
 template<typename DTYPE> int Module<DTYPE>::Alloc() {
+    m_apInput             = new Container<Operator<DTYPE> *>();
+    m_apParameter         = new Container<Operator<DTYPE> *>();
     m_aaExcutableOperator = new Container<Operator<DTYPE> *>();
+
     return TRUE;
 }
 
@@ -108,6 +119,16 @@ template<typename DTYPE> void Module<DTYPE>::Delete() {
     #ifdef __DEBUG__
     std::cout << "Module<DTYPE>::Delete()" << '\n';
     #endif  // __DEBUG__
+
+    if (m_apInput) {
+        delete m_apInput;
+        m_apInput = NULL;
+    }
+
+    if (m_apParameter) {
+        delete m_apParameter;
+        m_apParameter = NULL;
+    }
 
     if (m_aaExcutableOperator) {
         Operator<DTYPE> **OperatorContainer = m_aaExcutableOperator->GetRawData();
@@ -157,12 +178,16 @@ template<typename DTYPE> Module<DTYPE>::~Module() {
 }
 
 template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::SetInput(Operator<DTYPE> *pInput) {
+    m_apInput->Push(pInput);
+    m_InputDegree++;
     this->AddEdgebetweenOperators(pInput);
 
     return pInput;
 }
 
 template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::SetParameter(Operator<DTYPE> *pParameter) {
+    m_apParameter->Push(pParameter);
+    m_ParameterDegree++;
     this->AddEdgebetweenOperators(pParameter);
     return pParameter;
 }
@@ -283,33 +308,31 @@ template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::AnalyzeGraph(Operator<D
 
     m_aaExcutableOperator->Reverse();
 
-    // cut output edge of input operator
-    // Container<Operator<DTYPE> *> *m_apInput = this->GetInputContainer();
-    // int m_InputDegree                       = m_apInput->GetSize();
-
-    // for (int i = 0; i < m_InputDegree; i++) {
-    // Operator<DTYPE> *pInput = (*m_apInput)[i];
-    // Container<Operator<DTYPE> *> *prevOp = pInput->GetOutputContainer();
-    // int numOfOutputEdge                  = prevOp->GetSize();
-    //
-    // for (int j = 0; j < numOfOutputEdge; j++) {
-    // for (int k = 0; k < m_numOfExcutableOperator; k++) {
-    // if ((*m_aaExcutableOperator)[j] == (*prevOp)[i]) {
-    // (*prevOp)[i] = NULL;
-    // }
-    // }
-    // }
-    // }
-
-    // std::cout << "m_aaExcutableOperator : " << '\n';
-    //
-    // for (int i = 0; i < m_numOfExcutableOperator; i++) {
-    // std::cout << (*m_aaExcutableOperator)[i]->GetName() << '\n';
-    // }
-    // std::cout << '\n';
-    //
-
     return pResultOperator;
+}
+
+/*!
+ * @brief 신경망에 Input 리스트를 추가하는 메소드
+ * @details 매개변수로 받은 Tensor들을 순서대로 NeuralNetwork의 Input Container에 담겨 있는 Operator들의 Result로 설정한다.
+ * @param pNumOfInput Input Container에 추가하고 싶은 Tensor들의 개수
+ * @param ... Input Container에 추가하고 싶은 Tensor들의 리스트
+ * @return TRUE
+ * @see Operator<DTYPE>::SetResult(Tensor<DTYPE> *pTensor)
+ */
+template<typename DTYPE> int Module<DTYPE>::FeedInputTensor(int pNumOfInput, ...) {
+    Tensor<DTYPE> *temp = NULL;
+
+    va_list ap;
+    va_start(ap, pNumOfInput);
+
+    for (int i = 0; i < pNumOfInput; i++) {
+        temp = va_arg(ap, Tensor<DTYPE> *);
+        // (*m_apInput)[i]->SetResult(temp);
+        (*m_apInput)[i]->SetResult(temp);
+    }
+
+    va_end(ap);
+    return TRUE;
 }
 
 template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetExcutableOperatorContainer() {
@@ -342,6 +365,16 @@ template<typename DTYPE> Tensor<DTYPE> *Module<DTYPE>::GetDelta() const {
 
 template<typename DTYPE> Container<Tensor<DTYPE> *> *Module<DTYPE>::GetDeltaContainer() {
     return m_pLastOperator->GetDeltaContainer();
+}
+
+template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetParameterContainer() {
+    return m_apParameter;
+    // return this->GetInputContainer();
+}
+
+template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetParameter() {
+    return m_apParameter;
+    // return this->GetInputContainer();
 }
 
 template<typename DTYPE> int Module<DTYPE>::SetModeTrain() {
@@ -443,22 +476,61 @@ template<typename DTYPE> void Module<DTYPE>::PrintInformation(int level) {
  * @return 없음
  */
 template<typename DTYPE> void Module<DTYPE>::SetDeviceCPU() {
+    if (m_Device != CPU) this->SetDeviceCPUOnModule();
+}
+
+template<typename DTYPE> void Module<DTYPE>::SetDeviceCPUOnModule() {
     this->SetDevice(CPU);
 
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->SetDeviceCPU();
     }
+
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        (*m_apParameter)[i]->SetDeviceCPU();
+    }
+
+    for (int i = 0; i < m_InputDegree; i++) {
+        // important order
+        (*m_apInput)[i]->SetDeviceCPU();
+    }
+}
+
+template<typename DTYPE> int Module<DTYPE>::Save(char *nameOfDir) {
+    char filename[256];
+
+    if (access(nameOfDir, 00) == -1) {
+        if (mkdir(nameOfDir, 0766) == -1) {
+            printf("mkdir fail\n");
+            exit(-1);
+        }
+    }
+
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        sprintf(filename, "%s/%d.p", nameOfDir, i);
+        // std::cout << filename << '\n';
+        (*m_apParameter)[i]->Save(filename);
+        filename[0] = '\0';
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::Load(char *nameOfDir) {
+    char filename[256];
+
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        sprintf(filename, "%s/%d.p", nameOfDir, i);
+        // std::cout << filename << '\n';
+        (*m_apParameter)[i]->Load(filename);
+        filename[0] = '\0';
+    }
+    return TRUE;
 }
 
 #ifdef __CUDNN__
-
-// template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
-// this->SetDevice(GPU);
-//
-// for (int i = 0; i < m_numOfExcutableOperator; i++) {
-// (*m_aaExcutableOperator)[i]->SetDeviceGPU(idOfDevice);
-// }
-// }
 
 /*!
  * @brief Module 클래스의 device 맴버 변수를 GPU로 변경한다.
@@ -467,6 +539,10 @@ template<typename DTYPE> void Module<DTYPE>::SetDeviceCPU() {
  * @param idOfDevice 사용하고자 하는 GPU번호
  */
 template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
+    if (this->GetDevice() != GPU) this->SetDeviceGPUOnModule(pCudnnHandle, idOfDevice);
+}
+
+template<typename DTYPE> void Module<DTYPE>::SetDeviceGPUOnModule(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
     checkCudaErrors(cudaSetDevice(idOfDevice));
     this->SetDevice(GPU);
     this->SetDeviceID(idOfDevice);
@@ -475,13 +551,17 @@ template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnH
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->SetDeviceGPU(pCudnnHandle, idOfDevice);
     }
-}
 
-// template<typename DTYPE> void Module<DTYPE>::InitializeAttributeForGPU(unsigned int idOfDevice) {
-// for (int i = 0; i < m_numOfExcutableOperator; i++) {
-// (*m_aaExcutableOperator)[i]->InitializeAttributeForGPU(idOfDevice);
-// }
-// }
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        // important order
+        (*m_apParameter)[i]->SetDeviceGPU(pCudnnHandle, idOfDevice);
+    }
+
+    for (int i = 0; i < m_InputDegree; i++) {
+        // important order
+        (*m_apInput)[i]->SetDeviceGPU(pCudnnHandle, idOfDevice);
+    }
+}
 
 /*!
  * @brief GPU를 이용해 모듈 그래프의 순전파를 수행하는 메소드

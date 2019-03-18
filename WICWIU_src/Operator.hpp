@@ -5,9 +5,9 @@
 #include "Container.hpp"
 
 /*!
-@brief Operator의 현재 상태를 나타내는  enum class
-@details TRAINING:학습 중, ACCUMULATING:, INFERENCING:accuracy를 구하는 중
-*/
+ * @brief Operator의 현재 상태를 나타내는  enum class
+ * @details TRAINING:학습 중, ACCUMULATING:, INFERENCING:accuracy를 구하는 중
+ */
 enum Mode {
     TRAIN,
     ACCUMULATE,
@@ -15,13 +15,13 @@ enum Mode {
 };
 
 /*!
-@class Operator class
-@details 본 프래임워크의 가장 작은 연산 단위.
-*/
+ * @class Operator class
+ * @details 본 프래임워크의 가장 작은 연산 단위.
+ */
 template<typename DTYPE> class Operator {
 private:
     Container<Operator<DTYPE> *> *m_apOutput;
-     ///< Operator의 m_aaResult값을 사용할 Operator들의 주소 값.
+    ///< Operator의 m_aaResult값을 사용할 Operator들의 주소 값.
     Container<Operator<DTYPE> *> *m_apInput;
     ///< Operator에 input으로  들어오는 Operator들의 주소 값.
     Container<Tensor<DTYPE> *> *m_aaResult;
@@ -119,8 +119,8 @@ public:
     virtual int                           SetResultOnCPU();
     virtual int                           SetGradientOnCPU();
 
-    int                                   Save(char *nameOfFile);
-    int                                   Load(char *nameOfFile);
+    virtual int                           Save(char *nameOfFile);
+    virtual int                           Load(char *nameOfFile);
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     virtual int                           SetResultOnGPU(unsigned int idOfDevice);
@@ -142,10 +142,10 @@ public:
 //////////////////////////////////////////////////////////////////////////////// for private method
 
 /*!
-@brief Operator의 맴버 변수들중 포인터들을 메모리에 할당하는 매소드.
-@details 맴버변수 m_apOutput, m_apInput, m_aaResult, m_aaGradient들을 메모리에 할당한다
-@return 성공시 TRUE.
-*/
+ * @brief Operator의 맴버 변수들중 포인터들을 메모리에 할당하는 매소드.
+ * @details 맴버변수 m_apOutput, m_apInput, m_aaResult, m_aaGradient들을 메모리에 할당한다
+ * @return 성공시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::Alloc() {
     m_apOutput   = new Container<Operator<DTYPE> *>();
     m_apInput    = new Container<Operator<DTYPE> *>();
@@ -156,13 +156,13 @@ template<typename DTYPE> int Operator<DTYPE>::Alloc() {
 }
 
 /*!
-@brief Operator와 다수의 다른 Operator들을 연결시키는 매소드.
-@details AddEdgebetweenOperators매소드를 통해 파라미터로 전달받은 Operator의 주소값을 이용해을 연결시킨다.
-@param numInput 연결 할 Operator의 갯수.
-@param ... Operator와 연결할 input Operator들.
-@return 성공 시 TRUE, 실패 시 FALSE.
-@ref Operator<DTYPE>::AddEdgebetweenOperators(Operator<DTYPE> *pInput)
-*/
+ * @brief Operator와 다수의 다른 Operator들을 연결시키는 매소드.
+ * @details AddEdgebetweenOperators매소드를 통해 파라미터로 전달받은 Operator의 주소값을 이용해을 연결시킨다.
+ * @param numInput 연결 할 Operator의 갯수.
+ * @param ... Operator와 연결할 input Operator들.
+ * @return 성공 시 TRUE, 실패 시 FALSE.
+ * @ref Operator<DTYPE>::AddEdgebetweenOperators(Operator<DTYPE> *pInput)
+ */
 template<typename DTYPE> int Operator<DTYPE>::Alloc(int numInput, ...) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Alloc(Tensor<DTYPE> *)" << '\n';
@@ -203,9 +203,9 @@ template<typename DTYPE> int Operator<DTYPE>::Alloc(int numInput, ...) {
 }
 
 /*!
-@brief Operator를 메모리에 삭제하는 매소드.
-@details 메모리에 할당했던 변수들을 삭제하고 포인터들을 NULL로 초기화한다.
-*/
+ * @brief Operator를 메모리에 삭제하는 매소드.
+ * @details 메모리에 할당했던 변수들을 삭제하고 포인터들을 NULL로 초기화한다.
+ */
 template<typename DTYPE> void Operator<DTYPE>::Delete() {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Delete()" << '\n';
@@ -252,13 +252,14 @@ template<typename DTYPE> void Operator<DTYPE>::Delete() {
 }
 
 // Add Graph Edge
+
 /*!
-@brief Operator의 m_apInput을 설정하는 함수.
-@details 다른 Operator의 주소 값을 받아 Operator의 input값(m_apInput)으로 설정한다.
-@param pInput input으로 설정 할 Operator들의 주소 값.
-@return 성공 시 TRUE, 실패 시 FALSE
-@ref int Push(DTYPE pElement)
-*/
+ * @brief Operator의 m_apInput을 설정하는 함수.
+ * @details 다른 Operator의 주소 값을 받아 Operator의 input값(m_apInput)으로 설정한다.
+ * @param pInput input으로 설정 할 Operator들의 주소 값.
+ * @return 성공 시 TRUE, 실패 시 FALSE
+ * @ref int Push(DTYPE pElement)
+ */
 template<typename DTYPE> int Operator<DTYPE>::AddInputEdge(Operator<DTYPE> *pInput) {
     try {
         m_apInput->Push(pInput);
@@ -271,12 +272,12 @@ template<typename DTYPE> int Operator<DTYPE>::AddInputEdge(Operator<DTYPE> *pInp
 }
 
 /*!
-@brief Operator의 m_apOutput을 설정하는 함수.
-@details 다른 Operator의 주소 값을 받아 Operator의 output값(m_apOutput)으로 설정한다.
-@param pOutput Operator의 output을 input으로 사용할 Operator들의 주소 값.
-@return 성공 시 TRUE, 실패 시 FALSE
-@ref int Push(DTYPE pElement)
-*/
+ * @brief Operator의 m_apOutput을 설정하는 함수.
+ * @details 다른 Operator의 주소 값을 받아 Operator의 output값(m_apOutput)으로 설정한다.
+ * @param pOutput Operator의 output을 input으로 사용할 Operator들의 주소 값.
+ * @return 성공 시 TRUE, 실패 시 FALSE
+ * @ref int Push(DTYPE pElement)
+ */
 template<typename DTYPE> int Operator<DTYPE>::AddOutputEdge(Operator<DTYPE> *pOutput) {
     try {
         m_apOutput->Push(pOutput);
@@ -291,10 +292,10 @@ template<typename DTYPE> int Operator<DTYPE>::AddOutputEdge(Operator<DTYPE> *pOu
 //////////////////////////////////////////////////////////////////////////////// for public method
 
 /*!
-@brief Operator의 생성자.
-@details 파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한다.
-@param pName 사용자가 설정 할 Operator의 이름.
-*/
+ * @brief Operator의 생성자.
+ * @details 파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한다.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -313,12 +314,12 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
 }
 
 /*!
-@brief Operator의 생성자.
-@details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
-@param pInput Operator와 연결 할 Operator들의 주소 값들.
-@param pName 사용자가 설정 할 Operator의 이름.
-@ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
-*/
+ * @brief Operator의 생성자.
+ * @details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
+ * @param pInput Operator와 연결 할 Operator들의 주소 값들.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std::string pName) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -338,13 +339,13 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
 }
 
 /*!
-@brief Operator의 생성자.
-@details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
-@param pInput0 Operator와 연결 할 Operator들의 주소 값들.
-@param pInput1 Operator와 연결 할 Operator들의 주소 값들.
-@param pName 사용자가 설정 할 Operator의 이름.
-@ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
-*/
+ * @brief Operator의 생성자.
+ * @details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
+ * @param pInput0 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pInput1 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -364,14 +365,14 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
 }
 
 /*!
-@brief Operator의 생성자.
-@details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
-@param pInput0 Operator와 연결 할 Operator들의 주소 값들.
-@param pInput1 Operator와 연결 할 Operator들의 주소 값들.
-@param pInput2 Operator와 연결 할 Operator들의 주소 값둘.
-@param pName 사용자가 설정 할 Operator의 이름.
-@ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
-*/
+ * @brief Operator의 생성자.
+ * @details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
+ * @param pInput0 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pInput1 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pInput2 Operator와 연결 할 Operator들의 주소 값둘.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -413,9 +414,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {
 }
 
 /*!
-@brief Operator의 소멸자
-@details Delete 매소드를 이용해 삭제한다.
-*/
+ * @brief Operator의 소멸자
+ * @details Delete 매소드를 이용해 삭제한다.
+ */
 template<typename DTYPE> Operator<DTYPE>::~Operator() {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::~Operator()" << '\n';
@@ -424,12 +425,12 @@ template<typename DTYPE> Operator<DTYPE>::~Operator() {
 }
 
 /*!
-@brief Operator와 다른 Operator들을 서로 연결한다.
-@details AddInputEdge, AddOutputEdge 매소드를 이옹해 Operator와 다른 Operator 연결한다.
-@param pInput 연결 할 다른 Operator의 주소 값.
-@ref int Operator<DTYPE>::AddInputEdge(Operator<DTYPE> *pInput), int Operator<DTYPE>::AddOutputEdge(Operator<DTYPE> *pOutput)
-@return 성공 시 TRUE.
-*/
+ * @brief Operator와 다른 Operator들을 서로 연결한다.
+ * @details AddInputEdge, AddOutputEdge 매소드를 이옹해 Operator와 다른 Operator 연결한다.
+ * @param pInput 연결 할 다른 Operator의 주소 값.
+ * @ref int Operator<DTYPE>::AddInputEdge(Operator<DTYPE> *pInput), int Operator<DTYPE>::AddOutputEdge(Operator<DTYPE> *pOutput)
+ * @return 성공 시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(Operator<DTYPE> *pInput) {
     this->AddInputEdge(pInput);
     pInput->AddOutputEdge(this);
@@ -472,13 +473,13 @@ template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(int numInp
 }
 
 /*!
-@brief Operator와 다른 Operator들을 서로 연결한다.
-@details AddEdgebetweenOperators 매소드를 이옹해 Operator와 다수의 다른 Operator들을 연결한다.
-@param numInput 연결 할 input들의 갯수.
-@param ... 연결할 다수의 다른 Operator.
-@ref int Operator<DTYPE>::AddEdgebetweenOperators(Operator<DTYPE> *pInput)
-@return 성공 시 TRUE, 실패 시 FALSE.
-*/
+ * @brief Operator와 다른 Operator들을 서로 연결한다.
+ * @details AddEdgebetweenOperators 매소드를 이옹해 Operator와 다수의 다른 Operator들을 연결한다.
+ * @param numInput 연결 할 input들의 갯수.
+ * @param ... 연결할 다수의 다른 Operator.
+ * @ref int Operator<DTYPE>::AddEdgebetweenOperators(Operator<DTYPE> *pInput)
+ * @return 성공 시 TRUE, 실패 시 FALSE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Alloc(Tensor<DTYPE> *)" << '\n';
@@ -530,11 +531,11 @@ template<typename DTYPE> int Operator<DTYPE>::SetResult(Tensor<DTYPE> *pTensor) 
 }
 
 /*!
-@brief 파라미터로 받은 Tensor를 결과 값으로 설정한다.
-@details 파라미터로 받은 pTensor를 m_aaResult애 저장한다.
-@param pTensor m_aaResult에 저장 할 Tensor.
-@return 성공 시 TRUE.
-*/
+ * @brief 파라미터로 받은 Tensor를 결과 값으로 설정한다.
+ * @details 파라미터로 받은 pTensor를 m_aaResult애 저장한다.
+ * @param pTensor m_aaResult에 저장 할 Tensor.
+ * @return 성공 시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::AddResult(Tensor<DTYPE> *pTensor) {
     m_aaResult->Push(pTensor);
     return TRUE;
@@ -552,11 +553,11 @@ template<typename DTYPE> int Operator<DTYPE>::SetGradient(Tensor<DTYPE> *pTensor
 }
 
 /*!
-@brief 파라미터로 받은 Tensor를 gradient값으로 설정한다.
-@details 파라미터로 받은 pTensor를 m_aaGradient에 저장한다.
-@param pTensor m_aaGradient에 저장 할 Tensor.
-@return 성공 시 TRUE.
-*/
+ * @brief 파라미터로 받은 Tensor를 gradient값으로 설정한다.
+ * @details 파라미터로 받은 pTensor를 m_aaGradient에 저장한다.
+ * @param pTensor m_aaGradient에 저장 할 Tensor.
+ * @return 성공 시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::AddGradient(Tensor<DTYPE> *pTensor) {
     m_aaGradient->Push(pTensor);
     return TRUE;
@@ -574,11 +575,11 @@ template<typename DTYPE> int Operator<DTYPE>::SetDelta(Tensor<DTYPE> *pTensor) {
 }
 
 /*!
-@brief 파라미터로 받은 Tensor를 Delta값으로 설정한다.
-@details 파라미터로 받은 pTensor를 m_aaGradient에 저장한다.
-@param pTensor m_aaGradient에 저장 할 Tensor.
-@return 성공 시 TRUE.
-*/
+ * @brief 파라미터로 받은 Tensor를 Delta값으로 설정한다.
+ * @details 파라미터로 받은 pTensor를 m_aaGradient에 저장한다.
+ * @param pTensor m_aaGradient에 저장 할 Tensor.
+ * @return 성공 시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::AddDelta(Tensor<DTYPE> *pTensor) {
     m_aaGradient->Push(pTensor);
     return TRUE;
@@ -682,10 +683,10 @@ template<typename DTYPE> int Operator<DTYPE>::GetIsTrainable() {
 }
 
 /*!
-@brief  ForwardPropagate 매소드. 실제 구현은 파생 클래스에서 정의된다.
-@param pTime ForwardPropagate할 데이터의 Time값.
-@return 성공 시 TRUE.
-*/
+ * @brief  ForwardPropagate 매소드. 실제 구현은 파생 클래스에서 정의된다.
+ * @param pTime ForwardPropagate할 데이터의 Time값.
+ * @return 성공 시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime) {
     #ifdef __DEBUG__
 
@@ -694,10 +695,10 @@ template<typename DTYPE> int Operator<DTYPE>::ForwardPropagate(int pTime) {
 }
 
 /*!
-@brief  BackwardPropagate 매소드. 실제 구현은 파생 클래스에서 정의된다.
-@param pTime forwardPropagate했던 데이터의 Time값.
-@return 성공 시 TRUE.
-*/
+ * @brief  BackwardPropagate 매소드. 실제 구현은 파생 클래스에서 정의된다.
+ * @param pTime forwardPropagate했던 데이터의 Time값.
+ * @return 성공 시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::BackPropagate(int pTime) {
     #ifdef __DEBUG__
 
@@ -756,8 +757,8 @@ template<typename DTYPE> int Operator<DTYPE>::ResetGradient() {
 // }
 
 /*!
-@brief Operator정보(이름과 Shape)를 출력한다.
-*/
+ * @brief Operator정보(이름과 Shape)를 출력한다.
+ */
 template<typename DTYPE> void Operator<DTYPE>::PrintInformation(int level) {
     for (int j = 0; j < level; j++) {
         std::cout << "-- ";
@@ -767,10 +768,11 @@ template<typename DTYPE> void Operator<DTYPE>::PrintInformation(int level) {
 }
 
 template<typename DTYPE> void Operator<DTYPE>::SetDeviceCPU() {
-    this->SetDevice(CPU);
-
-    this->SetResultOnCPU();
-    this->SetGradientOnCPU();
+    if (m_Device != CPU) {
+        this->SetDevice(CPU);
+        this->SetResultOnCPU();
+        this->SetGradientOnCPU();
+    }
 }
 
 template<typename DTYPE> int Operator<DTYPE>::SetResultOnCPU() {
@@ -852,19 +854,21 @@ template<typename DTYPE> void Operator<DTYPE>::InitializeAttributeForGPU(unsigne
 // }
 
 /*!
-@brief Operator가 GPU에서 연산 될 수 있도록 하는 매소드.
-@details Operator의 정보들을 지정된 GPU의 메모리로 복사한다.
-@param pCudnnHandle cudnn 라이브러리를 가리키는 포인터.
-@param idOfDevice 사용 할 GPU 번호
-*/
+ * @brief Operator가 GPU에서 연산 될 수 있도록 하는 매소드.
+ * @details Operator의 정보들을 지정된 GPU의 메모리로 복사한다.
+ * @param pCudnnHandle cudnn 라이브러리를 가리키는 포인터.
+ * @param idOfDevice 사용 할 GPU 번호
+ */
 template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
-    checkCudaErrors(cudaSetDevice(idOfDevice));
-    this->SetCudnnHandle(pCudnnHandle);
-    this->SetDevice(GPU);
-    this->SetDeviceID(idOfDevice);
-    this->SetResultOnGPU(idOfDevice);
-    this->SetGradientOnGPU(idOfDevice);
-    this->InitializeAttributeForGPU(idOfDevice);
+    if (m_Device != GPU) {
+        checkCudaErrors(cudaSetDevice(idOfDevice));
+        this->SetCudnnHandle(pCudnnHandle);
+        this->SetDevice(GPU);
+        this->SetDeviceID(idOfDevice);
+        this->SetResultOnGPU(idOfDevice);
+        this->SetGradientOnGPU(idOfDevice);
+        this->InitializeAttributeForGPU(idOfDevice);
+    }
 }
 
 template<typename DTYPE> cudnnHandle_t& Operator<DTYPE>::GetCudnnHandle() {
@@ -872,10 +876,10 @@ template<typename DTYPE> cudnnHandle_t& Operator<DTYPE>::GetCudnnHandle() {
 }
 
 /*!
-@brief  ForwardPropagateOnGPU 매소드. 실제 구현은 파생 클래스에서 정의된다.
-@param pTime ForwardPropagate할 데이터의 Time값.
-@return 성공 시 TRUE.
-*/
+ * @brief  ForwardPropagateOnGPU 매소드. 실제 구현은 파생 클래스에서 정의된다.
+ * @param pTime ForwardPropagate할 데이터의 Time값.
+ * @return 성공 시 TRUE.
+ */
 template<typename DTYPE> int Operator<DTYPE>::ForwardPropagateOnGPU(int pTime) {
     # if __DEBUG__
     std::cout << "Operator<DTYPE>::ForwardPropagateOnGPU(int)" << '\n';
