@@ -5,8 +5,6 @@
 
 template<typename DTYPE>
 class Tanh : public Operator<DTYPE>{
-private:
-  int m_Loadflag;
 public:
     /*!
     @brief Tanh의 생성자
@@ -14,11 +12,11 @@ public:
     @param pInput Alloc할 대상 Operator
     @param pName Operator에 사용자가 부여한 이름.
     */
-    Tanh(Operator<DTYPE> *pInput, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    Tanh(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Tanh::Tanh(Operator *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pLoadflag);
+        this->Alloc(pInput);
     }
 
     /*!
@@ -34,7 +32,7 @@ public:
     @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, int pLoadflag) {
+    int Alloc(Operator<DTYPE> *pInput) {
         #ifdef __DEBUG__
         std::cout << "Tanh::Alloc(Operator *, Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -48,8 +46,6 @@ public:
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
 
         this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
-
-        m_Loadflag = pLoadflag;
 
         return TRUE;
     }

@@ -23,7 +23,7 @@ private:
     ///< row의 dimension 크기
     int m_colsize;
     ///< col의 dimension 크기
-    int m_Loadflag;
+
 
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t leftTensorDesc, rightTensorDesc, outputTensorDesc, leftDeltaDesc, rightDeltaDesc, deltaDesc;
@@ -47,11 +47,11 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput)
     */
-    Addall(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput, std::string pName, int pLoadflag) : Operator<DTYPE>(pLeftInput, pRightInput, pName, pLoadflag) {
+    Addall(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pLeftInput, pRightInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Addall::Addall(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pLeftInput, pRightInput, pLoadflag);
+        this->Alloc(pLeftInput, pRightInput);
     }
 
     /*!
@@ -71,14 +71,14 @@ public:
     @param pRightInput 연산에 사용 할 inputTensor.
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput, int pLoadflag = TRUE) {
+    int Alloc(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput) {
         #ifdef __DEBUG__
         std::cout << "Addall::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
         m_pLeftTenShape  = pLeftInput->GetResult()->GetShape();
         m_pRightTenShape = pRightInput->GetResult()->GetShape();
-        m_pLoadflag   = pLoadflag;
+
         m_timesize    = (*m_pLeftTenShape)[0];
         m_batchsize   = (*m_pLeftTenShape)[1];
         m_channelsize = (*m_pLeftTenShape)[2];
@@ -305,7 +305,7 @@ private:
     ///< rowrow
     int m_colsize;
     ///< colcol
-    int m_Loadflag;
+
 
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, biasTensorDesc, outputTensorDesc, inputDeltaDesc, biasDeltaDesc, deltaDesc;
@@ -329,11 +329,11 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias)
     */
-    AddColWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pBias, pName, pLoadflag) {
+    AddColWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pBias, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "AddColWise::AddColWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string, int)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pBias, pLoadflag);
+        this->Alloc(pInput, pBias);
     }
 
     /*!
@@ -353,7 +353,7 @@ public:
     @param pBias 더할 Operator.
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, int pLoadflag = TRUE) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias) {
         #ifdef __DEBUG__
         std::cout << "AddColWise::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -366,7 +366,7 @@ public:
         m_channelsize = (*m_pInputTenShape)[2];
         m_rowsize     = (*m_pInputTenShape)[3];
         m_colsize     = (*m_pInputTenShape)[4];
-        m_Loadflag    = pLoadflag;
+
         #ifdef __DEBUG__
 
         if ((*m_pBiasTenShape)[0] != 1) printf("Receive invalid bias shape in %s (%s %d), cannot handling\n", __FUNCTION__, __FILE__, __LINE__);
@@ -599,7 +599,6 @@ private:
     ///<  row의 dimension 크기
     int m_colsize;
     ///< col의 dimension 크기
-    int m_Loadflag;
 
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, biasTensorDesc, outputTensorDesc, inputDeltaDesc, biasDeltaDesc, deltaDesc;
@@ -623,7 +622,7 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias)
     */
-    AddChannelWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pBias, pName, pLoadflg) {
+    AddChannelWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pBias, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "AddChannelWise::AddChannelWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string, int)" << '\n';
         #endif  // __DEBUG__
@@ -647,7 +646,7 @@ public:
     @param pBias 더할 Operator.
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, int pLoadflag = TRUE) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias) {
         #ifdef __DEBUG__
         std::cout << "AddColWise::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__

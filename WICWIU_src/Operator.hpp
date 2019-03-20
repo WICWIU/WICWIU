@@ -61,10 +61,10 @@ private:
 #endif  // __CUDNN__
 
 public:
-    Operator(std::string pName = "NO NAME");
-    Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME", int pLoadflag = "TRUE");
-    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag = "TRUE");
-    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME", int pLoadflag = "TRUE");
+    Operator(std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(int numInput, ...);
     virtual ~Operator();
 
@@ -296,7 +296,7 @@ template<typename DTYPE> int Operator<DTYPE>::AddOutputEdge(Operator<DTYPE> *pOu
 @details 파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한다.
 @param pName 사용자가 설정 할 Operator의 이름.
 */
-template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__

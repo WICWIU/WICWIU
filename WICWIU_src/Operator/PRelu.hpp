@@ -18,8 +18,6 @@ private:
     float m_alpha;
     float m_beta;
     double m_coef;
-    int m_Loadflag;
-
 #endif  // __CUDNN__
 
 public:
@@ -30,11 +28,11 @@ public:
     @param pWeight 입력값이 음수일 경우 사용하는 기울기
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight)
     */
-    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int pLoadflag) : Operator<DTYPE>(pInput, pWeight, pLoadflag) {
+    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "PRelu::PRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pWeight, pLoadflag);
+        this->Alloc(pInput, pWeight);
     }
 
     /*!
@@ -45,11 +43,11 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight)
     */
-    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
+    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "PRelu::PRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pWeight, pLoadflag);
+        this->Alloc(pInput, pWeight);
     }
 
     /*!
@@ -71,7 +69,7 @@ public:
     @param pWeight 입력값이 음수일 경우 사용하는 Tensor의 정보를 가진 Operator
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int pLoadflag) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight) {
         #ifdef __DEBUG__
         std::cout << "PRelu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -84,8 +82,6 @@ public:
 
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
         this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
-
-        m_Loadflag = pLoadflag;
 
         return TRUE;
     }

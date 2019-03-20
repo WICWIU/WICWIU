@@ -42,7 +42,7 @@ private:
     ///<  Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
     void *m_filterDevWorkSpace;
     ///<  Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
-    int m_Loadflag;
+
 
 #endif  // __CUDNN__
 
@@ -55,11 +55,11 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput)
     */
-    MatMul(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput, std::string pName, int pLoadflag) : Operator<DTYPE>(pWeight, pInput, pName, pLoadflag) {
+    MatMul(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pWeight, pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "MatMul::MatMul(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pWeight, pInput, pLoadflag);
+        this->Alloc(pWeight, pInput);
     }
 
     /*!
@@ -83,7 +83,7 @@ public:
     @param pInput Matmul할 input Operator.
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput, int pLoadflag) {
+    int Alloc(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput) {
         #ifdef __DEBUG__
         std::cout << "MatMul::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -93,8 +93,6 @@ public:
         int channelsize = pInput->GetResult()->GetChannelSize();
         int rowsize     = pInput->GetResult()->GetRowSize();
         int colsize     = pWeight->GetResult()->GetRowSize();
-
-        m_Loadflag = pLoadflag;
 
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
 

@@ -40,8 +40,6 @@ private:
     float m_momentum;
     double m_exponentialAverageFactor;
 
-    int m_Loadflag;
-
 #ifdef __CUDNN__
     cudnnHandle_t m_CUDNNHandle;
     cudnnBatchNormMode_t m_CUDNNMode;
@@ -63,7 +61,7 @@ public:
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__
 
-        Alloc(pInput, pScale, pBias, pIsChannelwise, pLoadflag);
+        Alloc(pInput, pScale, pBias, pIsChannelwise);
     }
 
     BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, float pMomentum = 0.1, std::string pName = NULL, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pScale, pBias, pName, pLoadflag) {
@@ -71,7 +69,7 @@ public:
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__
 
-        Alloc(pInput, pScale, pBias, pIsChannelwise, pMomentum, pLoadflag);
+        Alloc(pInput, pScale, pBias, pIsChannelwise, pMomentum);
     }
 
     ~BatchNormalize() {
@@ -82,7 +80,7 @@ public:
         Delete();
     }
 
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, float pMomentum = 0.1, double pEpsilon = 0.01, int pLoadflag = TRUE) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise, float pMomentum = 0.1, double pEpsilon = 0.01) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: Alloc( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, double)" << '\n';
 #endif  // __DEBUG__
@@ -107,7 +105,7 @@ public:
 
         m_isChannelwise = pIsChannelwise;
         m_momentum      = pMomentum;
-        m_Loadflag      = pLoadflag;
+
         if (m_isChannelwise) {
             m_batchSummaryCapacity = m_numChannel;
             // m_aTenTotalMean         = Tensor<DTYPE>::Zeros(1, 1, m_numChannel, 1, 1);

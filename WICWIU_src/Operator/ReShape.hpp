@@ -5,8 +5,6 @@
 
 template<typename DTYPE>
 class ReShape : public Operator<DTYPE>{
-private:
-  int m_Loadflag;
 public:
     /*!
     @brief ReShape의 생성자
@@ -17,11 +15,11 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pRowSize, int pColSize, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    ReShape(Operator<DTYPE> *pInput, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, 0, 0, 0, pRowSize, pColSize, pLoadflag);
+        this->Alloc(pInput, 0, 0, 0, pRowSize, pColSize);
     }
 
     /*!
@@ -34,11 +32,11 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    ReShape(Operator<DTYPE> *pInput, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, 0, 0, pChannelSize, pRowSize, pColSize, pLoadflag);
+        this->Alloc(pInput, 0, 0, pChannelSize, pRowSize, pColSize);
     }
 
     /*!
@@ -52,11 +50,11 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    ReShape(Operator<DTYPE> *pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, 0, pBatchSize, pChannelSize, pRowSize, pColSize, pLoadflag);
+        this->Alloc(pInput, 0, pBatchSize, pChannelSize, pRowSize, pColSize);
     }
 
     /*!
@@ -71,11 +69,11 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    ReShape(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize, pLoadflag);
+        this->Alloc(pInput, pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize);
     }
 
     /*!
@@ -103,7 +101,7 @@ public:
     @param pColSize ReShape으로 새로 만들어질 Tensor의 colsize.
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, int pLoadflag) {
+    int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize) {
         #ifdef __DEBUG__
         std::cout << "ReShape::Alloc(Operator *, Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -124,7 +122,6 @@ public:
 
         this->SetDelta(new Tensor<DTYPE>(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize));
 
-        m_Loadflag = pLoadflag;
 
         return TRUE;
     }

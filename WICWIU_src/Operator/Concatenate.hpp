@@ -8,16 +8,16 @@ class ConcatenateChannelWise : public Operator<DTYPE>{
 private:
     int m_noOperator;
     int *m_aAccumulate;
-    int m_Loadflag;
+
 
 public:
-    ConcatenateChannelWise(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag) : Operator<DTYPE>(pInput0, pInput1, pName, pLoadflag) {
+    ConcatenateChannelWise(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag = TRUE) : Operator<DTYPE>(pInput0, pInput1, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ConcatenateChannelWise::ConcatenateChannelWise(Operator *)" << '\n';
         #endif  // __DEBUG__
 
         m_noOperator = 0;
-        this->Alloc(2, pInput0, pInput1, pLoadflag);
+        this->Alloc(2, pInput0, pInput1);
     }
 
     ~ConcatenateChannelWise() {
@@ -31,7 +31,7 @@ public:
 
         m_noOperator  = noOperator;
         m_aAccumulate = new int[noOperator];
-        m_Loadflag = pLoadflag;
+
 
         va_list ap;
         va_start(ap, noOperator);

@@ -11,7 +11,6 @@ private:
       cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
       cudnnActivationDescriptor_t actDesc;
       DTYPE *m_pDevInput, *m_pDevOutput, *m_pDevInputDelta, *m_pDevDelta;
-      int m_Loadflag;
       float m_alpha;
       float m_beta;
       double m_coef;
@@ -27,11 +26,11 @@ public:
     @param negativeSlope 입력값이 음수일 경우 사용하는 기울기
     @ref int Alloc(Operator<DTYPE> *pInput, float negativeSlope)
     */
-    LRelu(Operator<DTYPE> *pInput, float negativeSlope, int pLoadflag) : Operator<DTYPE>(pInput, pLoadflag) {
+    LRelu(Operator<DTYPE> *pInput, float negativeSlope, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "LRelu::LRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, negativeSlope, pLoadflag);
+        this->Alloc(pInput, negativeSlope);
     }
 
     /*!
@@ -42,11 +41,11 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, float negativeSlope)
     */
-    LRelu(Operator<DTYPE> *pInput, float negativeSlope, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    LRelu(Operator<DTYPE> *pInput, float negativeSlope, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "LRelu::LRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, negativeSlope, pLoadflag);
+        this->Alloc(pInput, negativeSlope);
 
     }
 
@@ -70,7 +69,7 @@ public:
     @param negativeSlope 입력값이 음수일 경우 사용하는 기울기
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, float negativeSlope, int pLoadflag) {
+    int Alloc(Operator<DTYPE> *pInput, float negativeSlope) {
         #ifdef __DEBUG__
         std::cout << "LRelu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -80,8 +79,6 @@ public:
         int channelsize = pInput->GetResult()->GetChannelSize();
         int rowsize     = pInput->GetResult()->GetRowSize();
         int colsize     = pInput->GetResult()->GetColSize();
-
-        m_Loadflag = pLoadflag;
 
         m_negativeSlope = negativeSlope;
         //std::cout << m_negativeSlope << '\n';

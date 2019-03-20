@@ -19,7 +19,7 @@ private:
     ///< 연산 간 두 Operand의 가중치를 표현하기 위한 변수. ex) z = α*x + β*y
     double m_coef;
     ///< Activation모드에 따라 threashold값이나 alpha값을 지정하기 위한 변수.
-    int m_Loadflag;
+
 #endif  // __CUDNN__
 
 public:
@@ -29,11 +29,11 @@ public:
     @param pInput Alloc할 대상 Operator
     @ref int Alloc(Operator<DTYPE> *pInput)
     */
-    Relu(Operator<DTYPE> *pInput, int pLoadflag) : Operator<DTYPE>(pInput, pLoadflag) {
+    Relu(Operator<DTYPE> *pInput, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pLoadflag);
+        this->Alloc(pInput);
     }
 
     /*!
@@ -43,11 +43,11 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput)
     */
-    Relu(Operator<DTYPE> *pInput, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    Relu(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pLoadflag);
+        this->Alloc(pInput);
     }
 
     /*!
@@ -68,7 +68,7 @@ public:
     @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, int pLoadflag) {
+    int Alloc(Operator<DTYPE> *pInput) {
         #ifdef __DEBUG__
         std::cout << "Relu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -83,7 +83,6 @@ public:
 
         this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
 
-        m_Loadflag = pLoadflag;
 
         return TRUE;
     }

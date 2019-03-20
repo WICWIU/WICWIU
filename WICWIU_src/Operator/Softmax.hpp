@@ -15,7 +15,7 @@ class Softmax : public Operator<DTYPE>{
     ///< Softmax연산 중 Tensor값들의 합을 저장하기 위한 포인터.
     DTYPE **max;
     ///< Softmax연산 중 Tensor값들 중 가장 큰 값을 저장하기 위한 포인터.
-    int m_Loadflag;
+
 
 public:
     /*!
@@ -25,11 +25,11 @@ public:
     @param epsilon ForwardPropagate에 사용힐 값. 0으로 나누어지는 것을 방지하는 역할을 한다.
     @ref virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f
     */
-    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f, int pLoadflag) : Operator<DTYPE>(pOperator, pLoadflag) {
+    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f, int pLoadflag = TRUE) : Operator<DTYPE>(pOperator, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
-        Alloc(pOperator, epsilon, pLoadflag);
+        Alloc(pOperator, epsilon);
     }
 
     /*!
@@ -39,11 +39,11 @@ public:
     @param pName 사용자가 Operator에 부여한 이름.
     @ref virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f
     */
-    Softmax(Operator<DTYPE> *pOperator, std::string pName, int pLoadflag) : Operator<DTYPE>(pOperator, pName, pLoadflag) {
+    Softmax(Operator<DTYPE> *pOperator, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pOperator, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
-        Alloc(pOperator, pLoadflag);
+        Alloc(pOperator);
     }
 
     /*!
@@ -54,11 +54,11 @@ public:
     @param pName 사용자가 Operator에 부여한 이름.
     @ref virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f
     */
-    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon, std::string pName, int pLoadflag) : Operator<DTYPE>(pOperator, pName, pLoadflag) {
+    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pOperator, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
-        Alloc(pOperator, epsilon, pLoadflag);
+        Alloc(pOperator, epsilon);
     }
 
     /*!
@@ -77,7 +77,7 @@ public:
     @param epsilon 0으로 나누어지는 것을 방지하기위해 softmax식의 분모에 더하는 값.
     @return 성공 시 TRUE.
     */
-    virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f, int pLoadflag) {
+    virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f) {
         Operator<DTYPE> *pInput = pOperator;
 
         int timesize    = pInput->GetResult()->GetTimeSize();
@@ -99,7 +99,6 @@ public:
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
         this->SetGradient(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
 
-        m_Loadflag = pLoadflag;
 
         return TRUE;
     }
