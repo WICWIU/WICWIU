@@ -81,8 +81,14 @@ public:
     virtual void                        SetDeviceCPU();
     void                                SetDeviceCPUOnModule();
 
-    virtual int                         Save(char *nameOfDir);
-    virtual int                         Load(char *nameOfDir);
+    virtual int                         Save(char *nameOfFile);
+    virtual int                         Load(char *nameOfFile);
+
+    virtual int                         Save(FILE *fp);
+    virtual int                         Load(FILE *fp);
+
+    virtual int                         SaveComponents(char *nameOfDir);
+    virtual int                         LoadComponents(char *nameOfDir);
 
 #ifdef __CUDNN__
 
@@ -497,7 +503,41 @@ template<typename DTYPE> void Module<DTYPE>::SetDeviceCPUOnModule() {
     }
 }
 
-template<typename DTYPE> int Module<DTYPE>::Save(char *nameOfDir) {
+template<typename DTYPE> int Module<DTYPE>::Save(char *nameOfFile) {
+    FILE *fp = fopen(nameOfFile, "wb");
+
+    this->Save(fp);
+
+    fclose(fp);
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::Load(char *nameOfFile) {
+    FILE *fp = fopen(nameOfFile, "rb");
+
+    this->Load(fp);
+
+    fclose(fp);
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::Save(FILE *fp) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        (*m_apParameter)[i]->Save(fp);
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::Load(FILE *fp) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        (*m_apParameter)[i]->Load(fp);
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::SaveComponents(char *nameOfDir) {
     char filename[256];
 
     if (access(nameOfDir, 00) == -1) {
@@ -517,7 +557,7 @@ template<typename DTYPE> int Module<DTYPE>::Save(char *nameOfDir) {
     return TRUE;
 }
 
-template<typename DTYPE> int Module<DTYPE>::Load(char *nameOfDir) {
+template<typename DTYPE> int Module<DTYPE>::LoadComponents(char *nameOfDir) {
     char filename[256];
 
     for (int i = 0; i < m_ParameterDegree; i++) {

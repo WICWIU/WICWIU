@@ -122,6 +122,9 @@ public:
 
     virtual int                           Save(char *nameOfFile);
     virtual int                           Load(char *nameOfFile);
+
+    virtual int                           Load(FILE *fp);
+    virtual int                           Save(FILE *fp);
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     virtual int                           SetResultOnGPU(unsigned int idOfDevice);
@@ -293,10 +296,10 @@ template<typename DTYPE> int Operator<DTYPE>::AddOutputEdge(Operator<DTYPE> *pOu
 //////////////////////////////////////////////////////////////////////////////// for public method
 
 /*!
-@brief Operator의 생성자.
-@details 파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한다.
-@param pName 사용자가 설정 할 Operator의 이름.
-*/
+ * @brief Operator의 생성자.
+ * @details 파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한다.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -316,12 +319,12 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName, int pLoadf
 }
 
 /*!
-@brief Operator의 생성자.
-@details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
-@param pInput Operator와 연결 할 Operator들의 주소 값들.
-@param pName 사용자가 설정 할 Operator의 이름.
-@ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
-*/
+ * @brief Operator의 생성자.
+ * @details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
+ * @param pInput Operator와 연결 할 Operator들의 주소 값들.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -342,13 +345,13 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
 }
 
 /*!
-@brief Operator의 생성자.
-@details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
-@param pInput0 Operator와 연결 할 Operator들의 주소 값들.
-@param pInput1 Operator와 연결 할 Operator들의 주소 값들.
-@param pName 사용자가 설정 할 Operator의 이름.
-@ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
-*/
+ * @brief Operator의 생성자.
+ * @details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
+ * @param pInput0 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pInput1 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -369,14 +372,14 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
 }
 
 /*!
-@brief Operator의 생성자.
-@details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
-@param pInput0 Operator와 연결 할 Operator들의 주소 값들.
-@param pInput1 Operator와 연결 할 Operator들의 주소 값들.
-@param pInput2 Operator와 연결 할 Operator들의 주소 값둘.
-@param pName 사용자가 설정 할 Operator의 이름.
-@ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
-*/
+ * @brief Operator의 생성자.
+ * @details파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한 뒤, AddEdgebetweenOperators를 통해 Operator들을 서로 연결한다.
+ * @param pInput0 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pInput1 Operator와 연결 할 Operator들의 주소 값들.
+ * @param pInput2 Operator와 연결 할 Operator들의 주소 값둘.
+ * @param pName 사용자가 설정 할 Operator의 이름.
+ * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
+ */
 template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
@@ -802,22 +805,40 @@ template<typename DTYPE> int Operator<DTYPE>::SetGradientOnCPU() {
 }
 
 template<typename DTYPE> int Operator<DTYPE>::Save(char *nameOfFile) {
-    int size = m_aaResult->GetSize();
+    FILE *fp = fopen(nameOfFile, "wb");
 
-    for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->Save(nameOfFile);
-    }
+    this->Save(fp);
+
+    fclose(fp);
 
     return TRUE;
 }
 
 template<typename DTYPE> int Operator<DTYPE>::Load(char *nameOfFile) {
+    FILE *fp = fopen(nameOfFile, "rb");
+
+    this->Load(fp);
+
+    fclose(fp);
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::Save(FILE *fp) {
     int size = m_aaResult->GetSize();
 
     for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->Load(nameOfFile);
+        (*m_aaResult)[i]->Save(fp);
     }
+    return TRUE;
+}
 
+template<typename DTYPE> int Operator<DTYPE>::Load(FILE *fp) {
+    int size = m_aaResult->GetSize();
+
+    for (int i = 0; i < size; i++) {
+        (*m_aaResult)[i]->Load(fp);
+    }
     return TRUE;
 }
 
