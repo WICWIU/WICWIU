@@ -7,26 +7,8 @@
  * @class NeuralNetwork 뉴럴 네트워크 모델 생성, 학습 및 평가를 총괄하는 클래스
  * @details Operator, Module, Loss Function, Optimizer 클래스를 생성 및 활용해 뉴럴 네트워크를 구성하고 학습시킨다
  */
-template<typename DTYPE> class NeuralNetwork {
+template<typename DTYPE> class NeuralNetwork : public Module<DTYPE>{
 private:
-    Container<Operator<DTYPE> *> *m_aaOperator;
-    ///< 신경망의 전체 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수  //// Excutable + Input + Parameter
-    Container<Operator<DTYPE> *> *m_apExcutableOperator;
-    ///< 순전파 시 연산을 수행하는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
-    Container<Operator<DTYPE> *> *m_apInput;
-    ///< 신경망의 최초 Input이 되는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
-    Container<Operator<DTYPE> *> *m_apParameter;
-    ///< 신경망의 학습이 가능한 파라미터에 해당하는 Operator들의 포인터를 담고 있는 Container의 포인터 멤버 변수
-
-    int m_Operatordegree;
-    ///< 해당 클래스의 Operator Container 멤버 변수의 Element의 개수
-    int m_ExcutableOperatorDegree;
-    ///< 해당 클래스의 Excutable Operator Container 멤버 변수의 Element의 개수
-    int m_InputDegree;
-    ///< 해당 클래스의 Input Container 멤버 변수의 Element의 개수
-    int m_ParameterDegree;
-    ///< 해당 클래스의 Parameter Container 멤버 변수의 Element의 개수
-
     LossFunction<DTYPE> *m_aLossFunction;
     ///< 신경망의 손실함수에 해당하는 LossFunction의 포인터 멤버 변수
     Optimizer<DTYPE> *m_aOptimizer;
@@ -55,77 +37,49 @@ public:
     NeuralNetwork();
     virtual ~NeuralNetwork();
 
-    Operator<DTYPE>             * SetInput(Operator<DTYPE> *pInput);
-    int                           SetInput(int pNumOfInput, ...);
-    int                           IsInput(Operator<DTYPE> *pOperator);
+    LossFunction<DTYPE>* SetLossFunction(LossFunction<DTYPE> *pLossFunction);
+    Optimizer<DTYPE>   * SetOptimizer(Optimizer<DTYPE> *pOptimizer);
 
-    int                           IsValid(Operator<DTYPE> *pOperator); // Graph 분석 시 node에 추가할 것인지 확인한다.
+    Operator<DTYPE>    * GetResultOperator();
+    Operator<DTYPE>    * GetResult();
 
-    Operator<DTYPE>             * AnalyzeGraph(Operator<DTYPE> *pResultOperator);
-    LossFunction<DTYPE>         * SetLossFunction(LossFunction<DTYPE> *pLossFunction);
-    Optimizer<DTYPE>            * SetOptimizer(Optimizer<DTYPE> *pOptimizer);
-    int                           FeedInputTensor(int pNumOfInput, ...);
-    // =======
+    LossFunction<DTYPE>* GetLossFunction();
 
-    Container<Operator<DTYPE> *>* GetInputContainer();
+    Optimizer<DTYPE>   * GetOptimizer();
 
-    Operator<DTYPE>             * GetResultOperator();
-    Operator<DTYPE>             * GetResult();
 
-    Container<Operator<DTYPE> *>* GetExcutableOperatorContainer();
+    void                 SetDeviceCPU();
+    void                 SetDeviceCPUOnNeuralNetwork();
 
-    Container<Operator<DTYPE> *>* GetParameterContainer();
-    Container<Operator<DTYPE> *>* GetParameter();
+    int                  Train();
+    int                  Test();
 
-    LossFunction<DTYPE>         * GetLossFunction();
+    int                  TrainOnCPU();
+    int                  TestOnCPU();
 
-    Optimizer<DTYPE>            * GetOptimizer();
+    int                  TrainOnGPU();
+    int                  TestOnGPU();
 
-    int                           ForwardPropagate(int pTime = 0);
-    int                           BackPropagate(int pTime = 0);
+    float                GetAccuracy(int numOfClass = 10);
+    int                  GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
+    float                GetTop5Accuracy(int numOfClass);
+    void                 GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
+    float                GetLoss();
 
-    void                          SetDeviceCPU();
+    void                 PrintGraphInformation();
 
-    void                          SetModeTrain();
-    void                          SetModeAccumulate();
-    void                          SetModeInference();
+    int                  ResetLossFunctionResult();
+    int                  ResetLossFunctionGradient();
 
-    int                           Train();
-    int                           Test();
+    int                  ResetParameterGradient();
 
-    int                           TrainOnCPU();
-    int                           TestOnCPU();
-
-    int                           TrainOnGPU();
-    int                           TestOnGPU();
-
-    float                         GetAccuracy(int numOfClass = 10);
-    int                           GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
-    float                         GetTop5Accuracy(int numOfClass);
-    void                          GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
-    float                         GetLoss();
-
-    void                          PrintGraphInformation();
-
-    int                           ResetOperatorResult();
-    int                           ResetOperatorGradient();
-
-    int                           ResetLossFunctionResult();
-    int                           ResetLossFunctionGradient();
-
-    int                           ResetParameterGradient();
-
-    Operator<DTYPE>             * SearchOperator(std::string pName);
-
-    int                           Save(char *nameOfDir);
-    int                           Load(char *nameOfDir);
+    Operator<DTYPE>    * SearchOperator(std::string pName);
 
 #ifdef __CUDNN__
-    int                           ForwardPropagateOnGPU(int pTime = 0);
-    int                           BackPropagateOnGPU(int pTime = 0);
 
-    void                          SetDeviceGPU(unsigned int idOfDevice);
-    int                           SetDeviceID(unsigned int idOfDevice);
+    void SetDeviceGPU(unsigned int idOfDevice);
+    void SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    int  SetDeviceID(unsigned int idOfDevice);
 #endif  // __CUDNN__
 };
 
@@ -138,10 +92,6 @@ public:
  * @return TRUE
  */
 template<typename DTYPE> int NeuralNetwork<DTYPE>::Alloc() {
-    m_aaOperator          = new Container<Operator<DTYPE> *>();
-    m_apExcutableOperator = new Container<Operator<DTYPE> *>();
-    m_apInput             = new Container<Operator<DTYPE> *>();
-    m_apParameter         = new Container<Operator<DTYPE> *>();
     return TRUE;
 }
 
@@ -154,36 +104,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::Delete() {
     #ifdef __DEBUG__
     std::cout << "NeuralNetwork<DTYPE>::Delete()" << '\n';
     #endif  // __DEBUG__
-    int size = 0;
-
-    if (m_aaOperator) {
-        size = m_aaOperator->GetSize();
-        Operator<DTYPE> **OperatorContainer = m_aaOperator->GetRawData();
-
-        for (int i = 0; i < size; i++) {
-            if ((*m_aaOperator)[i]) {
-                delete OperatorContainer[i];
-                OperatorContainer[i] = NULL;
-            }
-        }
-        delete m_aaOperator;
-        m_aaOperator = NULL;
-    }
-
-    if (m_apExcutableOperator) {
-        delete m_apExcutableOperator;
-        m_apExcutableOperator = NULL;
-    }
-
-    if (m_apInput) {
-        delete m_apInput;
-        m_apInput = NULL;
-    }
-
-    if (m_apParameter) {
-        delete m_apParameter;
-        m_apParameter = NULL;
-    }
+    // int size = 0;
 
     if (m_aLossFunction) {
         delete m_aLossFunction;
@@ -233,20 +154,10 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::DeleteOnGPU() {
  * @return 없음
  * @see NeuralNetwork<DTYPE>::Alloc()
  */
-template<typename DTYPE> NeuralNetwork<DTYPE>::NeuralNetwork() {
+template<typename DTYPE> NeuralNetwork<DTYPE>::NeuralNetwork() : Module<DTYPE>() {
     #ifdef __DEBUG__
     std::cout << "NeuralNetwork<DTYPE>::NeuralNetwork()" << '\n';
     #endif  // __DEBUG__
-
-    m_aaOperator          = NULL;
-    m_apExcutableOperator = NULL;
-    m_apInput             = NULL;
-    m_apParameter         = NULL;
-
-    m_Operatordegree          = 0;
-    m_ExcutableOperatorDegree = 0;
-    m_InputDegree             = 0;
-    m_ParameterDegree         = 0;
 
     m_aLossFunction = NULL;
     m_aOptimizer    = NULL;
@@ -276,168 +187,6 @@ template<typename DTYPE> NeuralNetwork<DTYPE>::~NeuralNetwork() {
 }
 
 /*!
- * @brief Operator를 신경망의 Input에 추가하는 메소드
- * @details 매개 변수로 받은 Operator를 NeuralNetwork 클래스의 Operator, Input Container에 추가하고 각 degree를 1만큼 증가시킨다.
- * @param pInput Input으로 추가하고자 하는 Operator
- * @return 매개변수로 받은 Operator
- */
-template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SetInput(Operator<DTYPE> *pInput) {
-    m_aaOperator->Push(pInput);
-    m_Operatordegree++;
-
-    m_apInput->Push(pInput);
-    m_InputDegree++;
-    return pInput;
-}
-
-/*!
- * @brief Operator 리스트를 신경망의 Input에 추가하는 메소드
- * @details Operator 개수와 Operator 리스트를 매개변수로 받아서, 각각의 Operator에 대해서 NeuralNetwork<DTYPE>::SetInput(Operator<DTYPE> *pInput)를 호출한다.
- * @param pNumOfInput Input에 추가하고자 하는 Operator의 개수
- * @param ... Input에 추가하고자 하는 Operator의 리스트
- * @return TRUE
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::SetInput(int pNumOfInput, ...) {
-    Operator<DTYPE> *temp = NULL;
-
-    va_list ap;
-    va_start(ap, pNumOfInput);
-
-    for (int i = 0; i < pNumOfInput; i++) {
-        temp = va_arg(ap, Operator<DTYPE> *);
-        this->SetInput(temp);
-    }
-
-    va_end(ap);
-    return TRUE;
-}
-
-/*!
- * @brief 해당 Operator가 신경망의 Input인지 확인하는 메소드
- * @details 매개변수로 받은 Operator가 NeuralNetwork의 Input Container에 포함되어 있는 지 확인한다.
- * @param pOperator Input 여부를 확인하고자 하는 Operator
- * @return Input container에 포함되어 있는 경우 TRUE, 포함되어 있지 않는 경우 FALSE를 반환한다.
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::IsInput(Operator<DTYPE> *pOperator) {
-    for (int i = 0; i < m_InputDegree; i++) {
-        if ((*m_apInput)[i] == pOperator) return TRUE;
-    }
-
-    return FALSE;
-}
-
-/*!
- * @brief 해당 Operator의 Output Operator들이 신경망 그래프에 중복으로 포함되는 지 확인하는 메소드
- * @details 해당 Operator의 Output container 멤버 변수에 담겨 있는 Operator들이 NeuralNetwork의 Excutable Operator container에 중복되어 포함되어 있는 지 여부를 확인한다.
- * @param pOperator Output Container 멤버 변수가 Excutable Operator Container에 포함되어 있는 지 확인하고자 하는 Operator
- * @return 해당 Operator의 Output Container 멤버 변수가 Excutable Operator Container에 중복되어 포함되어 있으면 TRUE를 아니면 FALSE를 반환한다.
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::IsValid(Operator<DTYPE> *pOperator) {
-    Container<Operator<DTYPE> *> *prevOp = pOperator->GetOutputContainer();
-    int numOfOutputEdge                  = prevOp->GetSize();
-    int check                            = 0;
-
-    // every Output node is already in Excutable Operator
-    for (int i = 0; i < numOfOutputEdge; i++) {
-        for (int j = 0; j < m_ExcutableOperatorDegree; j++) {
-            if ((*m_apExcutableOperator)[j] == (*prevOp)[i]) {
-                check++;
-                break;
-            }
-        }
-
-        if (check != (i + 1)) return FALSE;
-    }
-
-    return TRUE;
-}
-
-/*!
- * @brief 학습 가능한 형태로 신경망 그래프를 구성해주는 메소드
- * @details 신경망의 Output에 해당하는 Operator를 매개변수로 받아 너비 우선 탐색으로 신경망 그래프를 구성한다.
- * @details 매개변수로 받은 신경망의 Output에 해당하는 Operator를 시작으로 신경망의 Input에 해당하는 Operator까지 역순으로 NeuralNetwork 클래스의 Container 멤버 변수들에 Operator들을 추가한다.
- * @details NeuralNetwork 클래스의 Container 멤버 변수들에 Operator들을 모두 추가한 후, 각 Container들을 역순으로 변경한다.
- * @details Operator 탐색 순서는 너비 우선 탐색을 따르며, 매개변수로 받은 Output Operator부터 해당 Operator의 Input Operator 리스트를 너비 우선 탐색 방식을 이용해 순서대로 진행한다.
- * @details 신경망의 각 Operator들은 Operator Container에 순서대로 추가되며, 연산에 참여하는 Operator의 경우 Excutable Conatainer에 학습 파라미터에 해당하는 Operator의 경우 Parameter Container에 순서대로 추가된다.
- * @details 각 Operator들은 NeuralNetwork<DTYPE>::IsValid(Operator<DTYPE> *pOperator) 메소드를 이용하여 신경망 그래프 안에서의 중복 여부를 확인하며 중복되는 경우 그래프에 추가하지 않는다.
- * @param pResultOperator 그래프를 구성하고자 하는 신경망의 Output에 해당하는 Operator
- * @return 매개변수로 받은 그래프를 구성하고자 하는 신경망의 Output에 해당하는 Operator
- */
-template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::AnalyzeGraph(Operator<DTYPE> *pResultOperator) {
-    // BFS
-    Container<Operator<DTYPE> *> queue;
-    queue.Push(pResultOperator);
-    Operator<DTYPE> *out                 = NULL;
-    Container<Operator<DTYPE> *> *nextOp = NULL;
-    int numOfInputEdge                   = 0;
-
-    while (queue.GetSize() > 0) {
-        out = queue.Pop();
-
-        if (!(this->IsInput(out))) {
-            if (this->IsValid(out)) {
-                // std::cout << out->GetName() << '\n';
-
-                m_aaOperator->Push(out);
-                m_Operatordegree++;
-
-                if (out->GetIsTensorholder()) {
-                    m_apParameter->Push(out);
-                    m_ParameterDegree++;
-                } else {
-                    m_apExcutableOperator->Push(out);
-                    m_ExcutableOperatorDegree++;
-                }
-
-                nextOp         = out->GetInputContainer();
-                numOfInputEdge = nextOp->GetSize();
-
-                // std::cout << numOfInputEdge << '\n';
-
-                for (int i = 0; i < numOfInputEdge; i++) {
-                    queue.Push((*nextOp)[i]);
-                }
-            } else continue;
-        } else continue;
-    }
-    // std::cout << '\n';
-
-    m_aaOperator->Reverse();
-    m_apExcutableOperator->Reverse();
-    m_apParameter->Reverse();
-
-    // std::cout << "m_aaOperator : " << '\n';
-    //
-    // for (int i = 0; i < m_Operatordegree; i++) {
-    // std::cout << (*m_aaOperator)[i]->GetName() << '\n';
-    // }
-    // std::cout << '\n';
-    //
-    // std::cout << "m_apExcutableOperator : " << '\n';
-    //
-    // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-    // std::cout << (*m_apExcutableOperator)[i]->GetName() << '\n';
-    // }
-    // std::cout << '\n';
-    //
-    // std::cout << "m_apInput : " << '\n';
-    //
-    // for (int i = 0; i < m_InputDegree; i++) {
-    // std::cout << (*m_apInput)[i]->GetName() << '\n';
-    // }
-    // std::cout << '\n';
-    //
-    // std::cout << "m_apParameter : " << '\n';
-    //
-    // for (int i = 0; i < m_ParameterDegree; i++) {
-    // std::cout << (*m_apParameter)[i]->GetName() << '\n';
-    // }
-    // std::cout << '\n';
-
-    return pResultOperator;
-}
-
-/*!
  * @brief 특정 Loss Function을 매개 변수로 받아 이를 신경망의 Loss Function로 지정해주는 메소드
  * @param pLossFunction 신경망의 Loss Function로 지정하고자 하는 Loss Function
  * @return 매개변수로 받은 Loss Function
@@ -457,51 +206,13 @@ template<typename DTYPE> Optimizer<DTYPE> *NeuralNetwork<DTYPE>::SetOptimizer(Op
     return pOptimizer;
 }
 
-/*!
- * @brief 신경망에 Input 리스트를 추가하는 메소드
- * @details 매개변수로 받은 Tensor들을 순서대로 NeuralNetwork의 Input Container에 담겨 있는 Operator들의 Result로 설정한다.
- * @param pNumOfInput Input Container에 추가하고 싶은 Tensor들의 개수
- * @param ... Input Container에 추가하고 싶은 Tensor들의 리스트
- * @return TRUE
- * @see Operator<DTYPE>::SetResult(Tensor<DTYPE> *pTensor)
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::FeedInputTensor(int pNumOfInput, ...) {
-    Tensor<DTYPE> *temp = NULL;
-
-    va_list ap;
-    va_start(ap, pNumOfInput);
-
-    for (int i = 0; i < pNumOfInput; i++) {
-        temp = va_arg(ap, Tensor<DTYPE> *);
-        (*m_apInput)[i]->SetResult(temp);
-    }
-
-    va_end(ap);
-    return TRUE;
-}
-
-template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetInputContainer() {
-    return m_apInput;
-}
-
 template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::GetResultOperator() {
     return this->GetResult();
 }
 
 template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::GetResult() {
-    return m_apExcutableOperator->GetLast();
-}
-
-template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetExcutableOperatorContainer() {
-    return m_apExcutableOperator;
-}
-
-template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetParameterContainer() {
-    return m_apParameter;
-}
-
-template<typename DTYPE> Container<Operator<DTYPE> *> *NeuralNetwork<DTYPE>::GetParameter() {
-    return m_apParameter;
+    // return m_apExcutableOperator->GetLast();
+    return this->GetExcutableOperatorContainer()->GetLast();
 }
 
 template<typename DTYPE> LossFunction<DTYPE> *NeuralNetwork<DTYPE>::GetLossFunction() {
@@ -513,80 +224,18 @@ template<typename DTYPE> Optimizer<DTYPE> *NeuralNetwork<DTYPE>::GetOptimizer() 
 }
 
 /*!
- * @brief 신경망 그래프의 순전파를 수행하는 메소드
- * @details Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::ForwardPropagate(int pTime) 메소드를 순서대로 호출하고, Lossfunction의 LossFunction<DTYPE>::ForwardPropagate(int pTime) 메소드를 호출한다.
- * @param pTime 각 ForwardPropagate 메소드에 전달할 Time의 인덱스
- * @return TRUE
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagate(int pTime) {
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->ForwardPropagate(pTime);
-    }
-    m_aLossFunction->ForwardPropagate(pTime);
-
-    return TRUE;
-}
-
-/*!
- * @brief 신경망 그래프의 역전파를 수행하는 메소드
- * @details Lossfunction의 LossFunction<DTYPE>::ForwardPropagate(int pTime) 메소드를 호출하고, Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::ForwardPropagate(int pTime) 메소드를 역순으로 호출한다.
- * @param pTime 각 ForwardPropagate 메소드에 전달할 Time의 인덱스
- * @return TRUE
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagate(int pTime) {
-    m_aLossFunction->BackPropagate(pTime);
-
-    for (int i = m_ExcutableOperatorDegree - 1; i >= 0; i--) {
-        (*m_apExcutableOperator)[i]->BackPropagate(pTime);
-    }
-    return TRUE;
-}
-
-/*!
  * @brief 신경망 그래프 학습에 사용되는 장치를 CPU로 전환하는 메소드
  * @details NeuralNetwork의 Device 멤버변수를 CPU로 전환하고, Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::SetDeviceCPU() 메소드를 순서대로 호출하고, Lossfunction의 LossFunction<DTYPE>::SetDeviceCPU() 메소드를 호출한다.
  * @return 없음
  */
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPU() {
+    if (m_Device != CPU) this->SetDeviceCPUOnNeuralNetwork();
+}
+
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceCPUOnNeuralNetwork() {
     m_Device = CPU;
-
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetDeviceCPU();
-    }
+    this->SetDeviceCPUOnModule();
     m_aLossFunction->SetDeviceCPU();
-}
-
-/*!
- * @brief 신경망 그래프의 학습 모드를 TRAINING 상태로 전환하는 메소드
- * @details Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::SetModeTraining() 메소드를 순서대로 호출한다.
- * @return 없음
- */
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeTrain() {
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetModeTrain();
-    }
-}
-
-/*!
- * @brief 신경망 그래프의 학습 모드를 ACCUMULATING(Batch Normalization을 이용한 학습 시 사용) 상태로 전환하는 메소드
- * @details Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::SetModeAccumulating() 메소드를 순서대로 호출한다.
- * @return 없음
- */
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeAccumulate() {
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetModeAccumulate();
-    }
-}
-
-/*!
- * @brief 신경망 그래프의 학습 모드를 INFERENCING(테스트) 상태로 전환하는 메소드
- * @details Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::SetModeInferencing() 메소드를 순서대로 호출한다.
- * @return 없음
- */
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetModeInference() {
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->SetModeInference();
-    }
 }
 
 /*!
@@ -628,12 +277,16 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Test() {
  * @see NeuralNetwork<DTYPE>::ForwardPropagate() NeuralNetwork<DTYPE>::BackPropagate() Optimizer<DTYPE>::UpdateParameter()
  */
 template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
-    this->ResetOperatorResult();
-    this->ResetOperatorGradient();
+    // this->ResetOperatorResult();
+    // this->ResetOperatorGradient();
+    this->ResetResult();
+    this->ResetGradient();
     this->ResetLossFunctionResult();
     this->ResetLossFunctionGradient();
 
     this->ForwardPropagate();
+    m_aLossFunction->ForwardPropagate();
+    m_aLossFunction->BackPropagate();
     this->BackPropagate();
 
     m_aOptimizer->UpdateParameter();
@@ -649,10 +302,12 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
  * @see NeuralNetwork<DTYPE>::ResetOperatorResult() NeuralNetwork<DTYPE>::ResetLossFunctionResult() NeuralNetwork<DTYPE>::ForwardPropagate()
  */
 template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnCPU() {
-    this->ResetOperatorResult();
+    // this->ResetOperatorResult();
+    this->ResetResult();
     this->ResetLossFunctionResult();
 
     this->ForwardPropagate();
+    m_aLossFunction->ForwardPropagate();
     return TRUE;
 }
 
@@ -667,12 +322,16 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnCPU() {
  */
 template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnGPU() {
 #ifdef __CUDNN__
-    this->ResetOperatorResult();
-    this->ResetOperatorGradient();
+    // this->ResetOperatorResult();
+    // this->ResetOperatorGradient();
+    this->ResetResult();
+    this->ResetGradient();
     this->ResetLossFunctionResult();
     this->ResetLossFunctionGradient();
 
     this->ForwardPropagateOnGPU();
+    m_aLossFunction->ForwardPropagateOnGPU();
+    m_aLossFunction->BackPropagateOnGPU();
     this->BackPropagateOnGPU();
 
     m_aOptimizer->UpdateParameterOnGPU();
@@ -693,10 +352,12 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnGPU() {
  */
 template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnGPU() {
 #ifdef __CUDNN__
-    this->ResetOperatorResult();
+    // this->ResetOperatorResult();
+    this->ResetResult();
     this->ResetLossFunctionResult();
 
     this->ForwardPropagateOnGPU();
+    m_aLossFunction->ForwardPropagateOnGPU();
 #else  // __CUDNN__
     std::cout << "There is no GPU option!" << '\n';
     exit(-1);
@@ -898,37 +559,13 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetLoss() {
 template<typename DTYPE> void NeuralNetwork<DTYPE>::PrintGraphInformation() {
     std::cout << "Graph Structure: " << "\n\n";
 
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->PrintInformation(0);
+    for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
+        (*this->GetExcutableOperatorContainer())[i]->PrintInformation(0);
         std::cout << '\n';
     }
 
     std::cout << "LossFunction: " << m_aLossFunction->GetName() << '\n';
     // std::cout << "Optimizern: " << m_aOptimizer->GetName() << '\n';
-}
-
-/*!
- * @brief 연산에 참여하는 Operator들의 Result Container를 초기화시킨다.
- * @details Excutable Operator Container에 포함되어 있는 각 Operator들에서 Operator<DTYPE>::ResetResult() 메소드를 호출한다.
- * @return TRUE
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::ResetOperatorResult() {
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->ResetResult();
-    }
-    return TRUE;
-}
-
-/*!
- * @brief 연산에 참여하는 Operator들의 Gradient Container를 초기화시킨다.
- * @details Excutable Operator Container에 포함되어 있는 각 Operator들에서 Operator<DTYPE>::ResetGradient() 메소드를 호출한다.
- * @return TRUE
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::ResetOperatorGradient() {
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->ResetGradient();
-    }
-    return TRUE;
 }
 
 /*!
@@ -964,79 +601,22 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::ResetParameterGradient() {
 template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(std::string pName) {
     std::string name = "NULL";
 
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        name = (*m_apExcutableOperator)[i]->GetName();
+    // for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
+    // name = (*m_apExcutableOperator)[i]->GetName();
+    //
+    // if (name == pName) return (*m_apExcutableOperator)[i];
+    // }
 
-        if (name == pName) return (*m_apExcutableOperator)[i];
+    for (int i = 0; i < this->GetNumOfExcutableOperator(); i++) {
+        name = (*this->GetExcutableOperatorContainer())[i]->GetName();
+
+        if (name == pName) return (*this->GetExcutableOperatorContainer())[i];
     }
 
     return NULL;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Save(char *nameOfDir) {
-    char filename[256];
-
-    if (access(nameOfDir, 00) == -1) {
-        if (mkdir(nameOfDir, 0766) == -1) {
-            printf("mkdir fail\n");
-            exit(-1);
-        }
-    }
-
-    for (int i = 0; i < m_ParameterDegree; i++) {
-        // important order
-        sprintf(filename, "%s/%d.p", nameOfDir, i);
-        // std::cout << filename << '\n';
-        (*m_apParameter)[i]->Save(filename);
-        filename[0] = '\0';
-    }
-    return TRUE;
-}
-
-template<typename DTYPE> int NeuralNetwork<DTYPE>::Load(char *nameOfDir) {
-    char filename[256];
-
-    for (int i = 0; i < m_ParameterDegree; i++) {
-        // important order
-        sprintf(filename, "%s/%d.p", nameOfDir, i);
-        // std::cout << filename << '\n';
-        (*m_apParameter)[i]->Load(filename);
-        filename[0] = '\0';
-    }
-    return TRUE;
-}
-
 #ifdef __CUDNN__
-
-/*!
- * @brief GPU를 활용해 신경망 그래프의 순전파를 수행하는 메소드
- * @details Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::ForwardPropagateOnGPU(int pTime) 메소드를 순서대로 호출하고, Lossfunction의 LossFunction<DTYPE>::ForwardPropagateOnGPU(int pTime) 메소드를 호출한다.
- * @param pTime 각 ForwardPropagateOnGPU 메소드에 전달할 Time의 인덱스
- * @return TRUE
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::ForwardPropagateOnGPU(int pTime) {
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        (*m_apExcutableOperator)[i]->ForwardPropagateOnGPU(pTime);
-    }
-    m_aLossFunction->ForwardPropagateOnGPU(pTime);
-
-    return TRUE;
-}
-
-/*!
- * @brief GPU를 활용해 신경망 그래프의 역전파를 수행하는 메소드
- * @details Lossfunction의 LossFunction<DTYPE>::ForwardPropagateOnGPU(int pTime) 메소드를 호출하고, Excutable Operator Container의 각 Operator들에서 Operator<DTYPE>::ForwardPropagateOnGPU(int pTime) 메소드를 역순으로 호출한다.
- * @param pTime 각 ForwardPropagateOnGPU 메소드에 전달할 Time의 인덱스
- * @return TRUE
- */
-template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagateOnGPU(int pTime) {
-    m_aLossFunction->BackPropagateOnGPU(pTime);
-
-    for (int i = m_ExcutableOperatorDegree - 1; i >= 0; i--) {
-        (*m_apExcutableOperator)[i]->BackPropagateOnGPU(pTime);
-    }
-    return TRUE;
-}
 
 /*!
  * @brief 신경망 그래프 학습에 사용되는 장치를 GPU로 전환하는 메소드
@@ -1047,29 +627,17 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BackPropagateOnGPU(int pTime)
  * @return 없음
  */
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
-    // std::cout << "NeuralNetwork<DTYPE>::SetModeGPU()" << '\n';
-    checkCudaErrors(cudaSetDevice(idOfDevice));
-
-    m_Device = GPU;
-    this->AllocOnGPU();
-
-    for (int i = 0; i < m_ExcutableOperatorDegree; i++) {
-        // important order
-        (*m_apExcutableOperator)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+    if (m_Device != GPU) {
+        checkCudaErrors(cudaSetDevice(idOfDevice));
+        m_Device = GPU;
+        this->AllocOnGPU();
+        this->SetDeviceGPUOnModule(m_cudnnHandle, idOfDevice);
+        this->SetDeviceGPUOnNeuralNetwork(m_cudnnHandle, idOfDevice);
     }
+}
 
-    for (int i = 0; i < m_ParameterDegree; i++) {
-        // important order
-        (*m_apParameter)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-    }
-
-    for (int i = 0; i < m_InputDegree; i++) {
-        // important order
-        (*m_apInput)[i]->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-    }
-
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
     m_aLossFunction->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-
     m_aOptimizer->SetDeviceGPU(m_cudnnHandle, idOfDevice);
 }
 
