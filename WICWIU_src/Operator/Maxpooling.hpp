@@ -30,6 +30,8 @@ private:
     ///< 연산 간 두 Operand의 가중치를 표현하기 위한 변수. ex) z = α*x + β*y
     double m_coef;
     ///< unUsed Variable
+    int m_Loadflag;
+
 #endif  // __CUDNN__
 
 public:
@@ -43,11 +45,11 @@ public:
     @param strideCol Colunm stride값
     @param pName 사용자가 부여한 Operator이름
     */
-    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Maxpooling2D(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol);
+        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol, pLoadflag);
     }
 
     /*!
@@ -61,11 +63,11 @@ public:
     @param padding padding size
     @param pName 사용자가 부여한 Operator이름
     */
-    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName, int pLoadflag;) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Maxpooling2D(Operator<DTYPE> *, int, int, std::string)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol, padding, padding);
+        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol, padding, padding, pLoadflag);
     }
 
     /*!
@@ -93,7 +95,7 @@ public:
     @param padding2 col_padding 값.
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, int padding1 = 0, int padding2 = 0) {
+    int Alloc(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, int padding1 = 0, int padding2 = 0, int pLoadflag;) {
         #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Alloc(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
@@ -111,6 +113,8 @@ public:
 
         int rowsize = 0;
         int colsize = 0;
+
+        m_Loadflag = pLoadflag;
 
         rowsize = ((*shapeOfInput)[3] - maskRow + (2 * m_padding[0])) / strideRow + 1;
         colsize = ((*shapeOfInput)[4] - maskCol + (2 * m_padding[1])) / strideCol + 1;

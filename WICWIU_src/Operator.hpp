@@ -40,6 +40,7 @@ private:
     ///< Operator가 파라미터인지 알려주는 값.
     int m_isTrainable;
     ///< Operator가 학습가능한 Operator인지 알려주는 값.
+    int m_Loadflag;
 
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
@@ -61,9 +62,9 @@ private:
 
 public:
     Operator(std::string pName = "NO NAME");
-    Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME");
-    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME");
-    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME");
+    Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME", int pLoadflag = "TRUE");
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag = "TRUE");
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME", int pLoadflag = "TRUE");
     Operator(int numInput, ...);
     virtual ~Operator();
 
@@ -309,6 +310,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
 }
 
@@ -319,7 +321,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
 @param pName 사용자가 설정 할 Operator의 이름.
 @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
 */
-template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__
@@ -333,8 +335,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
-    AddEdgebetweenOperators(1, pInput);
+    AddEdgebetweenOperators(1, pInput, pLoadflag);
 }
 
 /*!
@@ -345,7 +348,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
 @param pName 사용자가 설정 할 Operator의 이름.
 @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
 */
-template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__
@@ -359,8 +362,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
-    AddEdgebetweenOperators(2, pInput0, pInput1);
+    AddEdgebetweenOperators(2, pInput0, pInput1, pLoadflag);
 }
 
 /*!
@@ -372,7 +376,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
 @param pName 사용자가 설정 할 Operator의 이름.
 @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
 */
-template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__
@@ -386,8 +390,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
-    AddEdgebetweenOperators(3, pInput0, pInput1, pInput2);
+    AddEdgebetweenOperators(3, pInput0, pInput1, pInput2, pLoadflag);
 }
 
 template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {

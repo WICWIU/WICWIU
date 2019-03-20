@@ -5,6 +5,7 @@
 
 template<typename DTYPE> class Dropout : public Operator<DTYPE>{
 private:
+  int m_Loadflag;
   float m_droprate;
   Mode  m_mode;
   Tensor<unsigned char> *m_activeshape; //1D Tensor, type: unsigned char
@@ -29,14 +30,14 @@ public:
     }
 
 
-    Dropout(Operator<DTYPE> *pInput, float pDroprate, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Dropout(Operator<DTYPE> *pInput, float pDroprate, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Dropout::Dropout(Operator<DTYPE> * float *)" << '\n';
         #endif  // __DEBUG__
         m_droprate = 0.f;
         m_mode = TRAIN;
-
-        this->Alloc(pInput, pDroprate);
+        m_Loadflag = pLoadflag;
+        this->Alloc(pInput, pDroprate, pLoadflag);
     }
 
     ~Dropout() {
@@ -46,7 +47,7 @@ public:
         Delete();
     }
 
-    int Alloc(Operator<DTYPE> *pInput, float pDroprate) {
+    int Alloc(Operator<DTYPE> *pInput, float pDroprate, int pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Dropout::Alloc(Operator<DTYPE> *, float *)" << '\n';
         #endif  // __DEBUG__

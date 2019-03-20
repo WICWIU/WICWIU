@@ -10,6 +10,7 @@ private:
     ///< stride값. [0]은 row, [1]은 colunm을 각각 의미한다.
     int m_padding[2];
     ///< padding값 [0]은 height, [1]은 width를 각각 의미한다.
+    int m_Loadflag;
 
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, outputTensorDesc, deltaDesc, inputDeltaDesc;
@@ -59,8 +60,8 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2)
     */
-    TransposedConvolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, std::string pName = "NO NAME") : Operator<DTYPE>(pInput, pWeight, pName) {
-        Alloc(pInput, pWeight, stride1, stride2, 0, 0);
+    TransposedConvolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, std::string pName = "NO NAME", int pLoadflag) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
+        Alloc(pInput, pWeight, stride1, stride2, 0, 0, pLoadflag);
     }
 
     /*!
@@ -74,8 +75,8 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2)
     */
-    TransposedConvolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding, std::string pName = "NO NAME") : Operator<DTYPE>(pInput, pWeight, pName) {
-        Alloc(pInput, pWeight, stride1, stride2, padding, padding);
+    TransposedConvolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding, std::string pName = "NO NAME", int pLoadflag) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
+        Alloc(pInput, pWeight, stride1, stride2, padding, padding, pLoadflag);
     }
 
     /*!
@@ -90,8 +91,8 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2)
     */
-    TransposedConvolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2, std::string pName = "NO NAME") : Operator<DTYPE>(pInput, pWeight, pName) {
-        Alloc(pInput, pWeight, stride1, stride2, padding1, padding2);
+    TransposedConvolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2, std::string pName = "NO NAME", int pLoadflag) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
+        Alloc(pInput, pWeight, stride1, stride2, padding1, padding2, pLoadflag);
     }
 
     /*!
@@ -116,7 +117,7 @@ public:
     @param padding1 height padding값
     @param padding2 width padding값
     */
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2, int pLoadflag) {
         int outputWidth  = 0;
         int outputHeight = 0;
 
@@ -133,6 +134,8 @@ public:
 
         m_padding[0] = padding1;
         m_padding[1] = padding2;
+
+        m_Loadflag = pLoadflag;
 
         outputHeight = m_stride[0]*((*shapeOfInput)[3] - 1) + (*shapeOfWeight)[3] - (2 * m_padding[0]);
         outputWidth  = m_stride[1]*((*shapeOfInput)[4] - 1) + (*shapeOfWeight)[4] - (2 * m_padding[1]);

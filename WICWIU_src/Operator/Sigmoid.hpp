@@ -5,6 +5,8 @@
 
 template<typename DTYPE>
 class Sigmoid : public Operator<DTYPE>{
+private:
+  int m_Loadflag;
 public:
     /*!
     @brief Sigmoid의 생성자.
@@ -13,11 +15,11 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput)
     */
-    Sigmoid(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Sigmoid(Operator<DTYPE> *pInput, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Sigmoid::Sigmoid(Operator *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput);
+        this->Alloc(pInput, pLoadflag);
     }
 
     /*!
@@ -33,7 +35,7 @@ public:
     @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput) {
+    int Alloc(Operator<DTYPE> *pInput, int pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Sigmoid::Alloc(Operator *, Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -48,6 +50,7 @@ public:
 
         this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
 
+        m_Loadflag = pLoadflag;
         return TRUE;
     }
 

@@ -8,6 +8,8 @@
 @details 주로 Network의 input, label값을 저장하기 위해 구현되었다.
 */
 template<typename DTYPE> class Tensorholder : public Operator<DTYPE>{
+private:
+  int m_Loadflag;
 public:
     /*!
     @brief Tensorholder의 생성자.
@@ -17,11 +19,11 @@ public:
     @param pTrainable 생성 할 Operator(Tensorholder)가 Trainable인지 알리는 변수. default로 TRUE를 사용한다.
     @ref int Alloc(Tensor<DTYPE> *pTensor, int pTrainable)
     */
-    Tensorholder(Tensor<DTYPE> *pTensor, std::string pName, int pTrainable = TRUE) : Operator<DTYPE>(pName) {
+    Tensorholder(Tensor<DTYPE> *pTensor, std::string pName, int pTrainable = TRUE, int pLoadflag) : Operator<DTYPE>(pName) {
         #ifdef __DEBUG__
         std::cout << "Tensorholder<DTYPE>::Tensorholder(Tensor<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pTensor, pTrainable);
+        this->Alloc(pTensor, pTrainable, pLoadflag);
     }
 
     /*!
@@ -37,12 +39,12 @@ public:
     @param pTrainable 생성 할 Operator(Tensorholder)가 Trainable인지 알리는 변수. default로 TRUE를 사용한다.
     @ref int Alloc(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, int pTrainable)
     */
-    Tensorholder(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pTrainable = TRUE) : Operator<DTYPE>(pName) {
+    Tensorholder(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pTrainable = TRUE, int pLoadflag) : Operator<DTYPE>(pName) {
         #ifdef __DEBUG__
         std::cout << "Placeholder<DTYPE>::Placeholder(int, int, int, int, int, std::string)" << '\n';
         #endif  // __DEBUG__
 
-        this->Alloc(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize, pTrainable);
+        this->Alloc(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize, pTrainable, pLoadflag);
     }
 
     /*!
@@ -67,7 +69,7 @@ public:
     @ref int Operator<DTYPE>::SetIsTrainable(int pIsTrainable)
     @ref int Operator<DTYPE>::AddGradient(Tensor<DTYPE> *pTensor)
     */
-    int Alloc(Tensor<DTYPE> *pTensor, int pTrainable) {
+    int Alloc(Tensor<DTYPE> *pTensor, int pTrainable, int pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Tensorholder<DTYPE>::Alloc(Tensor<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
@@ -78,6 +80,7 @@ public:
             printf("Receive NULL pointer of Tensor<DTYPE> class in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
             return FALSE;
         }
+        m_Loadflag = pLoadflag;
 
         this->SetIsTensorholder(TRUE);
         this->SetIsTrainable(pTrainable);
@@ -103,7 +106,7 @@ public:
     @ref Shape *Tensor<DTYPE>::GetShape()
     @ref int Operator<DTYPE>::AddGradient(Tensor<DTYPE> *pTensor)
     */
-    int Alloc(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, int pTrainable) {
+    int Alloc(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, int pTrainable, int pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Placeholder<DTYPE>::Alloc(Tensor<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -121,6 +124,8 @@ public:
         this->SetIsTrainable(pTrainable);
         Shape *shapeOfDelta = new Shape(pTensor->GetShape());
         this->AddGradient(new Tensor<DTYPE>(shapeOfDelta));
+
+        m_Loadflag = pLoadflag;
 
         return TRUE;
     }

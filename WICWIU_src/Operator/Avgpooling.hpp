@@ -22,6 +22,7 @@ private:
 
     int m_divisor;
     ///< Average를 구할때 나누는 값 값. ex) row_size * col_size
+    int m_Loadflag;
 
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
@@ -42,11 +43,11 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput).
     */
-    GlobalAvaragePooling2D(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    GlobalAvaragePooling2D(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "GlobalAvaragePooling2D::GlobalAvaragePooling2D(Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
-        Alloc(pInput);
+        Alloc(pInput, pLoadflag);
     }
 
     /*!
@@ -60,7 +61,7 @@ public:
     @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput) {
+    int Alloc(Operator<DTYPE> *pInput, int pLoadflag = TRUE) {
         Shape *pInputTenShape = pInput->GetResult()->GetShape();
 
         m_timesize    = (*pInputTenShape)[0];
@@ -70,7 +71,7 @@ public:
         m_colsize     = (*pInputTenShape)[4];
 
         m_divisor = m_rowsize * m_colsize;
-
+        m_Loadflag = pLoadflag;
         this->AddResult(new Tensor<DTYPE>(new Shape(m_timesize, m_batchsize, m_channelsize, 1, 1)));
         this->AddGradient(new Tensor<DTYPE>(new Shape(m_timesize, m_batchsize, m_channelsize, 1, 1)));
 
@@ -238,21 +239,22 @@ private:
     float m_alpha;
     float m_beta;
     double m_coef;
+    int m_Loadflag;
 #endif  // __CUDNN__
 
 public:
-    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "AvaragePooling2D::AvaragePooling2D(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol);
+        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol, pLoadflag);
     }
 
-    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName, int pLoadflag) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "AvaragePooling2D::AvaragePooling2D(Operator<DTYPE> *, int, int, std::string)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol, padding, padding);
+        this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol, padding, padding, pLoadflag);
     }
 
     ~AvaragePooling2D() {
@@ -264,7 +266,7 @@ public:
 #endif  // if __CUDNN__
     }
 
-    int Alloc(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, int padding1 = 0, int padding2 = 0) {
+    int Alloc(Operator<DTYPE> *pInput, int strideRow, int strideCol, int maskRow, int maskCol, int padding1 = 0, int padding2 = 0, int pLoadflag = TRUE) {
         #ifdef __DEBUG__
         std::cout << "AvaragePooling2D::Alloc(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
@@ -279,6 +281,8 @@ public:
 
         m_padding[0] = padding1;
         m_padding[1] = padding2;
+
+        m_Loadflag = pLoadflag;
 
         int rowsize = 0;
         int colsize = 0;
