@@ -73,10 +73,10 @@ $ make
 $ ./main
 ```
 ## CPU 동작을 원하시면 다음과 같은 방법으로 실행할 수 있습니다. (처음 받으시면 GPU로 환경설정이 되어 있습니다.)
-```bash 
+```bash
 $ cd WICWIU/
-* makefile에서 ENABLE_CUDNN = -D__CUDNN__ 주석 처리 
-$ make 
+* makefile에서 ENABLE_CUDNN = -D__CUDNN__ 주석 처리
+$ make
 $ cd tutorials/MNIST
 $ make
 $ ./main
@@ -89,9 +89,9 @@ $ ./main
 
 * 한동대학교 전산전자공학부 김인중 교수님.
 * 1기: 박천명(팀장), 김지웅, 기윤호, 김지현
-* 2기: 최은서(팀장), 윤성결
+* 2기: 최은서(팀장), 윤성결, 김승주, 오준석
 * 3기: 권예성(팀장), 윤동휘, 김경협, 전혜원
-* Alumni: 김승주
+* 4기: 오상진, 서진명
 
 ## 저희팀과 연락하고 싶으신 분들은?
 프레임워크에 대해 궁금한 점이 있다면 hgudeeplearning@gmail.com 로 연락하시길 바랍니다.
