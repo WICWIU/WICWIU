@@ -81,8 +81,8 @@ public:
     int                                   SetDevice(Device pDevice);
     int                                   SetDeviceID(unsigned int idOfDevice);
 
-    int                                   SetIsTensorholder(int pIsParameter);
-    int                                   SetIsTrainable(int pIsTrainable);
+    int                           SetIsTensorholder(int pIsParameter);
+    int                           SetIsTrainable(int pIsTrainable);
 
     virtual int                           SetModeTrain();
     virtual int                           SetModeAccumulate();
