@@ -90,6 +90,7 @@ public:
         #ifdef __DEBUG__
         std::cout << "GradientDescentOptimizer::~GradientDescentOptimizer()" << '\n';
         #endif  // __DEBUG__
+        this->Delete();
     }
 
     /*!
@@ -131,6 +132,15 @@ public:
         }
 
         m_momentum = momentum;
+
+        return TRUE;
+    }
+
+    int Delete(){
+        if (m_aaVelocity) {
+            delete m_aaVelocity;
+            m_aaVelocity = NULL;
+        }
 
         return TRUE;
     }
