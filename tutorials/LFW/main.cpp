@@ -62,7 +62,7 @@ int main(int argc, char const *argv[]) {
 
     // @ When load parameters
     // std::cout << "Loading..." << '\n';
-    net->LoadComponents(filename);
+    // net->Load(filename);
     // std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
