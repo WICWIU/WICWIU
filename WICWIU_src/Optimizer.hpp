@@ -15,7 +15,7 @@ private:
     float m_weightDecayRate;
 
     Container<Operator<DTYPE> *> *m_ppParameters;
-    int m_TrainableTensorDegree;
+    int m_numOfParameter;
 
     int m_idOfDevice;
 
@@ -80,7 +80,7 @@ template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Operator<DTYPE> *
     m_LearningRate          = 0.f;
     m_OptimizeDirection     = 1;
     m_ppParameters          = NULL;
-    m_TrainableTensorDegree = 0;
+    m_numOfParameter = 0;
     m_weightDecayRate       = 0.f;
     m_idOfDevice            = -1;
 
@@ -105,7 +105,7 @@ template<typename DTYPE> Optimizer<DTYPE>::Optimizer(Container<Operator<DTYPE> *
     m_LearningRate          = 0.f;
     m_OptimizeDirection     = 1;
     m_ppParameters          = NULL;
-    m_TrainableTensorDegree = 0;
+    m_numOfParameter = 0;
     m_weightDecayRate       = 0.f;
     m_idOfDevice            = -1;
 
@@ -138,7 +138,7 @@ template<typename DTYPE> int Optimizer<DTYPE>::Alloc(Container<Operator<DTYPE> *
     std::cout << "Optimizer::Alloc(Container<Operator<DTYPE> *> *, float , OptimizeDirection )" << '\n';
     #endif  // __DEBUG__
     m_ppParameters          = pParameters;
-    m_TrainableTensorDegree = pParameters->GetSize();
+    m_numOfParameter = pParameters->GetSize();
 
     m_LearningRate = pLearningRate;
 
@@ -162,7 +162,7 @@ template<typename DTYPE> int Optimizer<DTYPE>::Alloc(Container<Operator<DTYPE> *
     std::cout << "Optimizer::Alloc(Container<Operator<DTYPE> *> *, float , OptimizeDirection )" << '\n';
     #endif  // __DEBUG__
     m_ppParameters          = pParameters;
-    m_TrainableTensorDegree = pParameters->GetSize();
+    m_numOfParameter = pParameters->GetSize();
 
     m_LearningRate = pLearningRate;
 
@@ -185,8 +185,8 @@ template<typename DTYPE> int Optimizer<DTYPE>::Delete() {
  * @return TRUE
  */
 template<typename DTYPE> int Optimizer<DTYPE>::UpdateParameter() {
-    for (int i = 0; i < m_TrainableTensorDegree; i++) {
-        UpdateParameter((*m_ppParameters)[i]);
+    for (int i = 0; i < m_numOfParameter; i++) {
+        if((*m_ppParameters)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameters)[i]);
     }
     return TRUE;
 }
@@ -218,8 +218,8 @@ template<typename DTYPE> cudnnHandle_t& Optimizer<DTYPE>::GetCudnnHandle() {
  * @return TRUE
  */
 template<typename DTYPE> int Optimizer<DTYPE>::UpdateParameterOnGPU() {
-    for (int i = 0; i < m_TrainableTensorDegree; i++) {
-        UpdateParameterOnGPU((*m_ppParameters)[i]);
+    for (int i = 0; i < m_numOfParameter; i++) {
+        if((*m_ppParameters)[i]->GetIsTrainable()) UpdateParameterOnGPU((*m_ppParameters)[i]);
     }
     return TRUE;
 }
@@ -231,7 +231,7 @@ template<typename DTYPE> void Optimizer<DTYPE>::SetLearningRate(float pLearningR
 }
 
 template<typename DTYPE> void Optimizer<DTYPE>::SetTrainableTensorDegree(int pTrainableTensorDegree) {
-    m_TrainableTensorDegree = pTrainableTensorDegree;
+    m_numOfParameter = pTrainableTensorDegree;
 }
 
 template<typename DTYPE> void Optimizer<DTYPE>::SetWeightDecayRate(int pWeightDecayRate) {
@@ -255,7 +255,7 @@ template<typename DTYPE> Container<Operator<DTYPE> *> *Optimizer<DTYPE>::GetTrai
 }
 
 template<typename DTYPE> int Optimizer<DTYPE>::GetTrainableTensorDegree() const {
-    return m_TrainableTensorDegree;
+    return m_numOfParameter;
 }
 
 /*!
@@ -264,7 +264,7 @@ template<typename DTYPE> int Optimizer<DTYPE>::GetTrainableTensorDegree() const 
  * @ref Operator<DTYPE>::ResetGradient()
  */
 template<typename DTYPE> int Optimizer<DTYPE>::ResetParameterGradient() {
-    for (int i = 0; i < m_TrainableTensorDegree; i++) {
+    for (int i = 0; i < m_numOfParameter; i++) {
         (*m_ppParameters)[i]->ResetGradient();
     }
 

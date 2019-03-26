@@ -203,11 +203,11 @@ public:
 
         if(m_centered == TRUE){
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
+                if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
             }
         }else{
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
+                if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
             }
         }
         return TRUE;
@@ -295,11 +295,11 @@ public:
     virtual int UpdateParameterOnGPU() {
         if (m_centered == TRUE) {
             for (int i = 0; i < m_numOfParameter; i++) {
-              UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
+              if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaMeanSquared)[i], (*m_aaMeanGrad)[i]);
             }
         }else{
             for (int i = 0; i < m_numOfParameter; i++) {
-              UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
+              if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaMeanSquared)[i]);
           }
         }
 
