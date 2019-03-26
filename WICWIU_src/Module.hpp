@@ -66,6 +66,9 @@ public:
     Container<Operator<DTYPE> *>      * GetParameterContainer();
     Container<Operator<DTYPE> *>      * GetParameter();
 
+    virtual int                         SetIsTensorholder(int pIsParameter);
+    virtual int                         SetIsTrainable(int pIsTrainable);
+
     int                                 SetModeTrain();
     int                                 SetModeAccumulate();
     int                                 SetModeInference();
@@ -381,6 +384,20 @@ template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetParamet
 template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetParameter() {
     return m_apParameter;
     // return this->GetInputContainer();
+}
+
+template<typename DTYPE> int Module<DTYPE>::SetIsTensorholder(int pIsParameter) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        (*m_apParameter)[i]->SetIsTensorholder(pIsParameter);
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::SetIsTrainable(int pIsTrainable) {
+    for (int i = 0; i < m_ParameterDegree; i++) {
+        (*m_apParameter)[i]->SetIsTrainable(pIsTrainable);
+    }
+    return TRUE;
 }
 
 template<typename DTYPE> int Module<DTYPE>::SetModeTrain() {
