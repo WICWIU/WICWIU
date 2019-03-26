@@ -10,7 +10,6 @@ private:
     ///< 값을 업데이트 할 Tensor들을 가리키는 포인터
     Container<Tensor<DTYPE> *> *m_aaGradientSquared;
     ///<  @gradient의 제곱으로 업데이트 되는 variable
-    Tensor<DTYPE> *shape;
 
     int m_numOfParameter;
     ///<  업데이트 할 Tensor의 degree
