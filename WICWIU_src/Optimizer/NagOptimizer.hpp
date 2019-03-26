@@ -123,7 +123,7 @@ public:
     virtual int UpdateParameter() {
         if (m_momentum != 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
-                  UpdateParameter((*m_ppParameter)[i], (*m_aaVelocity)[i]);
+                  if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i], (*m_aaVelocity)[i]);
             }
         }else{
             std::cout << "Don't execute UpdateParameter On CPU" << '\n';
@@ -193,7 +193,7 @@ public:
     virtual int UpdateParameterOnGPU() {
         if (m_momentum != 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
-                UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaVelocity)[i]);
+                if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaVelocity)[i]);
             }
         }else{
             std::cout << "Don't execute UpdataParameterOnGPU" << '\n';
