@@ -40,6 +40,7 @@ private:
     ///< Operator가 파라미터인지 알려주는 값.
     int m_isTrainable;
     ///< Operator가 학습가능한 Operator인지 알려주는 값.
+    int m_Loadflag;
 
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
@@ -60,10 +61,10 @@ private:
 #endif  // __CUDNN__
 
 public:
-    Operator(std::string pName = "NO NAME");
-    Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME");
-    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME");
-    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME");
+    Operator(std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(int numInput, ...);
     virtual ~Operator();
 
@@ -121,6 +122,9 @@ public:
 
     virtual int                           Save(char *nameOfFile);
     virtual int                           Load(char *nameOfFile);
+
+    virtual int                           Load(FILE *fp);
+    virtual int                           Save(FILE *fp);
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
     virtual int                           SetResultOnGPU(unsigned int idOfDevice);
@@ -296,7 +300,7 @@ template<typename DTYPE> int Operator<DTYPE>::AddOutputEdge(Operator<DTYPE> *pOu
  * @details 파라미터로 전달 받은 pName을 m_name으로 설정 하고 나머지는 변수들은 NULL, CPU, TRAINING으로 초기화 한다.
  * @param pName 사용자가 설정 할 Operator의 이름.
  */
-template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__
@@ -310,6 +314,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
 }
 
@@ -320,7 +325,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName) {
  * @param pName 사용자가 설정 할 Operator의 이름.
  * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
  */
-template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__
@@ -334,8 +339,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
-    AddEdgebetweenOperators(1, pInput);
+    AddEdgebetweenOperators(1, pInput, pLoadflag);
 }
 
 /*!
@@ -346,7 +352,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
  * @param pName 사용자가 설정 할 Operator의 이름.
  * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
  */
-template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__
@@ -360,8 +366,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
-    AddEdgebetweenOperators(2, pInput0, pInput1);
+    AddEdgebetweenOperators(2, pInput0, pInput1, pLoadflag);
 }
 
 /*!
@@ -373,7 +380,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
  * @param pName 사용자가 설정 할 Operator의 이름.
  * @ref Operator<DTYPE>::AddEdgebetweenOperators(int numInput, ...)
  */
-template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName) {
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName, int pLoadflag) {
     #ifdef __DEBUG__
     std::cout << "Operator<DTYPE>::Operator()" << '\n';
     #endif  // __DEBUG__
@@ -387,8 +394,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
     Alloc();
-    AddEdgebetweenOperators(3, pInput0, pInput1, pInput2);
+    AddEdgebetweenOperators(3, pInput0, pInput1, pInput2, pLoadflag);
 }
 
 template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {
@@ -797,22 +805,40 @@ template<typename DTYPE> int Operator<DTYPE>::SetGradientOnCPU() {
 }
 
 template<typename DTYPE> int Operator<DTYPE>::Save(char *nameOfFile) {
-    int size = m_aaResult->GetSize();
+    FILE *fp = fopen(nameOfFile, "wb");
 
-    for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->Save(nameOfFile);
-    }
+    this->Save(fp);
+
+    fclose(fp);
 
     return TRUE;
 }
 
 template<typename DTYPE> int Operator<DTYPE>::Load(char *nameOfFile) {
+    FILE *fp = fopen(nameOfFile, "rb");
+
+    this->Load(fp);
+
+    fclose(fp);
+
+    return TRUE;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::Save(FILE *fp) {
     int size = m_aaResult->GetSize();
 
     for (int i = 0; i < size; i++) {
-        (*m_aaResult)[i]->Load(nameOfFile);
+        (*m_aaResult)[i]->Save(fp);
     }
+    return TRUE;
+}
 
+template<typename DTYPE> int Operator<DTYPE>::Load(FILE *fp) {
+    int size = m_aaResult->GetSize();
+
+    for (int i = 0; i < size; i++) {
+        (*m_aaResult)[i]->Load(fp);
+    }
     return TRUE;
 }
 

@@ -56,7 +56,7 @@ private:
 #endif  // _CUDNN__
 
 public:
-    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
+    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, std::string pName = NULL, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pScale, pBias, pName, pLoadflag) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__
@@ -64,7 +64,7 @@ public:
         Alloc(pInput, pScale, pBias, pIsChannelwise);
     }
 
-    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, float pMomentum = 0.1, std::string pName = NULL) : Operator<DTYPE>(pInput, pScale, pBias, pName) {
+    BatchNormalize(Operator<DTYPE> *pInput, Operator<DTYPE> *pScale, Operator<DTYPE> *pBias, int pIsChannelwise = TRUE, float pMomentum = 0.1, std::string pName = NULL, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pScale, pBias, pName, pLoadflag) {
 #if __DEBUG__
         std::cout << "BatchNormalize:: BatchNormalize( Operator< DTYPE>*, Operator< DTYPE>*, Operator< DTYPE>*, int, std:: string)" << '\n';
 #endif  // __DEBUG__

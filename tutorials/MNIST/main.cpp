@@ -5,7 +5,7 @@
 #include <time.h>
 
 #define BATCH             100
-#define EPOCH             10
+#define EPOCH             2
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             1
@@ -13,8 +13,7 @@
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
-
-    char filename[]      = "./MNIST_parameter";
+    char filename[]      = "MNIST_parmas";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
@@ -41,7 +40,7 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    // net->Load(filename);
+    net->Load(filename);
 
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';

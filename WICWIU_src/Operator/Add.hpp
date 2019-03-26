@@ -24,6 +24,7 @@ private:
     int m_colsize;
     ///< col의 dimension 크기
 
+
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t leftTensorDesc, rightTensorDesc, outputTensorDesc, leftDeltaDesc, rightDeltaDesc, deltaDesc;
     ///< GPU내의 Tensor값들을 가르키기 위한 descriptor.
@@ -46,7 +47,7 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput)
     */
-    Addall(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput, std::string pName) : Operator<DTYPE>(pLeftInput, pRightInput, pName) {
+    Addall(Operator<DTYPE> *pLeftInput, Operator<DTYPE> *pRightInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pLeftInput, pRightInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Addall::Addall(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
@@ -305,6 +306,7 @@ private:
     int m_colsize;
     ///< colcol
 
+
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t inputTensorDesc, biasTensorDesc, outputTensorDesc, inputDeltaDesc, biasDeltaDesc, deltaDesc;
     ///<  GPU내의 Tensor값들을 가르키기 위한 descriptor.
@@ -327,9 +329,9 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias)
     */
-    AddColWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName) : Operator<DTYPE>(pInput, pBias, pName) {
+    AddColWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pBias, pName, pLoadflag) {
         #ifdef __DEBUG__
-        std::cout << "AddColWise::AddColWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
+        std::cout << "AddColWise::AddColWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string, int)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, pBias);
     }
@@ -620,9 +622,9 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias)
     */
-    AddChannelWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName) : Operator<DTYPE>(pInput, pBias, pName) {
+    AddChannelWise(Operator<DTYPE> *pInput, Operator<DTYPE> *pBias, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pBias, pName, pLoadflag) {
         #ifdef __DEBUG__
-        std::cout << "AddChannelWise::AddChannelWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
+        std::cout << "AddChannelWise::AddChannelWise(Operator<DTYPE> *, Operator<DTYPE> *, std::string, int)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, pBias);
     }

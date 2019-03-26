@@ -49,6 +49,7 @@ private:
     ///< Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
     void *m_filterDevWorkSpace;
     ///< Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
+
 #endif  // __CUDNN__
 
 public:
@@ -62,7 +63,7 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2)
     */
-    Convolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, std::string pName = "NO NAME") : Operator<DTYPE>(pInput, pWeight, pName) {
+    Convolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, std::string pName = "NO NAME", int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
         Alloc(pInput, pWeight, stride1, stride2, 0, 0);
     }
 
@@ -77,7 +78,7 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2)
     */
-    Convolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding, std::string pName = "NO NAME") : Operator<DTYPE>(pInput, pWeight, pName) {
+    Convolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding, std::string pName = "NO NAME", int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
         Alloc(pInput, pWeight, stride1, stride2, padding, padding);
     }
 
@@ -93,7 +94,7 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2)
     */
-    Convolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2, std::string pName = "NO NAME") : Operator<DTYPE>(pInput, pWeight, pName) {
+    Convolution2D(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int stride1, int stride2, int padding1, int padding2, std::string pName = "NO NAME", int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
         Alloc(pInput, pWeight, stride1, stride2, padding1, padding2);
     }
 
@@ -136,6 +137,7 @@ public:
 
         m_padding[0] = padding1;
         m_padding[1] = padding2;
+
 
         outputHeight = ((*shapeOfInput)[3] - (*shapeOfWeight)[3] + (2 * m_padding[0])) / m_stride[0] + 1;
         outputWidth  = ((*shapeOfInput)[4] - (*shapeOfWeight)[4] + (2 * m_padding[1])) / m_stride[1] + 1;

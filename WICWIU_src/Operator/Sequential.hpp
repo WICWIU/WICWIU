@@ -7,7 +7,6 @@ template<typename DTYPE>
 class Sequential : public Operator<DTYPE>{
     Operator<DTYPE> **m_listOfOperator;
     int m_numOfOperator;
-
 public:
     Sequential(int numOfOperator, ...) {
         std::cout << "Sequential::Sequential(Operator<DTYPE> *)" << '\n';

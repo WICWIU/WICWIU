@@ -12,7 +12,7 @@ public:
     @param pInput Alloc할 대상 Operator
     @param pName Operator에 사용자가 부여한 이름.
     */
-    Tanh(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Tanh(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Tanh::Tanh(Operator *)" << '\n';
         #endif  // __DEBUG__

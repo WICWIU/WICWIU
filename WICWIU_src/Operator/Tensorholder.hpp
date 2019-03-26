@@ -8,6 +8,7 @@
 @details 주로 Network의 input, label값을 저장하기 위해 구현되었다.
 */
 template<typename DTYPE> class Tensorholder : public Operator<DTYPE>{
+
 public:
     /*!
     @brief Tensorholder의 생성자.
@@ -17,7 +18,7 @@ public:
     @param pTrainable 생성 할 Operator(Tensorholder)가 Trainable인지 알리는 변수. default로 TRUE를 사용한다.
     @ref int Alloc(Tensor<DTYPE> *pTensor, int pTrainable)
     */
-    Tensorholder(Tensor<DTYPE> *pTensor, std::string pName, int pTrainable = TRUE) : Operator<DTYPE>(pName) {
+    Tensorholder(Tensor<DTYPE> *pTensor, std::string pName, int pTrainable = TRUE, int pLoadflag = TRUE) : Operator<DTYPE>(pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Tensorholder<DTYPE>::Tensorholder(Tensor<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
@@ -37,7 +38,7 @@ public:
     @param pTrainable 생성 할 Operator(Tensorholder)가 Trainable인지 알리는 변수. default로 TRUE를 사용한다.
     @ref int Alloc(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, int pTrainable)
     */
-    Tensorholder(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pTrainable = TRUE) : Operator<DTYPE>(pName) {
+    Tensorholder(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pTrainable = TRUE, int pLoadflag = TRUE) : Operator<DTYPE>(pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Placeholder<DTYPE>::Placeholder(int, int, int, int, int, std::string)" << '\n';
         #endif  // __DEBUG__
@@ -121,6 +122,7 @@ public:
         this->SetIsTrainable(pTrainable);
         Shape *shapeOfDelta = new Shape(pTensor->GetShape());
         this->AddGradient(new Tensor<DTYPE>(shapeOfDelta));
+
 
         return TRUE;
     }

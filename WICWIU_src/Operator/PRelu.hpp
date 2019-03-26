@@ -18,7 +18,6 @@ private:
     float m_alpha;
     float m_beta;
     double m_coef;
-
 #endif  // __CUDNN__
 
 public:
@@ -29,7 +28,7 @@ public:
     @param pWeight 입력값이 음수일 경우 사용하는 기울기
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight)
     */
-    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight) : Operator<DTYPE>(pInput, pWeight) {
+    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "PRelu::PRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -44,7 +43,7 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight)
     */
-    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, std::string pName) : Operator<DTYPE>(pInput, pWeight, pName) {
+    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "PRelu::PRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__

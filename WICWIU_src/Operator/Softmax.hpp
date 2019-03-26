@@ -16,6 +16,7 @@ class Softmax : public Operator<DTYPE>{
     DTYPE **max;
     ///< Softmax연산 중 Tensor값들 중 가장 큰 값을 저장하기 위한 포인터.
 
+
 public:
     /*!
     @brief Softmax의 생성자.
@@ -24,7 +25,7 @@ public:
     @param epsilon ForwardPropagate에 사용힐 값. 0으로 나누어지는 것을 방지하는 역할을 한다.
     @ref virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f
     */
-    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f) : Operator<DTYPE>(pOperator) {
+    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f, int pLoadflag = TRUE) : Operator<DTYPE>(pOperator, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -38,7 +39,7 @@ public:
     @param pName 사용자가 Operator에 부여한 이름.
     @ref virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f
     */
-    Softmax(Operator<DTYPE> *pOperator, std::string pName) : Operator<DTYPE>(pOperator, pName) {
+    Softmax(Operator<DTYPE> *pOperator, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pOperator, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -53,7 +54,7 @@ public:
     @param pName 사용자가 Operator에 부여한 이름.
     @ref virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon = 1e-6f
     */
-    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon, std::string pName) : Operator<DTYPE>(pOperator, pName) {
+    Softmax(Operator<DTYPE> *pOperator, DTYPE epsilon, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pOperator, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Softmax::Softmax(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -97,6 +98,7 @@ public:
 
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
         this->SetGradient(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
+
 
         return TRUE;
     }

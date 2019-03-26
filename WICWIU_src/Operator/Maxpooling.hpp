@@ -30,6 +30,8 @@ private:
     ///< 연산 간 두 Operand의 가중치를 표현하기 위한 변수. ex) z = α*x + β*y
     double m_coef;
     ///< unUsed Variable
+
+
 #endif  // __CUDNN__
 
 public:
@@ -43,7 +45,7 @@ public:
     @param strideCol Colunm stride값
     @param pName 사용자가 부여한 Operator이름
     */
-    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Maxpooling2D(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
@@ -61,7 +63,7 @@ public:
     @param padding padding size
     @param pName 사용자가 부여한 Operator이름
     */
-    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Maxpooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Maxpooling2D::Maxpooling2D(Operator<DTYPE> *, int, int, std::string)" << '\n';
         #endif  // __DEBUG__

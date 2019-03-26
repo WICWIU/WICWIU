@@ -43,6 +43,7 @@ private:
     void *m_filterDevWorkSpace;
     ///<  Convolution 연산을 위해 할당받은 메모리 공간을 가리키는 포인터
 
+
 #endif  // __CUDNN__
 
 public:
@@ -54,7 +55,7 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput)
     */
-    MatMul(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pWeight, pInput, pName) {
+    MatMul(Operator<DTYPE> *pWeight, Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pWeight, pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "MatMul::MatMul(Operator<DTYPE> *, Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__

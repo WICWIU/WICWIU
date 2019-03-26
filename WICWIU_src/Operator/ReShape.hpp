@@ -5,7 +5,6 @@
 
 template<typename DTYPE>
 class ReShape : public Operator<DTYPE>{
-private:
 public:
     /*!
     @brief ReShape의 생성자
@@ -16,7 +15,7 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    ReShape(Operator<DTYPE> *pInput, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -33,7 +32,7 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    ReShape(Operator<DTYPE> *pInput, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -51,7 +50,7 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    ReShape(Operator<DTYPE> *pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -70,7 +69,7 @@ public:
     @paramp pName 사용자가 부여한 Operator의 이름.
     @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    ReShape(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -122,6 +121,7 @@ public:
         this->SetResult(result);  // copy data
 
         this->SetDelta(new Tensor<DTYPE>(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize));
+
 
         return TRUE;
     }

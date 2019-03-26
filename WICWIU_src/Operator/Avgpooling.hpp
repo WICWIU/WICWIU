@@ -23,6 +23,7 @@ private:
     int m_divisor;
     ///< Average를 구할때 나누는 값 값. ex) row_size * col_size
 
+
 #ifdef __CUDNN__
     cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
     cudnnPoolingDescriptor_t m_aPoolingDesc;
@@ -42,7 +43,7 @@ public:
     @param pName 사용자가 부여한 Operator이름.
     @ref int Alloc(Operator<DTYPE> *pInput).
     */
-    GlobalAvaragePooling2D(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    GlobalAvaragePooling2D(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "GlobalAvaragePooling2D::GlobalAvaragePooling2D(Operator<DTYPE> *, std::string)" << '\n';
         #endif  // __DEBUG__
@@ -238,17 +239,18 @@ private:
     float m_alpha;
     float m_beta;
     double m_coef;
+
 #endif  // __CUDNN__
 
 public:
-    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "AvaragePooling2D::AvaragePooling2D(Operator<DTYPE> *, int, int)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pInput, strideRow, strideCol, maskRow, maskCol);
     }
 
-    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    AvaragePooling2D(Operator<DTYPE> *pInput, int maskRow, int maskCol, int strideRow, int strideCol, int padding, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "AvaragePooling2D::AvaragePooling2D(Operator<DTYPE> *, int, int, std::string)" << '\n';
         #endif  // __DEBUG__

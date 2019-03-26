@@ -29,7 +29,7 @@ public:
     @param pInput Alloc할 대상 Operator
     @ref int Alloc(Operator<DTYPE> *pInput)
     */
-    Relu(Operator<DTYPE> *pInput) : Operator<DTYPE>(pInput) {
+    Relu(Operator<DTYPE> *pInput, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -43,7 +43,7 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput)
     */
-    Relu(Operator<DTYPE> *pInput, std::string pName) : Operator<DTYPE>(pInput, pName) {
+    Relu(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
@@ -82,6 +82,7 @@ public:
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
 
         this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
+
 
         return TRUE;
     }

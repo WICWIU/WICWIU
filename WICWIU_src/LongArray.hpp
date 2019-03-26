@@ -60,8 +60,8 @@ public:
 
     int    SetDeviceCPU();
 
-    int    Save(char *nameOfFile);
-    int    Load(char *nameOfFile);
+    int    Save(FILE *fp);
+    int    Load(FILE *fp);
 #ifdef __CUDNN__
     int    SetDeviceGPU(unsigned int idOfDevice);
 
@@ -459,7 +459,7 @@ template<typename DTYPE> int LongArray<DTYPE>::SetDeviceCPU() {
 @see LongArray<DTYPE>::SetDeviceCPU()
 */
 
-template<typename DTYPE> int LongArray<DTYPE>::Save(char *nameOfFile) {
+template<typename DTYPE> int LongArray<DTYPE>::Save(FILE *fp) {
     #ifdef __CUDNN__
     # if __DEBUG__
 
@@ -484,7 +484,7 @@ template<typename DTYPE> int LongArray<DTYPE>::Save(char *nameOfFile) {
 
     // char filename[idxOfParameter];
     // sprintf(filename, "%d", idxOfParameter);
-    FILE *fp = fopen(nameOfFile, "wb");
+    // FILE *fp = fopen(nameOfFile, "wb");
 
     if (!fwrite(&m_CapacityPerTime, sizeof(int), 1, fp)) {
         printf("Failed to write Data from binary file in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
@@ -497,12 +497,12 @@ template<typename DTYPE> int LongArray<DTYPE>::Save(char *nameOfFile) {
             exit(-1);
         }
     }
-    fclose(fp);
+    // fclose(fp);
 
     return TRUE;
 }
 
-template<typename DTYPE> int LongArray<DTYPE>::Load(char *nameOfFile) {
+template<typename DTYPE> int LongArray<DTYPE>::Load(FILE *fp) {
     #ifdef __CUDNN__
     # if __DEBUG__
 
@@ -529,7 +529,7 @@ template<typename DTYPE> int LongArray<DTYPE>::Load(char *nameOfFile) {
     // char filename[idxOfParameter];
     // sprintf(filename, "%d", idxOfParameter);
 
-    FILE *fp = fopen(nameOfFile, "rb");
+    // FILE *fp = fopen(nameOfFile, "rb");
 
     // printf("%s\n", filename);
     int filesize = ftell(fp);
@@ -550,7 +550,7 @@ template<typename DTYPE> int LongArray<DTYPE>::Load(char *nameOfFile) {
         }
     }
 
-    fclose(fp);
+    // fclose(fp);
 
     return TRUE;
 }
