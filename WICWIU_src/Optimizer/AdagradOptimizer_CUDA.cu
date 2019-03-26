@@ -22,7 +22,7 @@ __global__ void AdagradUpdate_kernel(float *pDevWeight, float *pDevAccGradient, 
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < weightDim; idx += blockDim.x * gridDim.x) {
         float g = pDevAccGradient[idx];
 
-        pDevGradientSquared[idx] = g * g;
+        pDevGradientSquared[idx] += g * g;
 
         pDevWeight[idx]     += signed_learning_rate * weightDecayRate * pDevWeight[idx];
         pDevWeight[idx]     += signed_learning_rate / sqrt(pDevGradientSquared[idx] + epsilon) * g;
