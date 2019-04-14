@@ -20,9 +20,9 @@
 
 * 높은 성능의 GPU 병렬 연산 (cuDNN)
 
-* 학습을 위한 한국어 문서 (준비중)
+* 학습을 위한 한국어 문서 (준비중; 현재 한국어 주석 포함)
 
-* 현재는 MNIST tutorial만 지원하지만, ImageNet tutorial도 공개하겠습니다.
+* MNIST, CIFAR10, ImageNet tutorial 지원
 
 ## WICWIU는 다음과 같은 환경을 지원하고 있습니다.
 
