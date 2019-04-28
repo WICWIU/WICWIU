@@ -1,6 +1,5 @@
-#include "net/my_Resnet.hpp"
-#include "net/my_Densenet.hpp"
-#include "LFWReader.hpp"
+#include "net/my_FaceNet.hpp"
+#include "ImageNetReader.hpp"
 #include <time.h>
 #include <ctime>
 #include <unistd.h>
@@ -11,7 +10,7 @@
 #define LOOP_FOR_TRAIN                (1281144 / BATCH)
 #define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
 #define LOOP_FOR_TEST                 (50000 / BATCH)
-#define GPUID                         0
+#define GPUID                         1
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    10
@@ -23,33 +22,33 @@ int main(int argc, char const *argv[]) {
     float mean[]   = { 0.485, 0.456, 0.406 };
     float stddev[] = { 0.229, 0.224, 0.225 };
 
-    char filename[] = "LFW_parmas";
+    char filename[]      = "params";
+    char filename_info[] = "params_info";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
-    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, NUMBER_OF_CLASS, "label");
+    Tensorholder<float> *y     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "y");
+    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 5749, "label");
 
     // ======================= Select net ===================
-    NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
+    NeuralNetwork<float> *net = my_FaceNet<float>(x, y, label, NUMBER_OF_CLASS);
+
     // NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
     // NeuralNetwork<float> *net = DenseNetLite<float>(x, label, NUMBER_OF_CLASS);
-    net->PrintGraphInformation();
+    // net->PrintGraphInformation();
 
-    std::cout << "/* Prepare Data */" << '\n';
     // ======================= Prepare Data ===================
     ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
-    std::cout << "/* train_data_reader */" << '\n';
     train_data_reader->UseNormalization(TRUE, mean, stddev);
     train_data_reader->UseRandomHorizontalFlip();
+    std::cout << "train is perfect" << '\n';
     // train_data_reader->UseRandomVerticalFlip();
 
     ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 25, FALSE);
-    std::cout << "/* test_data_reader */" << '\n';
     test_data_reader->UseNormalization(TRUE, mean, stddev);
 
     train_data_reader->StartProduce();
     test_data_reader->StartProduce();
-    std::cout << "/* StartProduce */" << '\n';
 
     Tensor<float> **data = NULL;
 
@@ -62,10 +61,18 @@ int main(int argc, char const *argv[]) {
 
     // @ When load parameters
     // std::cout << "Loading..." << '\n';
-    // net->Load(filename);
+    // FILE *fp = fopen(filename, "rb");
+    // net->Load(fp);
+    // fclose(fp);
+    //
+    // FILE *fp_info = fopen(filename_info, "rb");
+    // fread(&best_acc, sizeof(float), 1, fp_info);
+    // fread(&epoch,    sizeof(int),   1, fp_info);
+    // fclose(fp_info);
     // std::cout << "Done!" << '\n';
 
     std::cout << "filename : " << filename << '\n';
+    std::cout << "filename_info : " << filename_info << '\n';
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
 
@@ -108,7 +115,7 @@ int main(int argc, char const *argv[]) {
             data = train_data_reader->GetDataFromBuffer();
 
     #ifdef __CUDNN__
-            data[0]->SetDeviceGPU(GPUID);  // 異뷀썑 ?먮룞???꾩슂
+            data[0]->SetDeviceGPU(GPUID);  // 추후 자동화 필요
             // std::cout << data[0]->GetShape() << '\n';
             data[1]->SetDeviceGPU(GPUID);
             // std::cout << data[1]->GetShape() << '\n';
@@ -167,7 +174,7 @@ int main(int argc, char const *argv[]) {
             data = test_data_reader->GetDataFromBuffer();
 
     #ifdef __CUDNN__
-            data[0]->SetDeviceGPU(GPUID);  // 異뷀썑 ?먮룞???꾩슂
+            data[0]->SetDeviceGPU(GPUID);  // 추후 자동화 필요
             data[1]->SetDeviceGPU(GPUID);
     #endif  // __CUDNN__
 
@@ -190,7 +197,16 @@ int main(int argc, char const *argv[]) {
 
         if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
             std::cout << "\nsave parameters...";
-            net->Save(filename);
+            FILE *fp = fopen(filename, "wb");
+            net->Save(fp);
+            fclose(fp);
+
+            FILE *fp_info = fopen(filename_info, "wb");
+            best_acc = test_avg_accuracy / LOOP_FOR_TEST;
+            fwrite(&best_acc, sizeof(float), 1, fp_info);
+            fwrite(&i,        sizeof(int),   1, fp_info);
+            fclose(fp_info);
+
             std::cout << "done" << "\n\n";
         } else std::cout << "\n\n";
     }
