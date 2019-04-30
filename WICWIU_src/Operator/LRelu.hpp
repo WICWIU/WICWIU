@@ -26,7 +26,7 @@ public:
     @param negativeSlope 입력값이 음수일 경우 사용하는 기울기
     @ref int Alloc(Operator<DTYPE> *pInput, float negativeSlope)
     */
-    LRelu(Operator<DTYPE> *pInput, float negativeSlope, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pLoadflag) {
+    LRelu(Operator<DTYPE> *pInput, float negativeSlope, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, "NO NAME", pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "LRelu::LRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__

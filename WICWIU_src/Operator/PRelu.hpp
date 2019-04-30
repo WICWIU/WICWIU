@@ -28,7 +28,7 @@ public:
     @param pWeight 입력값이 음수일 경우 사용하는 기울기
     @ref int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight)
     */
-    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, pLoadflag) {
+    PRelu(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeight, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pWeight, "NO NAME", pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "PRelu::PRelu(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
