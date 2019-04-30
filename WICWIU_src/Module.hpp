@@ -29,7 +29,7 @@ private:
 
     Device m_Device;
     ///< 장치 사용 구분자, CPU 또는 GPU, Device 참고
-    unsigned int m_idOfDevice;
+    int m_idOfDevice;
     ///< GPU 사용 시, 사용하려는 GPU의 번호. CPU의 경우 -1
 
 private:
