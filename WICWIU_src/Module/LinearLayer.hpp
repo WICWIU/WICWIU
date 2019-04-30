@@ -15,7 +15,7 @@ public:
     @details Linear 클래스의 Alloc 메소드를 호출한다.
     @see linear<DTYPE>::Alloc(Operator<DTYPE> *pInput, int pNumInputCol, int pNumOutputCol, int use_bias, std::string pName)
     */
-    Linear(Operator<DTYPE> *pInput, int pNumInputCol, int pNumOutputCol, int use_bias = FALSE, std::string pName = NULL) : Module<DTYPE>(pName) {
+    Linear(Operator<DTYPE> *pInput, int pNumInputCol, int pNumOutputCol, int use_bias = FALSE, std::string pName = "No Name") : Module<DTYPE>(pName) {
         Alloc(pInput, pNumInputCol, pNumOutputCol, use_bias, pName);
     }
 
