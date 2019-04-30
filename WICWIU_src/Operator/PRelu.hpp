@@ -229,7 +229,6 @@ public:
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
-        int x;
 
         int index = 0;
         for (int ba = 0; ba < batchsize; ba++) {
