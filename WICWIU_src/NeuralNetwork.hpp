@@ -564,7 +564,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::PrintGraphInformation() {
         std::cout << '\n';
     }
 
-    std::cout << "LossFunction: " << m_aLossFunction->GetName() << '\n';
+    // std::cout << "LossFunction: " << m_aLossFunction->GetName() << '\n';
     // std::cout << "Optimizern: " << m_aOptimizer->GetName() << '\n';
 }
 
@@ -637,8 +637,8 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU(unsigned int id
 }
 
 template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
-    m_aLossFunction->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-    m_aOptimizer->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+    if(m_aLossFunction != NULL) m_aLossFunction->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+    if(m_aOptimizer != NULL) m_aOptimizer->SetDeviceGPU(m_cudnnHandle, idOfDevice);
 }
 
 /*!
