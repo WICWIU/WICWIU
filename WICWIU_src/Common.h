@@ -46,4 +46,9 @@ enum Device {
     GPU,
 };
 
+enum Switch {
+    FAKE, // 0
+    REAL, // 1
+};
+
 #endif  // COMMON_H_
