@@ -127,6 +127,10 @@ public:
         return TRUE;
     }
 
+    Tensor<DTYPE>* GetTensor() {
+        return this->GetResult();
+    }
+
     /*!
     @brief 파라미터로 받은 Tensor를 Result로 설정한다.
     @param pTensor Result로 설정 할 Tensor.
