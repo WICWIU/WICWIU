@@ -94,6 +94,11 @@ public:
 
     static Tensor<DTYPE>* Random_normal(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, float mean, float stddev, IsUseTime pAnswer = UseTime);
     static Tensor<DTYPE>* Random_normal(Shape *pShape, float mean, float stddev, IsUseTime pAnswer = UseTime);
+    static Tensor<DTYPE>* Truncated_normal(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, float mean, float stddev, float trunc, IsUseTime pAnswer = UseTime);
+    static Tensor<DTYPE>* Truncated_normal(Shape *pShape, float mean, float stddev, float trunc, IsUseTime pAnswer = UseTime);
+    static Tensor<DTYPE>* Random_Uniform(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, float LowerLimit, float UpperLimit, IsUseTime pAnswer = UseTime);
+    static Tensor<DTYPE>* Random_Uniform(Shape *pShape, float LowerLimit, float UpperLimit, IsUseTime pAnswer = UseTime);
+
     static Tensor<DTYPE>* Zeros(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, IsUseTime pAnswer = UseTime);
     static Tensor<DTYPE>* Zeros(Shape *pShape, IsUseTime pAnswer = UseTime);
     static Tensor<DTYPE>* Constants(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, DTYPE constant, IsUseTime pAnswer = UseTime);
@@ -973,9 +978,9 @@ template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Random_normal(Shape *pSha
     #ifdef __DEBUG__
     std::cout << "Tensor<DTYPE>::Random_normal()" << '\n';
     #endif  // __DEBUG__
-    srand((unsigned)time(NULL));
-
     Tensor<DTYPE> *temp = new Tensor<DTYPE>(pShape, pAnswer);
+
+    srand((unsigned)time(NULL) + (unsigned int)((intptr_t)temp));
 
     int   capacity = temp->GetCapacity();
     DTYPE v1 = 0.f, v2 = 0.f, mid_result = 0.f;
@@ -991,6 +996,72 @@ template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Random_normal(Shape *pSha
         mid_result = sqrt((-2 * log(mid_result)) / mid_result);
         mid_result = v1 * mid_result;
         (*temp)[i] = (stddev * mid_result) + mean;
+    }
+
+    return temp;
+}
+template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Truncated_normal(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, float mean, float stddev, float trunc, IsUseTime pAnswer) {
+    #ifdef __DEBUG__
+    std::cout << "Tensor<DTYPE>::Truncated_norma" << '\n';
+    #endif  // __DEBUG__
+
+    return Tensor<DTYPE>::Truncated_normal(new Shape(pSize0, pSize1, pSize2, pSize3, pSize4), mean, stddev, trunc, pAnswer);
+}
+
+template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Truncated_normal(Shape *pShape, float mean, float stddev, float trunc, IsUseTime pAnswer) {
+    #ifdef __DEBUG__
+    std::cout << "Tensor<DTYPE>::Truncated_norma" << '\n';
+    #endif  // __DEBUG__
+
+    Tensor<DTYPE> *temp = new Tensor<DTYPE>(pShape, pAnswer);
+
+    srand((unsigned)time(NULL) + (unsigned int)((intptr_t)temp));
+
+    int   capacity = temp->GetCapacity();
+    DTYPE v1 = 0.f, v2 = 0.f, mid_result = 0.f;
+
+    // Random number generator on normal distribution
+    for (int i = 0; i < capacity; i++) {
+        do {
+            v1         = 2 * ((float)rand() / RAND_MAX) - 1; // -1.0 ~ 1.0 까지의 값
+            v2         = 2 * ((float)rand() / RAND_MAX) - 1; // -1.0 ~ 1.0 까지의 값
+            mid_result = v1 * v1 + v2 * v2;
+        } while (mid_result >= 1 || mid_result == 0);
+
+        mid_result = sqrt((-2 * log(mid_result)) / mid_result);
+        mid_result = v1 * mid_result;
+
+        //If Random number over trunc
+        if(fabs(stddev * mid_result) > trunc){
+            i--;
+        }else {
+            (*temp)[i] = (stddev * mid_result) + mean;
+        }
+    }
+
+    return temp;
+}
+
+template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Random_Uniform(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, float LowerLimit, float UpperLimit, IsUseTime pAnswer) {
+    #ifdef __DEBUG__
+    std::cout << "Tensor<DTYPE>::Random_Uniform" << '\n';
+    #endif  // __DEBUG__
+
+    return Tensor<DTYPE>::Random_Uniform(new Shape(pSize0, pSize1, pSize2, pSize3, pSize4), LowerLimit, UpperLimit, pAnswer);
+}
+
+template<typename DTYPE> Tensor<DTYPE> *Tensor<DTYPE>::Random_Uniform(Shape *pShape, float LowerLimit, float UpperLimit, IsUseTime pAnswer) {
+    #ifdef __DEBUG__
+    std::cout << "Tensor<DTYPE>::Random_Uniform" << '\n';
+    #endif  // __DEBUG__
+    Tensor<DTYPE> *temp = new Tensor<DTYPE>(pShape, pAnswer);
+
+    srand((unsigned)time(NULL) + (unsigned int)((intptr_t)temp));
+
+    int   capacity = temp->GetCapacity();
+    // Random number generator(Uniform)
+    for(int i = 0; i < capacity; i++){
+        (*temp)[i] = (UpperLimit - LowerLimit) * ((float)rand() / RAND_MAX) + LowerLimit;
     }
 
     return temp;

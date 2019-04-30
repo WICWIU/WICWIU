@@ -25,4 +25,6 @@
 #include "Operator/Softmax.hpp"
 // #include "Operator/Dropout.h"
 
+#include "Operator/NoiseGenerator/GaussianNoiseGenerator.hpp"
+
 #endif  // __OPERATER_UTIL_H__
