@@ -321,51 +321,56 @@ public:
 
 
 #ifdef __CUDNN__
-    int ForwardPropagateOnGPU(int pTime = 0) {
-        //this->ForwardPropagate(pTime);
-        Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
+    // int ForwardPropagateOnGPU(int pTime = 0) {
 
-        m_pDevInput  = input->GetGPUData(pTime);
-        m_pDevOutput = result->GetGPUData(pTime);
+    //     //this->ForwardPropagate(pTime);
+    //     Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
+    //     Tensor<DTYPE> *result = this->GetResult();
+    //
+    //     m_pDevInput  = input->GetGPUData(pTime);
+    //     m_pDevOutput = result->GetGPUData(pTime);
+    //
+    //     checkCUDNN(cudnnActivationForward(this->GetCudnnHandle(), actDesc,
+    //                                       &m_alpha, m_aInputTensorDesc, m_pDevInput,
+    //                                       &m_beta, m_aOutputTensorDesc, m_pDevOutput));
+    //
+    //
+    //     // checkCudaErrors(cudaDeviceSynchronize());
+    //     return TRUE;
+    // }
 
-        checkCUDNN(cudnnActivationForward(this->GetCudnnHandle(), actDesc,
-                                          &m_alpha, m_aInputTensorDesc, m_pDevInput,
-                                          &m_beta, m_aOutputTensorDesc, m_pDevOutput));
+    int ForwardPropagateOnGPU(int pTime = 0);
 
+    // int BackPropagateOnGPU(int pTime = 0) {
+    //     //this->BackPropagate(pTime);
+    //
+    //     Tensor<DTYPE> *result      = this->GetResult();
+    //     Tensor<DTYPE> *this_delta  = this->GetGradient();
+    //     Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
+    //     Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
+    //
+    //     m_pDevInput      = input->GetGPUData(pTime);
+    //     m_pDevOutput     = result->GetGPUData(pTime);
+    //     m_pDevDelta      = this_delta->GetGPUData(pTime);
+    //     m_pDevInputDelta = input_delta->GetGPUData(pTime);
+    //
+    //     if(m_pDevInput < 0 )
+    //       m_alpha = m_negativeSlope;
+    //     else
+    //       m_alpha = 1.f;
+    //
+    //     checkCUDNN(cudnnActivationBackward(this->GetCudnnHandle(), actDesc, &m_alpha,
+    //                                        m_aOutputTensorDesc, m_pDevOutput,
+    //                                        m_aDeltaDesc, m_pDevDelta,
+    //                                        m_aInputTensorDesc, m_pDevInput, &m_beta,
+    //                                        m_aInputTensorDesc, m_pDevInputDelta));
+    //
+    //     // checkCudaErrors(cudaDeviceSynchronize());
+    //
+    //     return TRUE;
+    // }
 
-        // checkCudaErrors(cudaDeviceSynchronize());
-        return TRUE;
-    }
-
-    int BackPropagateOnGPU(int pTime = 0) {
-        //this->BackPropagate(pTime);
-
-        Tensor<DTYPE> *result      = this->GetResult();
-        Tensor<DTYPE> *this_delta  = this->GetGradient();
-        Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
-
-        m_pDevInput      = input->GetGPUData(pTime);
-        m_pDevOutput     = result->GetGPUData(pTime);
-        m_pDevDelta      = this_delta->GetGPUData(pTime);
-        m_pDevInputDelta = input_delta->GetGPUData(pTime);
-
-        if(m_pDevInput < 0 )
-          m_alpha = m_negativeSlope;
-        else
-          m_alpha = 1.f;
-
-        checkCUDNN(cudnnActivationBackward(this->GetCudnnHandle(), actDesc, &m_alpha,
-                                           m_aOutputTensorDesc, m_pDevOutput,
-                                           m_aDeltaDesc, m_pDevDelta,
-                                           m_aInputTensorDesc, m_pDevInput, &m_beta,
-                                           m_aInputTensorDesc, m_pDevInputDelta));
-
-        // checkCudaErrors(cudaDeviceSynchronize());
-
-        return TRUE;
-    }
+    int BackPropagateOnGPU(int pTime = 0);
 
 #endif  // if __CUDNN__
 };

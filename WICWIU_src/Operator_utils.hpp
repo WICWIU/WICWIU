@@ -6,8 +6,8 @@
 #include "Operator/Concatenate.hpp"
 
 #include "Operator/Relu.hpp"
-// #include "Operator/LRelu.h"
-// #include "Operator/PRelu.h"
+#include "Operator/LRelu.hpp"
+#include "Operator/PRelu.hpp"
 #include "Operator/Sigmoid.hpp"
 #include "Operator/Tanh.hpp"
 
