@@ -80,6 +80,8 @@ public:
 
     int                      Save(FILE *fp);
     int                      Load(FILE *fp);
+
+    void                     Clip(float min, float max);
 #ifdef __CUDNN__
     void                     SetDeviceGPU(unsigned int idOfDevice);
 
@@ -828,6 +830,39 @@ template<typename DTYPE> int Tensor<DTYPE>::Load(FILE *fp) {
     m_aLongArray->Load(fp);
 
     return TRUE;
+}
+
+template<typename DTYPE> void Tensor<DTYPE>::Clip(float min, float max) {
+    #ifdef __DEBUG__
+    std::cout << "Tensor<DTYPE>::Clip()" << '\n';
+    #endif  // __DEBUG__
+
+    int timesize    = this->GetTimeSize();
+    int batchsize   = this->GetBatchSize();
+    int channelsize = this->GetChannelSize();
+    int rowsize     = this->GetRowSize();
+    int colsize     = this->GetColSize();
+
+    Shape *resultTenShape = this->GetShape();
+    int index = 0;
+
+    int ti = 0;
+    for (int ba = 0; ba < batchsize; ba++) {
+        for (int ch = 0; ch < channelsize; ch++) {
+            for (int ro = 0; ro < rowsize; ro++) {
+                for (int co = 0; co < colsize; co++) {
+                    index = (((ti * (*resultTenShape)[1] + ba) * (*resultTenShape)[2] + ch) * (*resultTenShape)[3] + ro) * (*resultTenShape)[4] + co;
+                            if( (*m_aLongArray)[index] < min )
+                                (*m_aLongArray)[index] = min;
+                            else if( (*m_aLongArray)[index] > max )
+                                (*m_aLongArray)[index] = max;
+
+                }
+            }
+        }
+    }
+
+    return;
 }
 
 #ifdef __CUDNN__
