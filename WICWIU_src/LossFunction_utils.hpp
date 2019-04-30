@@ -5,3 +5,5 @@
 
 #include "LossFunction/VanillaGeneratorLoss.hpp"
 #include "LossFunction/VanillaDiscriminatorLoss.hpp"
+#include "LossFunction/WGANGeneratorLoss.hpp"
+#include "LossFunction/WGANDiscriminatorLoss.hpp"
