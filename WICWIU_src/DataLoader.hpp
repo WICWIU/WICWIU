@@ -16,16 +16,18 @@ template<typename DTYPE> class DataLoader {
 private:
     /* data */
     Dataset<DTYPE> *m_pDataset;
+    int m_numOfDataset;
+    int m_numOfEachDatasetMember;
     std::thread *m_aThreadForDistInfo;
     std::thread **m_aaThreadForProcess;  // dynamic allocation
     int m_numOfWorker;
     int m_nowWorking;
 
     // for distribute data info
-    std::queue<std::vector<int> *> m_splitedInfoBuffer;
-    sem_t m_DistInfoFull;  // numOfthread + 1;
-    sem_t m_DistInfoEmpty;
-    sem_t m_DistInfoMutex;
+    std::queue<std::vector<int> *> m_splitedIdxBuffer;
+    sem_t m_distIdxFull;  // numOfthread + 1;
+    sem_t m_distIdxEmpty;
+    sem_t m_distIdxMutex;
 
     int m_batchSize;
     int m_dropLast;  // implement yet
@@ -33,7 +35,7 @@ private:
 
     // for global buffer
     std::queue<std::vector<Tensor<DTYPE> *> *> m_globalBuffer;
-    sem_t m_globalFull;  // user can define
+    sem_t m_globalFull;  // numOfthread * 2
     sem_t m_globalEmpty;
     sem_t m_globalMutex;
 
@@ -55,7 +57,7 @@ public:
 
     WData<DTYPE>                * DataPreprocess();
 
-    void                          Push2LocalBuffer();
+    void                          Push2IdxBuffer();
 
     std::vector<Tensor<DTYPE> *>* Concatenate();
 
@@ -94,23 +96,16 @@ template<typename DTYPE> void DataLoader<DTYPE>::Init() {
     std::cout << __FILE__ << '\n';
 #endif  // ifdef __DEBUG__
     // need to free memory which was allocated at Alloc()
-    m_pDataset = NULL;
-    m_aThreadForDistInfo = NULL;
-    m_aaThreadForProcess = NULL;
-    m_numOfWorker = 1;
-    m_nowWorking = FALSE;
-
-    // m_DistInfoFull = NULL;
-    // m_DistInfoEmpty = NULL;
-    // m_DistInfoMutex = NULL;
-
-    m_batchSize = 1;
-    m_dropLast = FALSE;
-    m_useShuffle = FALSE;
-
-    // m_globalFull = NULL;
-    // m_globalEmpty = NULL;
-    // m_globalMutex = NULL;
+    m_pDataset               = NULL;
+    m_numOfDataset           = 1;
+    m_numOfEachDatasetMember = 1;
+    m_aThreadForDistInfo     = NULL;
+    m_aaThreadForProcess     = NULL;
+    m_numOfWorker            = 1;
+    m_nowWorking             = FALSE;
+    m_batchSize              = 1;
+    m_dropLast               = FALSE;
+    m_useShuffle             = FALSE;
 }
 
 template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, int batchSize, int useShuffle, int numOfWorker, int dropLast) {
@@ -141,6 +136,18 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
     std::cout << m_dropLast << '\n';
 #endif  // ifdef __DEBUG__
 
+    // elicit information of data;
+    // m_numOfDataset
+    // m_numOfEachDatasetMember
+
+    sem_init(&m_distIdxFull,  0, 0);
+    sem_init(&m_distIdxEmpty, 0, m_numOfWorker + 1);
+    sem_init(&m_distIdxMutex, 0, 1);
+
+    sem_init(&m_globalFull,    0, 0);
+    sem_init(&m_globalEmpty,   0, m_numOfWorker * 2);
+    sem_init(&m_globalMutex,   0, 1);
+
     this->Alloc();
     this->StartProcess();
 }
@@ -163,7 +170,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::StartProcess() {
     for (int i = 0; i < m_numOfWorker; i++) {
         m_aaThreadForProcess[i] = new std::thread([&]() {
             this->DataPreprocess();
-        });
+        });  // lambda expression
         printf("Generate worker[%d] for data preprocessing\r\n", i);
     }
 }
@@ -188,12 +195,35 @@ template<typename DTYPE> void DataLoader<DTYPE>::DistributeIdxOfData2Thread() {
 template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::DataPreprocess() {
     // for thread
     // doing all of thing befor push global buffer
+    // arrange everything for worker
+    std::queue<WData<DTYPE> *> *localBuffer = new std::queue<WData<DTYPE> *>[m_numOfEachDatasetMember];
+    std::vector<Tensor<DTYPE> *> * temp = NULL;
+
     while (m_nowWorking) {
         printf("do\r");
+        // get information from IdxBuffer
+        temp = new std::vector<Tensor<DTYPE> *>(); // do not deallocate in this function!
+
+        for(int i = 0; i< m_batchSize; i++){
+            for(int j = 0; j < m_numOfEachDatasetMember; j++){
+                // Chech the type of Data for determine doing preprocessing
+                    // if true do data Preprocessing
+                // push data into local buffer
+            }
+        }
+
+        for(int k = 0; k < m_numOfEachDatasetMember; k++){
+            // concatenate each localbuffer
+            // push temp vector
+        }
+        // push temp into Global buffer
+        temp = NULL;
     }
+
+    delete[] localBuffer;
 }
 
-template<typename DTYPE> void DataLoader<DTYPE>::Push2LocalBuffer() {
+template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer() {
     // push Local Buffer
 }
 

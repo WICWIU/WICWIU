@@ -6,10 +6,33 @@
 
 #include "Tensor.hpp"
 
+enum WDATA_TYPE {
+    UNKNOWN,
+    IMAGE,
+    ONE_HOT
+};
+
 template<typename DTYPE> class WData {
 public:
-    WData();
-    virtual ~WData();
+    DTYPE *m_aData;
+    WDATA_TYPE m_type;
+
+    WData(DTYPE *data, WDATA_TYPE type = UNKNOWN) {
+        m_aData = data;
+        m_type  = type;
+    }
+
+    virtual ~WData() {
+        delete[] m_aData;
+    }
+
+    virtual DTYPE* GetData() {
+        return m_aData;
+    }
+
+    WDATA_TYPE GetType() {
+        return m_type;
+    }
 };
 
 template<typename DTYPE> class Dataset {  // [] operator override
