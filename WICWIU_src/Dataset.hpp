@@ -89,7 +89,7 @@ template<typename DTYPE> std::vector<WData<DTYPE> *> *Dataset<DTYPE>::GetData(in
 template<typename DTYPE> int Dataset<DTYPE>::GetLength() {
     // virtual
     // we need to implement default function
-    return 0;
+    return 1;
 }
 
 #endif  // ifndef _DATASET_H_
