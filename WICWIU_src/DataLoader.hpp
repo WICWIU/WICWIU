@@ -120,12 +120,12 @@ template<typename DTYPE> void DataLoader<DTYPE>::Init() {
     m_numOfDataset           = 1;
     m_numOfEachDatasetMember = 1;
     // m_aThreadForDistInfo     = NULL;
-    m_aaWorkerForProcess     = NULL;
-    m_numOfWorker            = 1;
-    m_nowWorking             = FALSE;
-    m_batchSize              = 1;
-    m_dropLast               = FALSE;
-    m_useShuffle             = FALSE;
+    m_aaWorkerForProcess = NULL;
+    m_numOfWorker        = 1;
+    m_nowWorking         = FALSE;
+    m_batchSize          = 1;
+    m_dropLast           = FALSE;
+    m_useShuffle         = FALSE;
 }
 
 template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, int batchSize, int useShuffle, int numOfWorker, int dropLast) {
@@ -209,8 +209,11 @@ template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
 
     for (int i = 0; i < m_numOfWorker; i++) {
         sem_post(&m_globalEmpty);  // for thread terminate
-        m_aaWorkerForProcess[i].join();
-        printf("Join worker[%d]\r\n", i);
+    }
+
+    for (int j = 0; j < m_numOfWorker; j++) {
+        m_aaWorkerForProcess[j].join();
+        printf("Join worker[%d]\r\n", j);
     }
 
     sem_post(&m_distIdxEmpty);  // for thread terminate
