@@ -61,7 +61,7 @@ public:
 
     std::vector<int>            * GetIdxSetFromIdxBuffer();
 
-    WData<DTYPE>                * ImagePreProcess(WData<DTYPE> *image);
+    // WData<DTYPE>                * ImagePreProcess(WData<DTYPE> *image); // delete -> transform with another class / with dataset
 
     Tensor<DTYPE>               * Concatenate(std::queue<WData<DTYPE> *>& setOfData);
 
@@ -267,20 +267,14 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
 
         for (int i = 0; i < m_batchSize; i++) {
             idx = (*setOfIdx)[i];
-            printf("%d", idx);
+            // printf("%d", idx);
             data = m_pDataset->GetData(idx);
 
             for (int j = 0; j < m_numOfEachDatasetMember; j++) {
                 // Chech the type of Data for determine doing preprocessing (IMAGE)
                 // if true do data Preprocessing
-                pick = (*data)[j];
-
-                //
-                if (pick->GetType() == WDATA_TYPE::IMAGE) {
-                    pick = this->ImagePreProcess(pick);
-                }
-                //// push data into local buffer
-                localBuffer[j].push(pick);
+                // push data into local buffer
+                localBuffer[j].push((*data)[j]);
             }
 
             delete data;
@@ -307,10 +301,10 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     delete[] localBuffer;
 }
 
-template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::ImagePreProcess(WData<DTYPE> *image) {
-    // use preprocessing rule
-    return image;
-}
+// template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::ImagePreProcess(WData<DTYPE> *image) {
+//     // use preprocessing rule
+//     return image;
+// }
 
 template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer(std::vector<int> *setOfIdx) {
     sem_wait(&m_distIdxEmpty);

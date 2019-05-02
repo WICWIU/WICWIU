@@ -6,22 +6,14 @@
 
 #include "Tensor.hpp"
 
-enum WDATA_TYPE {
-    UNKNOWN,
-    IMAGE,
-    ONE_HOT
-};
-
 template<typename DTYPE> class WData {
 public:
     DTYPE *m_aData;
     int m_capacity;
-    WDATA_TYPE m_type;
 
-    WData(DTYPE *data, int capacity, WDATA_TYPE type = WDATA_TYPE::UNKNOWN) {
+    WData(DTYPE *data, int capacity) {
         m_aData    = data;
         m_capacity = capacity;
-        m_type     = type;
     }
 
     virtual ~WData() {
@@ -36,9 +28,6 @@ public:
         return m_capacity;
     }
 
-    WDATA_TYPE GetType() {
-        return m_type;
-    }
 };
 
 template<typename DTYPE> class Dataset {  // [] operator override
@@ -95,7 +84,7 @@ template<typename DTYPE> std::vector<WData<DTYPE> *> *Dataset<DTYPE>::GetData(in
     int capacity                        = 10;
 
     DTYPE *_data       = new DTYPE[capacity];
-    WData<DTYPE> *data = new WData<DTYPE>(_data, capacity, WDATA_TYPE::IMAGE);
+    WData<DTYPE> *data = new WData<DTYPE>(_data, capacity);
     (*result)[0] = data;
 
     return result;
