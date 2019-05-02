@@ -18,7 +18,7 @@ public:
     int m_capacity;
     WDATA_TYPE m_type;
 
-    WData(DTYPE *data, int capacity, WDATA_TYPE type = UNKNOWN) {
+    WData(DTYPE *data, int capacity, WDATA_TYPE type = WDATA_TYPE::UNKNOWN) {
         m_aData    = data;
         m_capacity = capacity;
         m_type     = type;
@@ -57,6 +57,7 @@ public:
 
     virtual std::vector<WData<DTYPE> *>* GetData(int idx);
     virtual int                          GetLength();
+    int                                  GetNumOfDatasetMember();
 };
 
 template<typename DTYPE> Dataset<DTYPE>::Dataset() {
@@ -90,12 +91,44 @@ template<typename DTYPE> void Dataset<DTYPE>::Dealloc() {
 template<typename DTYPE> std::vector<WData<DTYPE> *> *Dataset<DTYPE>::GetData(int idx) {
     // virtual
     // we need to implement default function
+    std::vector<WData<DTYPE> *> *result = new std::vector<WData<DTYPE> *>(1, NULL);
+    int capacity                        = 10;
+
+    DTYPE *_data       = new DTYPE[capacity];
+    WData<DTYPE> *data = new WData<DTYPE>(_data, capacity, WDATA_TYPE::IMAGE);
+    (*result)[0] = data;
+
+    return result;
 }
 
 template<typename DTYPE> int Dataset<DTYPE>::GetLength() {
     // virtual
     // we need to implement default function
-    return 1;
+    return 100;
+}
+
+template<typename DTYPE> int Dataset<DTYPE>::GetNumOfDatasetMember() {
+    // virtual
+    // we need to implement default function
+    int numOfDatasetMember = 0;
+
+    std::vector<WData<DTYPE> *> *temp = this->GetData(0);
+
+    if(temp){
+        numOfDatasetMember = temp->size();
+
+        for (int i = 0; i < numOfDatasetMember; i++) {
+            if ((*temp)[i]) {
+                delete (*temp)[i];
+                (*temp)[i] = NULL;
+            }
+        }
+        delete temp;
+        temp = NULL;
+    }
+
+
+    return numOfDatasetMember;
 }
 
 #endif  // ifndef _DATASET_H_

@@ -61,6 +61,8 @@ public:
 
     std::vector<int>            * GetIdxSetFromIdxBuffer();
 
+    WData<DTYPE>                * ImagePreProcess(WData<DTYPE> *image);
+
     Tensor<DTYPE>               * Concatenate(std::queue<WData<DTYPE> *>& setOfData);
 
     void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
@@ -168,7 +170,7 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
     // elicit information of data;
     m_numOfDataset = m_pDataset->GetLength();
     assert(m_numOfDataset > 0);
-    // m_numOfEachDatasetMember (assert)
+    m_numOfEachDatasetMember = m_pDataset->GetNumOfDatasetMember();
     assert(m_numOfEachDatasetMember > 0);
 
     sem_init(&m_distIdxFull,  0, 0);
@@ -253,6 +255,8 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     std::queue<WData<DTYPE> *> *localBuffer        = new std::queue<WData<DTYPE> *>[m_numOfEachDatasetMember];
     std::vector<int> *setOfIdx                     = NULL;
     int idx                                        = 0;
+    std::vector<WData<DTYPE> *> *dataset           = NULL;
+    WData<DTYPE> *data                             = NULL;
     std::vector<Tensor<DTYPE> *> *preprocessedData = NULL;
 
     while (m_nowWorking) {
@@ -262,12 +266,22 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
         for (int i = 0; i < m_batchSize; i++) {
             idx = (*setOfIdx)[i];
             printf("%d", idx);
+            dataset = m_pDataset->GetData(idx);
 
             for (int j = 0; j < m_numOfEachDatasetMember; j++) {
                 // Chech the type of Data for determine doing preprocessing (IMAGE)
                 // if true do data Preprocessing
-                // push data into local buffer
+                data = (*dataset)[j];
+                //
+                if (data->GetType() == WDATA_TYPE::IMAGE) {
+                    data = this->ImagePreProcess(data);
+                }
+                // // push data into local buffer
+                localBuffer[j].push(data);
             }
+
+            delete dataset;
+            dataset = NULL;
         }
 
         // delete set of idx vector
@@ -288,6 +302,11 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     }
 
     delete[] localBuffer;
+}
+
+template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::ImagePreProcess(WData<DTYPE> *image) {
+    // use preprocessing rule
+    return image;
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer(std::vector<int> *setOfIdx) {
