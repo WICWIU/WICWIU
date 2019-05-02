@@ -15,11 +15,13 @@ enum WDATA_TYPE {
 template<typename DTYPE> class WData {
 public:
     DTYPE *m_aData;
+    int m_capacity;
     WDATA_TYPE m_type;
 
-    WData(DTYPE *data, WDATA_TYPE type = UNKNOWN) {
-        m_aData = data;
-        m_type  = type;
+    WData(DTYPE *data, int capacity, WDATA_TYPE type = UNKNOWN) {
+        m_aData    = data;
+        m_capacity = capacity;
+        m_type     = type;
     }
 
     virtual ~WData() {
@@ -28,6 +30,10 @@ public:
 
     virtual DTYPE* GetData() {
         return m_aData;
+    }
+
+    virtual int GetCapacity() {
+        return m_capacity;
     }
 
     WDATA_TYPE GetType() {

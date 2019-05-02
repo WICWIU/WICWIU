@@ -61,7 +61,7 @@ public:
 
     std::vector<int>            * GetIdxSetFromIdxBuffer();
 
-    std::vector<Tensor<DTYPE> *>* Concatenate();
+    Tensor<DTYPE>               * Concatenate(std::queue<WData<DTYPE> *>& setOfData);
 
     void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
 
@@ -105,6 +105,16 @@ template<typename DTYPE> void DataLoader<DTYPE>::Delete() {
     while (!m_globalBuffer.empty()) {
         temp2 = m_globalBuffer.front();
         m_globalBuffer.pop();
+
+        if (temp2) {
+            for (int i = 0; i < m_numOfEachDatasetMember; i++) {
+                if ((*temp2)[i]) {
+                    delete (*temp2)[i];
+                    (*temp2)[i] = NULL;
+                }
+            }
+        }
+
         delete temp2;
         temp2 = NULL;
     }
@@ -119,13 +129,12 @@ template<typename DTYPE> void DataLoader<DTYPE>::Init() {
     m_pDataset               = NULL;
     m_numOfDataset           = 1;
     m_numOfEachDatasetMember = 1;
-    // m_aThreadForDistInfo     = NULL;
-    m_aaWorkerForProcess = NULL;
-    m_numOfWorker        = 1;
-    m_nowWorking         = FALSE;
-    m_batchSize          = 1;
-    m_dropLast           = FALSE;
-    m_useShuffle         = FALSE;
+    m_aaWorkerForProcess     = NULL;
+    m_numOfWorker            = 1;
+    m_nowWorking             = FALSE;
+    m_batchSize              = 1;
+    m_dropLast               = FALSE;
+    m_useShuffle             = FALSE;
 }
 
 template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, int batchSize, int useShuffle, int numOfWorker, int dropLast) {
@@ -265,11 +274,12 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
         delete setOfIdx;
         setOfIdx = NULL;
 
-        preprocessedData = new std::vector<Tensor<DTYPE> *>();  // do not deallocate in this function!
+        preprocessedData = new std::vector<Tensor<DTYPE> *>(m_numOfEachDatasetMember, NULL);  // do not deallocate in this function!
 
         for (int k = 0; k < m_numOfEachDatasetMember; k++) {
             // concatenate each localbuffer
             // push preprocessedData vector
+            (*preprocessedData)[k] = this->Concatenate(localBuffer[k]);
         }
 
         // push preprocessedData into Global buffer
@@ -303,8 +313,17 @@ template<typename DTYPE> std::vector<int> *DataLoader<DTYPE>::GetIdxSetFromIdxBu
     return setOfIdx;
 }
 
-template<typename DTYPE> std::vector<Tensor<DTYPE> *> *DataLoader<DTYPE>::Concatenate() {
+template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queue<WData<DTYPE> *>& setOfData) {
     // concatenate all preprocessed data into one tensor
+    WData<DTYPE> *temp    = NULL;
+    int capacity          = 1;
+    Tensor<DTYPE> *result = NULL;
+
+    // temp = setOfData.front();
+    // capacity       = temp.GetCapacity();
+    result = Tensor<float>::Zeros(1, m_batchSize, 1, 1, 1);
+
+    return result;
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData) {
