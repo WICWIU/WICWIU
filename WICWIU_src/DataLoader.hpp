@@ -6,33 +6,17 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-#include "Tensor.hpp"
+#include <stdio.h>
+#include <stdlib.h>
 
-template<typename DTYPE> class WData {
-public:
-    WData();
-    virtual ~WData();
-};
-
-template<typename DTYPE> class WRule {
-private:
-    /* data */
-
-public:
-    WRule();
-    virtual ~WRule();
-};
+#include "Dataset.hpp"
 
 template<typename DTYPE> class DataLoader {
 private:
     /* data */
-    pthread_t *m_aThread;
-    int m_numOfThread;
-
-    // for default mode
-    char *m_dataPath;
-    std::vector<char *> imageName;
-    std::vector<int> label;
+    pthread_t m_aThreadForDistInfo;
+    pthread_t *m_aThreadForProcess;  // dynamic allocation
+    int m_numOfWorker;
 
     // for distribute data info
     std::queue<std::vector<int> *> m_splitedInfoBuffer;
@@ -41,7 +25,8 @@ private:
     sem_t m_DistInfoMutex;
 
     int m_batchSize;
-    int m_useDataRand;
+    int m_dropLast;  // implement yet
+    int m_useShuffle;
 
     // for global buffer
     std::queue<std::vector<Tensor<DTYPE> *> *> m_globalBuffer;
@@ -55,26 +40,20 @@ private:
     void Delete();
 
 public:
-    DataLoader();
+    DataLoader(Dataset<DTYPE> *dataset, int batchSize = 1, int useShuffle = FALSE, int numOfWorker = 1, int dropLast = TRUE);
     virtual ~DataLoader();
 
-    void StartProcess();
-    void StopProcess();
 
-    // information of the data pair
-    // ex) string - int pair
-    void                          SetDataPairInfo();
+    void                          StartProcess();
+    void                          StopProcess();
 
-    // distribute data inforamtion to each thread
-    void                          DistributeDataInfo();
+    // distribute data idx to each thread
+    void                          DistributeIdxOfData2Thread();
 
-    virtual void                  DataPreprocessForThread();
 
-    virtual WData<DTYPE>        * LoadData(  /*rule*/);
+    WData<DTYPE>                * DataPreprocess();
 
-    WData<DTYPE>                * AugmentData();
-
-    void                          Push2LocalBuffer(int idx);
+    void                          Push2LocalBuffer();
 
     std::vector<Tensor<DTYPE> *>* Concatenate();
 
@@ -83,5 +62,80 @@ public:
     std::vector<Tensor<DTYPE> *>* GetDataFromGlobalBuffer();
 };
 
+
+template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, int batchSize, int useShuffle, int numOfWorker, int dropLast) {
+#ifdef __DEBUG__
+    std::cout << "construct DataLoader" << '\n';
+#endif  // ifdef __DEBUG__
+    // need to default value to run the data loader (background)
+    // batch size
+    m_batchSize = batchSize;
+    // random or not
+    m_useShuffle = useShuffle;
+    // number of thread
+    m_numOfWorker = numOfWorker;
+    // Drop last
+    m_dropLast = dropLast;
+
+    this->Alloc();
+}
+
+template<typename DTYPE> DataLoader<DTYPE>::~DataLoader() {
+#ifdef __DEBUG__
+    std::cout << "deconstruct DataLoader" << '\n';
+#endif  // ifdef __DEBUG__
+    // need to free all dynamic allocated elements
+    this->Delete();
+}
+
+template<typename DTYPE> void DataLoader<DTYPE>::Alloc() {
+#ifdef __DEBUG__
+    std::cout << "allocate something" << '\n';
+#endif  // ifdef __DEBUG__
+    // need to asign allocate memory dynamically
+    // thread allocate
+}
+
+template<typename DTYPE> void DataLoader<DTYPE>::Delete() {
+#ifdef __DEBUG__
+    std::cout << "deallocate something" << '\n';
+#endif  // ifdef __DEBUG__
+    // need to free memory which was allocated at Alloc()
+}
+
+template<typename DTYPE> void DataLoader<DTYPE>::StartProcess() {
+    // Generate thread for Dist - DistributeIdxOfData2Thread()
+    // Generate thread set for Process -
+}
+
+template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
+    // Stop Thread
+    // not deallocate!
+}
+
+template<typename DTYPE> void DataLoader<DTYPE>::DistributeIdxOfData2Thread() {
+    // shuffle, batch, m_dropLast
+}
+
+template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::DataPreprocess() {
+    // for thread
+    // doing all of thing befor push global buffer
+}
+
+template<typename DTYPE> void DataLoader<DTYPE>::Push2LocalBuffer() {
+    // push Local Buffer
+}
+
+template<typename DTYPE> std::vector<Tensor<DTYPE> *> *DataLoader<DTYPE>::Concatenate() {
+    // concatenate all preprocessed data into one tensor
+}
+
+template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer() {
+    // Push Tensor pair to Global buffer
+}
+
+template<typename DTYPE> std::vector<Tensor<DTYPE> *> *DataLoader<DTYPE>::GetDataFromGlobalBuffer() {
+    // pop Tensor pair from Global Buffer
+}
 
 #endif  // ifndef DATALOADER_H_
