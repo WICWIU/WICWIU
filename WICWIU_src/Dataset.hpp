@@ -23,23 +23,42 @@ public:
     Dataset();
     virtual ~Dataset();
 
-    virtual std::vector<WData<DTYPE> *>* GetData();
+    virtual void                         Alloc();
+    virtual void                         Dealloc();
+
+    virtual std::vector<WData<DTYPE> *>* GetData(int idx);
     virtual int                          GetLength();
 };
 
 template<typename DTYPE> Dataset<DTYPE>::Dataset() {
 #ifdef __DEBUG__
-    std::cout << "construct Dataset" << '\n';
+    std::cout << __FUNCTION__ << '\n';
+    std::cout << __FILE__ << '\n';
 #endif  // ifdef __DEBUG__
 }
 
 template<typename DTYPE> Dataset<DTYPE>::~Dataset() {
 #ifdef __DEBUG__
-    std::cout << "deconstruct Dataset" << '\n';
+    std::cout << __FUNCTION__ << '\n';
+    std::cout << __FILE__ << '\n';
 #endif  // ifdef __DEBUG__
 }
 
-template<typename DTYPE> std::vector<WData<DTYPE> *> *Dataset<DTYPE>::GetData() {
+template<typename DTYPE> void Dataset<DTYPE>::Alloc() {
+#ifdef __DEBUG__
+    std::cout << __FUNCTION__ << '\n';
+    std::cout << __FILE__ << '\n';
+#endif  // ifdef __DEBUG__
+}
+
+template<typename DTYPE> void Dataset<DTYPE>::Dealloc() {
+#ifdef __DEBUG__
+    std::cout << __FUNCTION__ << '\n';
+    std::cout << __FILE__ << '\n';
+#endif  // ifdef __DEBUG__
+}
+
+template<typename DTYPE> std::vector<WData<DTYPE> *> *Dataset<DTYPE>::GetData(int idx) {
     // virtual
     // we need to implement default function
 }
