@@ -49,17 +49,17 @@ public:
     virtual ~DataLoader();
 
 
-    void                          StartProcess();
-    void                          StopProcess();
+    void              StartProcess();
+    void              StopProcess();
 
     // distribute data idx to each thread
-    void                          DistributeIdxOfData2Thread();
+    void              DistributeIdxOfData2Thread();
 
-    void                          DataPreprocess();
+    void              DataPreprocess();
 
-    void                          Push2IdxBuffer(std::vector<int> *setOfIdx);
+    void              Push2IdxBuffer(std::vector<int> *setOfIdx);
 
-    std::vector<int>            * GetIdxSetFromIdxBuffer();
+    std::vector<int>* GetIdxSetFromIdxBuffer();
 
     // WData<DTYPE>                * ImagePreProcess(WData<DTYPE> *image); // delete -> transform with another class / with dataset
 
@@ -72,20 +72,20 @@ public:
 
 
 template<typename DTYPE> void DataLoader<DTYPE>::Alloc() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
     // need to asign allocate memory dynamically
     // thread allocate
     m_aaWorkerForProcess = new std::thread[m_numOfWorker];
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::Delete() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
     // need to free memory which was allocated at Alloc()
 
     if (m_aaWorkerForProcess) {
@@ -123,10 +123,10 @@ template<typename DTYPE> void DataLoader<DTYPE>::Delete() {
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::Init() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
     // need to free memory which was allocated at Alloc()
     m_pDataset               = NULL;
     m_lenOfDataset           = 1;
@@ -140,10 +140,10 @@ template<typename DTYPE> void DataLoader<DTYPE>::Init() {
 }
 
 template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, int batchSize, int useShuffle, int numOfWorker, int dropLast) {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
     this->Init();
 
     // need to default value to run the data loader (background)
@@ -165,7 +165,7 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
     m_numOfEachDatasetMember = m_pDataset->GetNumOfDatasetMember();
     assert(m_numOfEachDatasetMember > 0);
 
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << m_pDataset << '\n';
     std::cout << m_batchSize << '\n';
     std::cout << m_useShuffle << '\n';
@@ -173,7 +173,7 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
     std::cout << m_dropLast << '\n';
     std::cout << m_lenOfDataset << '\n';
     std::cout << m_numOfEachDatasetMember << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
 
     sem_init(&m_distIdxFull,  0, 0);
     sem_init(&m_distIdxEmpty, 0, m_numOfWorker + 1);
@@ -188,10 +188,10 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
 }
 
 template<typename DTYPE> DataLoader<DTYPE>::~DataLoader() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
     // need to free all dynamic allocated elements
     this->StopProcess();
     this->Delete();
@@ -302,8 +302,8 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
 }
 
 // template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::ImagePreProcess(WData<DTYPE> *image) {
-//     // use preprocessing rule
-//     return image;
+//// use preprocessing rule
+// return image;
 // }
 
 template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer(std::vector<int> *setOfIdx) {
@@ -337,9 +337,23 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
 
     temp     = setOfData.front();
     capacity = temp->GetCapacity();
-    result   = Tensor<float>::Zeros(1, m_batchSize, 1, 1, capacity);
+    result   = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, capacity);
 
     // std::cout << result->GetShape() << '\n';
+    // std::cout << setOfData.size() << '\n';
+
+    for (int i = 0; i < m_batchSize; i++) {
+        temp = setOfData.front();
+        setOfData.pop();
+
+        for (int j = 0; j < capacity; j++) (*result)[i * capacity + j] = (*temp)[j];
+
+        delete temp;
+        temp = NULL;
+    }
+
+    // std::cout << result << '\n';
+
 
     // concatenate all data;
     // and pop data on queue;

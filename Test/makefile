@@ -2,7 +2,7 @@
 
 CFLAGS = -O2 -std=c++11
 ENABLE_CUDNN = -D__CUDNN__
-DFLAGS = -g -D__DEBUG__
+DFLAGS = -g -D__DEBUG___
 
 LFLAGS = -lcudart -lcudnn -lpthread -ljpeg -lturbojpeg
 

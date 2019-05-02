@@ -28,6 +28,9 @@ public:
         return m_capacity;
     }
 
+    DTYPE& operator[](int idx) {
+        return m_aData[idx];
+    }
 };
 
 template<typename DTYPE> class Dataset {  // [] operator override
@@ -50,40 +53,42 @@ public:
 };
 
 template<typename DTYPE> Dataset<DTYPE>::Dataset() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
 }
 
 template<typename DTYPE> Dataset<DTYPE>::~Dataset() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
 }
 
 template<typename DTYPE> void Dataset<DTYPE>::Alloc() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
 }
 
 template<typename DTYPE> void Dataset<DTYPE>::Dealloc() {
-#ifdef __DEBUG__
+#ifdef __DEBUG___
     std::cout << __FUNCTION__ << '\n';
     std::cout << __FILE__ << '\n';
-#endif  // ifdef __DEBUG__
+#endif  // ifdef __DEBUG___
 }
 
 template<typename DTYPE> std::vector<WData<DTYPE> *> *Dataset<DTYPE>::GetData(int idx) {
     // virtual
     // we need to implement default function
     std::vector<WData<DTYPE> *> *result = new std::vector<WData<DTYPE> *>(1, NULL);
-    int capacity                        = 10;
+    int capacity                        = 1;
 
-    DTYPE *_data       = new DTYPE[capacity];
+    DTYPE *_data = new DTYPE[capacity];
+    _data[0] = idx;
+
     WData<DTYPE> *data = new WData<DTYPE>(_data, capacity);
     (*result)[0] = data;
 
@@ -103,7 +108,7 @@ template<typename DTYPE> int Dataset<DTYPE>::GetNumOfDatasetMember() {
 
     std::vector<WData<DTYPE> *> *temp = this->GetData(0);
 
-    if(temp){
+    if (temp) {
         numOfDatasetMember = temp->size();
 
         for (int i = 0; i < numOfDatasetMember; i++) {
