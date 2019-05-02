@@ -188,6 +188,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
     m_nowWorking = FALSE;
 
     for (int i = 0; i < m_numOfWorker; i++) {
+        sem_post(&m_globalEmpty); // for thread terminate
         m_aaThreadForProcess[i]->join();
         delete m_aaThreadForProcess[i];
         m_aaThreadForProcess[i] = NULL;
@@ -195,7 +196,6 @@ template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
     }
 
     sem_post(&m_distIdxEmpty); // for thread terminate
-
     m_aThreadForDistInfo->join();
     delete m_aThreadForDistInfo;
     m_aThreadForDistInfo = NULL;
