@@ -16,7 +16,7 @@ template<typename DTYPE> class DataLoader {
 private:
     /* data */
     Dataset<DTYPE> *m_pDataset;
-    int m_numOfDataset;
+    int m_lenOfDataset;
     int m_numOfEachDatasetMember;
     std::thread m_aThreadForDistInfo;
     std::thread *m_aaWorkerForProcess;  // dynamic allocation
@@ -129,7 +129,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::Init() {
 #endif  // ifdef __DEBUG__
     // need to free memory which was allocated at Alloc()
     m_pDataset               = NULL;
-    m_numOfDataset           = 1;
+    m_lenOfDataset           = 1;
     m_numOfEachDatasetMember = 1;
     m_aaWorkerForProcess     = NULL;
     m_numOfWorker            = 1;
@@ -159,19 +159,21 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
     // Drop last
     m_dropLast = dropLast;
 
+    // elicit information of data;
+    m_lenOfDataset = m_pDataset->GetLength();
+    assert(m_lenOfDataset > 0);
+    m_numOfEachDatasetMember = m_pDataset->GetNumOfDatasetMember();
+    assert(m_numOfEachDatasetMember > 0);
+
 #ifdef __DEBUG__
     std::cout << m_pDataset << '\n';
     std::cout << m_batchSize << '\n';
     std::cout << m_useShuffle << '\n';
     std::cout << m_numOfWorker << '\n';
     std::cout << m_dropLast << '\n';
+    std::cout << m_lenOfDataset << '\n';
+    std::cout << m_numOfEachDatasetMember << '\n';
 #endif  // ifdef __DEBUG__
-
-    // elicit information of data;
-    m_numOfDataset = m_pDataset->GetLength();
-    assert(m_numOfDataset > 0);
-    m_numOfEachDatasetMember = m_pDataset->GetNumOfDatasetMember();
-    assert(m_numOfEachDatasetMember > 0);
 
     sem_init(&m_distIdxFull,  0, 0);
     sem_init(&m_distIdxEmpty, 0, m_numOfWorker + 1);
@@ -255,8 +257,8 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     std::queue<WData<DTYPE> *> *localBuffer        = new std::queue<WData<DTYPE> *>[m_numOfEachDatasetMember];
     std::vector<int> *setOfIdx                     = NULL;
     int idx                                        = 0;
-    std::vector<WData<DTYPE> *> *dataset           = NULL;
-    WData<DTYPE> *data                             = NULL;
+    std::vector<WData<DTYPE> *> *data              = NULL;
+    WData<DTYPE> *pick                             = NULL;
     std::vector<Tensor<DTYPE> *> *preprocessedData = NULL;
 
     while (m_nowWorking) {
@@ -266,22 +268,23 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
         for (int i = 0; i < m_batchSize; i++) {
             idx = (*setOfIdx)[i];
             printf("%d", idx);
-            dataset = m_pDataset->GetData(idx);
+            data = m_pDataset->GetData(idx);
 
             for (int j = 0; j < m_numOfEachDatasetMember; j++) {
                 // Chech the type of Data for determine doing preprocessing (IMAGE)
                 // if true do data Preprocessing
-                data = (*dataset)[j];
+                pick = (*data)[j];
+
                 //
-                if (data->GetType() == WDATA_TYPE::IMAGE) {
-                    data = this->ImagePreProcess(data);
+                if (pick->GetType() == WDATA_TYPE::IMAGE) {
+                    pick = this->ImagePreProcess(pick);
                 }
-                // // push data into local buffer
-                localBuffer[j].push(data);
+                //// push data into local buffer
+                localBuffer[j].push(pick);
             }
 
-            delete dataset;
-            dataset = NULL;
+            delete data;
+            data = NULL;
         }
 
         // delete set of idx vector
@@ -338,9 +341,14 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     int capacity          = 1;
     Tensor<DTYPE> *result = NULL;
 
-    // temp = setOfData.front();
-    // capacity       = temp.GetCapacity();
-    result = Tensor<float>::Zeros(1, m_batchSize, 1, 1, 1);
+    temp     = setOfData.front();
+    capacity = temp->GetCapacity();
+    result   = Tensor<float>::Zeros(1, m_batchSize, 1, 1, capacity);
+
+    // std::cout << result->GetShape() << '\n';
+
+    // concatenate all data;
+    // and pop data on queue;
 
     return result;
 }
