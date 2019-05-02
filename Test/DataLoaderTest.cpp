@@ -5,7 +5,7 @@
 
 int main(int argc, char const *argv[]) {
     Dataset<float> *ds = new Dataset<float>();
-    DataLoader<float> * dl = new DataLoader<float>(ds);
+    DataLoader<float> * dl = new DataLoader<float>(ds, 100, FALSE, 8, TRUE);
 
     sleep(2);
 

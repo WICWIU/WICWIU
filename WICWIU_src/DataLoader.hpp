@@ -57,11 +57,13 @@ public:
 
     WData<DTYPE>                * DataPreprocess();
 
-    void                          Push2IdxBuffer();
+    void                          Push2IdxBuffer(std::vector<int> *temp);
+
+    std::vector<int>            * GetIdxSetFromIdxBuffer();
 
     std::vector<Tensor<DTYPE> *>* Concatenate();
 
-    void                          Push2GlobalBuffer();
+    void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
 
     std::vector<Tensor<DTYPE> *>* GetDataFromGlobalBuffer();
 };
@@ -137,16 +139,16 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
 #endif  // ifdef __DEBUG__
 
     // elicit information of data;
-    // m_numOfDataset
-    // m_numOfEachDatasetMember
+    // m_numOfDataset (assert)
+    // m_numOfEachDatasetMember (assert)
 
     sem_init(&m_distIdxFull,  0, 0);
     sem_init(&m_distIdxEmpty, 0, m_numOfWorker + 1);
     sem_init(&m_distIdxMutex, 0, 1);
 
-    sem_init(&m_globalFull,    0, 0);
-    sem_init(&m_globalEmpty,   0, m_numOfWorker * 2);
-    sem_init(&m_globalMutex,   0, 1);
+    sem_init(&m_globalFull,   0, 0);
+    sem_init(&m_globalEmpty,  0, m_numOfWorker * 2);
+    sem_init(&m_globalMutex,  0, 1);
 
     this->Alloc();
     this->StartProcess();
@@ -167,6 +169,11 @@ template<typename DTYPE> void DataLoader<DTYPE>::StartProcess() {
     // Generate thread set for Process -
     m_nowWorking = TRUE;
 
+    m_aThreadForDistInfo = new std::thread([&]() {
+        this->DistributeIdxOfData2Thread();
+    });  // lambda expression
+    printf("Generate dataloader base thread\r\n");
+
     for (int i = 0; i < m_numOfWorker; i++) {
         m_aaThreadForProcess[i] = new std::thread([&]() {
             this->DataPreprocess();
@@ -186,9 +193,29 @@ template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
         m_aaThreadForProcess[i] = NULL;
         printf("Join worker[%d]\r\n", i);
     }
+
+    sem_post(&m_distIdxEmpty); // for thread terminate
+
+    m_aThreadForDistInfo->join();
+    delete m_aThreadForDistInfo;
+    m_aThreadForDistInfo = NULL;
+    printf("Join dataloader base thread\r\n");
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::DistributeIdxOfData2Thread() {
+    std::vector<int> *setOfIdx = NULL;
+
+    while (m_nowWorking) {
+
+        setOfIdx = new std::vector<int>(m_batchSize);
+
+        for(int i = 0; i < m_batchSize; i++){
+                (*setOfIdx)[i] = i;
+        }
+
+        this->Push2IdxBuffer(setOfIdx);
+    }
+
     // shuffle, batch, m_dropLast
 }
 
@@ -196,47 +223,95 @@ template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::DataPreprocess() {
     // for thread
     // doing all of thing befor push global buffer
     // arrange everything for worker
-    std::queue<WData<DTYPE> *> *localBuffer = new std::queue<WData<DTYPE> *>[m_numOfEachDatasetMember];
-    std::vector<Tensor<DTYPE> *> * temp = NULL;
+    std::queue<WData<DTYPE> *> *localBuffer        = new std::queue<WData<DTYPE> *>[m_numOfEachDatasetMember];
+    std::vector<int> *setOfIdx                     = NULL;
+    int idx                                        = 0;
+    std::vector<Tensor<DTYPE> *> *preprocessedData = NULL;
 
     while (m_nowWorking) {
-        printf("do\r");
+        // printf("Do\r");
         // get information from IdxBuffer
-        temp = new std::vector<Tensor<DTYPE> *>(); // do not deallocate in this function!
+        preprocessedData = new std::vector<Tensor<DTYPE> *>();  // do not deallocate in this function!
+        setOfIdx = this->GetIdxSetFromIdxBuffer();
 
-        for(int i = 0; i< m_batchSize; i++){
-            for(int j = 0; j < m_numOfEachDatasetMember; j++){
-                // Chech the type of Data for determine doing preprocessing
-                    // if true do data Preprocessing
+        for (int i = 0; i < m_batchSize; i++) {
+            idx = (*setOfIdx)[i];
+            printf("%d", idx);
+
+            for (int j = 0; j < m_numOfEachDatasetMember; j++) {
+                // Chech the type of Data for determine doing preprocessing (IMAGE)
+                // if true do data Preprocessing
                 // push data into local buffer
             }
         }
 
-        for(int k = 0; k < m_numOfEachDatasetMember; k++){
+        // delete set of idx vector
+        delete setOfIdx;
+        setOfIdx = NULL;
+
+        for (int k = 0; k < m_numOfEachDatasetMember; k++) {
             // concatenate each localbuffer
-            // push temp vector
+            // push preprocessedData vector
         }
-        // push temp into Global buffer
-        temp = NULL;
+
+        // push preprocessedData into Global buffer
+
+        preprocessedData = NULL;
     }
 
     delete[] localBuffer;
 }
 
-template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer() {
-    // push Local Buffer
+template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer(std::vector<int> *setOfIdx) {
+    sem_wait(&m_distIdxEmpty);
+    sem_wait(&m_distIdxMutex);
+
+    m_splitedIdxBuffer.push(setOfIdx);
+
+    sem_post(&m_distIdxMutex);
+    sem_post(&m_distIdxFull);
+}
+
+template<typename DTYPE> std::vector<int> *DataLoader<DTYPE>::GetIdxSetFromIdxBuffer() {
+    sem_wait(&m_distIdxFull);
+    sem_wait(&m_distIdxMutex);
+
+    std::vector<int> *setOfIdx = m_splitedIdxBuffer.front();
+    m_splitedIdxBuffer.pop();
+
+    sem_post(&m_distIdxMutex);
+    sem_post(&m_distIdxEmpty);
+
+    return setOfIdx;
 }
 
 template<typename DTYPE> std::vector<Tensor<DTYPE> *> *DataLoader<DTYPE>::Concatenate() {
     // concatenate all preprocessed data into one tensor
 }
 
-template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer() {
+template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData) {
+    sem_wait(&m_globalEmpty);
+    sem_wait(&m_globalMutex);
+
     // Push Tensor pair to Global buffer
+    m_globalBuffer.push(preprocessedData);
+
+    sem_post(&m_globalMutex);
+    sem_post(&m_globalFull);
 }
 
 template<typename DTYPE> std::vector<Tensor<DTYPE> *> *DataLoader<DTYPE>::GetDataFromGlobalBuffer() {
+    sem_wait(&m_distIdxFull);
+    sem_wait(&m_distIdxMutex);
+
     // pop Tensor pair from Global Buffer
+    std::vector<Tensor<DTYPE> *> *preprocessedData = m_globalBuffer.front();
+    m_globalBuffer.pop();
+
+    sem_post(&m_distIdxMutex);
+    sem_post(&m_distIdxEmpty);
+
+    return preprocessedData;
 }
 
 #endif  // ifndef DATALOADER_H_
