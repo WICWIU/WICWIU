@@ -5,7 +5,8 @@
 
 int main(int argc, char const *argv[]) {
     Dataset<float> *ds = new Dataset<float>();
-    DataLoader<float> * dl = new DataLoader<float>(ds, 5, FALSE, 5, TRUE);
+    //DataLoader(Dataset<DTYPE> *dataset, int batchSize, int useShuffle, int numOfWorker, int dropLast);
+    DataLoader<float> * dl = new DataLoader<float>(ds, 6, FALSE, 5, FALSE);
 
     sleep(2);
 
