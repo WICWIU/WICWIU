@@ -31,7 +31,7 @@ int main(int argc, char const *argv[]) {
     DataLoader<float> * train_dataloader = new DataLoader<float>(train_dataset, BATCH, TRUE, 20, FALSE);
 
     MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>(TESTING);
-    DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, TRUE, 20, FALSE);
+    DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, FALSE, 20, FALSE);
 
 #ifdef __CUDNN__
     // x->SetDeviceGPU(GPUID);
