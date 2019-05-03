@@ -61,8 +61,6 @@ public:
 
     std::vector<int>* GetIdxSetFromIdxBuffer();
 
-    // WData<DTYPE>                * ImagePreProcess(Tensor<DTYPE> *image); // delete -> transform with another class / with dataset
-
     Tensor<DTYPE>               * Concatenate(std::queue<Tensor<DTYPE> *>& setOfData);
 
     void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
@@ -301,11 +299,6 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     delete[] localBuffer;
 }
 
-// template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::ImagePreProcess(Tensor<DTYPE> *image) {
-//// use preprocessing rule
-// return image;
-// }
-
 template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer(std::vector<int> *setOfIdx) {
     sem_wait(&m_distIdxEmpty);
     sem_wait(&m_distIdxMutex);
@@ -334,6 +327,7 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     Tensor<DTYPE> *temp   = NULL;
     int capacity          = 1;
     Tensor<DTYPE> *result = NULL;
+    // We need to consider Timesize
 
     temp     = setOfData.front();
     capacity = temp->GetCapacity();
