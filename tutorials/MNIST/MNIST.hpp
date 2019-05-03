@@ -40,7 +40,7 @@ public:
     int ReverseInt(DTYPE i);
 };
 
-template<typename DTYPE> MNIST<DTYPE>::MNIST(char* piamgePath, char* plabelPath, OPTIONS pOPTION = Train){
+template<typename DTYPE> MNIST<DTYPE>::MNIST(char* piamgePath, char* plabelPath, OPTIONS pOPTION){
     strcpy(m_imagePath, piamgePath); 
     strcpy(m_labelPath, plabelPath); 
     m_option = pOPTION;
@@ -53,6 +53,10 @@ template<typename DTYPE> MNIST<DTYPE>::~MNIST(){
 }
 
 template<typename DTYPE> void MNIST<DTYPE>::Alloc(){
+
+}
+
+template<typename DTYPE> void MNIST<DTYPE>::Dealloc(){
 
 }
 
@@ -121,9 +125,9 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *>* MNIST<DTYPE>::GetData(int
 
         fin_label.seekg(sizeof(unsigned char) * idx, std::ios::cur);
 
-        data = 0;
+        unsigned char data = 0;
         fin_label.read((char *)&data, sizeof(data));
-        temp_label[(int)data] = 1.f;
+        (*temp_label)[(int)data] = 1.f;
 
         result->push_back(temp_label);
     }
