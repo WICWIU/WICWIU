@@ -244,4 +244,5 @@ template<typename DTYPE> int MNISTDataSet<DTYPE>::GetLength() {
     } else if (m_option == TESTING) {
         return NUMOFTESTDATA;
     }
+    return 0;
 }
