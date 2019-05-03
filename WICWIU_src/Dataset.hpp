@@ -44,12 +44,12 @@ public:
     Dataset();
     virtual ~Dataset();
 
-    virtual void                         Alloc();
-    virtual void                         Dealloc();
+    virtual void                          Alloc();
+    virtual void                          Dealloc();
 
-    virtual std::vector<WData<DTYPE> *>* GetData(int idx);
-    virtual int                          GetLength();
-    int                                  GetNumOfDatasetMember();
+    virtual std::vector<Tensor<DTYPE> *>* GetData(int idx);
+    virtual int                           GetLength();
+    int                                   GetNumOfDatasetMember();
 };
 
 template<typename DTYPE> Dataset<DTYPE>::Dataset() {
@@ -80,16 +80,14 @@ template<typename DTYPE> void Dataset<DTYPE>::Dealloc() {
 #endif  // ifdef __DEBUG___
 }
 
-template<typename DTYPE> std::vector<WData<DTYPE> *> *Dataset<DTYPE>::GetData(int idx) {
+template<typename DTYPE> std::vector<Tensor<DTYPE> *> *Dataset<DTYPE>::GetData(int idx) {
     // virtual
     // we need to implement default function
-    std::vector<WData<DTYPE> *> *result = new std::vector<WData<DTYPE> *>(1, NULL);
-    int capacity                        = 1;
+    std::vector<Tensor<DTYPE> *> *result = new std::vector<Tensor<DTYPE> *>(1, NULL);
+    int capacity                         = 1;
 
-    DTYPE *_data = new DTYPE[capacity];
-    _data[0] = idx;
-
-    WData<DTYPE> *data = new WData<DTYPE>(_data, capacity);
+    Tensor<DTYPE> *data = Tensor<DTYPE>::Zeros(1, 1, 1, 1, capacity);
+    (*data)[0]   = (DTYPE)idx;
     (*result)[0] = data;
 
     return result;
@@ -106,7 +104,7 @@ template<typename DTYPE> int Dataset<DTYPE>::GetNumOfDatasetMember() {
     // we need to implement default function
     int numOfDatasetMember = 0;
 
-    std::vector<WData<DTYPE> *> *temp = this->GetData(0);
+    std::vector<Tensor<DTYPE> *> *temp = this->GetData(0);
 
     if (temp) {
         numOfDatasetMember = temp->size();

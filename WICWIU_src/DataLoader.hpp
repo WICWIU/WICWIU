@@ -61,9 +61,9 @@ public:
 
     std::vector<int>* GetIdxSetFromIdxBuffer();
 
-    // WData<DTYPE>                * ImagePreProcess(WData<DTYPE> *image); // delete -> transform with another class / with dataset
+    // WData<DTYPE>                * ImagePreProcess(Tensor<DTYPE> *image); // delete -> transform with another class / with dataset
 
-    Tensor<DTYPE>               * Concatenate(std::queue<WData<DTYPE> *>& setOfData);
+    Tensor<DTYPE>               * Concatenate(std::queue<Tensor<DTYPE> *>& setOfData);
 
     void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
 
@@ -254,11 +254,11 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     // for thread
     // doing all of thing befor push global buffer
     // arrange everything for worker
-    std::queue<WData<DTYPE> *> *localBuffer        = new std::queue<WData<DTYPE> *>[m_numOfEachDatasetMember];
+    std::queue<Tensor<DTYPE> *> *localBuffer       = new std::queue<Tensor<DTYPE> *>[m_numOfEachDatasetMember];
     std::vector<int> *setOfIdx                     = NULL;
     int idx                                        = 0;
-    std::vector<WData<DTYPE> *> *data              = NULL;
-    WData<DTYPE> *pick                             = NULL;
+    std::vector<Tensor<DTYPE> *> *data             = NULL;
+    Tensor<DTYPE> *pick                            = NULL;
     std::vector<Tensor<DTYPE> *> *preprocessedData = NULL;
 
     while (m_nowWorking) {
@@ -301,7 +301,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     delete[] localBuffer;
 }
 
-// template<typename DTYPE> WData<DTYPE> *DataLoader<DTYPE>::ImagePreProcess(WData<DTYPE> *image) {
+// template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::ImagePreProcess(Tensor<DTYPE> *image) {
 //// use preprocessing rule
 // return image;
 // }
@@ -329,9 +329,9 @@ template<typename DTYPE> std::vector<int> *DataLoader<DTYPE>::GetIdxSetFromIdxBu
     return setOfIdx;
 }
 
-template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queue<WData<DTYPE> *>& setOfData) {
+template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queue<Tensor<DTYPE> *>& setOfData) {
     // concatenate all preprocessed data into one tensor
-    WData<DTYPE> *temp    = NULL;
+    Tensor<DTYPE> *temp   = NULL;
     int capacity          = 1;
     Tensor<DTYPE> *result = NULL;
 
