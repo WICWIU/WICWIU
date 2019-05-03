@@ -248,6 +248,8 @@ template<typename DTYPE> void DataLoader<DTYPE>::DistributeIdxOfData2Thread() {
     std::vector<int> *allOfIdx = new std::vector<int>(m_lenOfDataset);
     std::vector<int> *setOfIdx = NULL;
     int dropLastSize = m_lenOfDataset % m_batchSize; //num of dropLast
+    int numOfBatchBlockSize = m_lenOfDataset / m_batchSize;
+    int cnt = 0;
 
     for(int i=0; i < m_lenOfDataset; i++) (*allOfIdx)[i] = i;
     
@@ -255,40 +257,30 @@ template<typename DTYPE> void DataLoader<DTYPE>::DistributeIdxOfData2Thread() {
 
     while (m_nowWorking) {
 
-        for(int k = 0; k < m_lenOfDataset/m_batchSize; k++){
-            setOfIdx = new std::vector<int>(m_batchSize);
+        setOfIdx = new std::vector<int>(m_batchSize);
             
-            for (int i = 0; i < m_batchSize; i++) {
-                (*setOfIdx)[i] = (*allOfIdx)[m_batchSize * k + i];
-                std::cout << "idx:" << m_batchSize * k + i << " "<<(*setOfIdx)[i] << " " ;
-            }
-            std::cout << std::endl;
-
-            this->Push2IdxBuffer(setOfIdx);
+        for (int i = 0; i < m_batchSize; i++) {
+            (*setOfIdx)[i] = (*allOfIdx)[m_batchSize * cnt + i];
+            #ifdef __DEBUG__
+             std::cout << "idx:" << m_batchSize * cnt + i << " " <<(*setOfIdx)[i] << " " ;
+            #endif //__DEBUG__
         }
+        cnt++;
 
-        if(!m_dropLast && dropLastSize){
-            std::reverse(allOfIdx->begin(), allOfIdx->end());
-            if(m_useShuffle)
-                std::random_shuffle(allOfIdx->begin() + dropLastSize, allOfIdx->end(), random_generator);
-        } else {
-            if(m_useShuffle)
-                std::random_shuffle(allOfIdx->begin(), allOfIdx->end(), random_generator);
-        }
-
+        this->Push2IdxBuffer(setOfIdx);
         
-        // setOfIdx = new std::vector<int>(m_batchSize);
-
-        // for (int i = 0; i < m_batchSize; i++) {
-        //     (*setOfIdx)[i] = i;
-        //     std::cout << i << " " ;
-        // }
-        // std::cout << std::endl;
-
-        // this->Push2IdxBuffer(setOfIdx);
+        if(numOfBatchBlockSize == cnt){
+            if(!m_dropLast && dropLastSize){
+            std::reverse(allOfIdx->begin(), allOfIdx->end());
+                if(m_useShuffle)
+                    std::random_shuffle(allOfIdx->begin() + dropLastSize, allOfIdx->end(), random_generator);
+            } else {
+                if(m_useShuffle)
+                    std::random_shuffle(allOfIdx->begin(), allOfIdx->end(), random_generator);
+            }
+            cnt = 0;
+        }
     }
-
-    // shuffle, batch, m_dropLast
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
