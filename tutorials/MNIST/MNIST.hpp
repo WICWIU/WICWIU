@@ -16,11 +16,6 @@
 
 using namespace std;
 
-enum OPTION {
-    TESTING,
-    TRAINING
-};
-
 int ReverseInt(int i) {
     unsigned char ch1, ch2, ch3, ch4;
 
@@ -101,14 +96,14 @@ private:
     DTYPE **m_aaLabel;
     int m_numOfImg;
 
-    OPTION m_option;
+    string m_option;
 
 public:
-    MNISTDataSet(string pImagePath, string pLabelPath, OPTION pOPTION) {
+    MNISTDataSet(string pImagePath, string pLabelPath, string pOption) {
         m_aaImage = NULL;
         m_aaLabel = NULL;
 
-        m_option = pOPTION;
+        m_option = pOption;
 
         Alloc(pImagePath, pLabelPath);
     }
@@ -128,13 +123,13 @@ public:
 };
 
 template<typename DTYPE> void MNISTDataSet<DTYPE>::Alloc(string pImagePath, string pLabelPath) {
-    if (m_option == TRAINING) {
+    if (m_option == "train") {
         m_numOfImg = NUMOFTRAINDATA;
         m_aaImage = new DTYPE *[m_numOfImg];
         IMAGE_Reader(pImagePath, m_aaImage);
         m_aaLabel = new DTYPE *[m_numOfImg];
         LABEL_Reader(pLabelPath, m_aaLabel);
-    } else if (m_option == TESTING) {
+    } else if (m_option == "test") {
         m_numOfImg = NUMOFTESTDATA;
         m_aaImage = new DTYPE *[m_numOfImg];
         IMAGE_Reader(pImagePath, m_aaImage);
@@ -189,9 +184,9 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *> *MNISTDataSet<DTYPE>::GetD
 }
 
 template<typename DTYPE> int MNISTDataSet<DTYPE>::GetLength() {
-    if (m_option == TRAINING) {
+    if (m_option == "train") {
         return NUMOFTRAINDATA;
-    } else if (m_option == TESTING) {
+    } else if (m_option == "test") {
         return NUMOFTESTDATA;
     }
     return 0;
