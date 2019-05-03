@@ -28,8 +28,8 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
-    MNIST<float> *train = new MNIST<float>("data/train-images-idx3-ubyte" ,"data/train-labels-idx1-ubyte", Train);
-    DataLoader<float> * dl = new DataLoader<float>(train, BATCH, FALSE, 5, FALSE);
+    MNISTDataSet<float> *train = new MNISTDataSet<float>(TRAINING);
+    DataLoader<float> * dl = new DataLoader<float>(train, BATCH, TRUE, 8, FALSE);
 
 #ifdef __CUDNN__
     // x->SetDeviceGPU(GPUID);

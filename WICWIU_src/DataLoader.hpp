@@ -52,29 +52,29 @@ public:
     virtual ~DataLoader();
 
 
-    void              StartProcess();
-    void              StopProcess();
+    void                          StartProcess();
+    void                          StopProcess();
 
     // distribute data idx to each thread
-    void              DistributeIdxOfData2Thread();
+    void                          DistributeIdxOfData2Thread();
 
-    void              DataPreprocess();
+    void                          DataPreprocess();
 
-    void              Push2IdxBuffer(std::vector<int> *setOfIdx);
+    void                          Push2IdxBuffer(std::vector<int> *setOfIdx);
 
-    std::vector<int>* GetIdxSetFromIdxBuffer();
+    std::vector<int>            * GetIdxSetFromIdxBuffer();
 
     Tensor<DTYPE>               * Concatenate(std::queue<Tensor<DTYPE> *>& setOfData);
 
     void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
 
     std::vector<Tensor<DTYPE> *>* GetDataFromGlobalBuffer();
-    
-    //static int random_generator(int upperbound);  
+
+    // static int random_generator(int upperbound);
 };
 
 static int random_generator(int upperbound) {
-    srand (time(NULL));
+    srand(time(NULL));
     return (upperbound == 0) ? 0 : rand() % upperbound;
 }
 
@@ -173,13 +173,13 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
     assert(m_numOfEachDatasetMember > 0);
 
 #ifdef __DEBUG___
-    std::cout << m_pDataset << '\n';
-    std::cout << m_batchSize << '\n';
-    std::cout << m_useShuffle << '\n';
-    std::cout << m_numOfWorker << '\n';
-    std::cout << m_dropLast << '\n';
-    std::cout << m_lenOfDataset << '\n';
-    std::cout << m_numOfEachDatasetMember << '\n';
+    std::cout << "m_pDataset: " << m_pDataset << '\n';
+    std::cout << "m_batchSize: " << m_batchSize << '\n';
+    std::cout << "m_useShuffle: " << m_useShuffle << '\n';
+    std::cout << "m_numOfWorker: " << m_numOfWorker << '\n';
+    std::cout << "m_dropLast: " << m_dropLast << '\n';
+    std::cout << "m_lenOfDataset: " << m_lenOfDataset << '\n';
+    std::cout << "m_numOfEachDatasetMember: " << m_numOfEachDatasetMember << '\n';
 #endif  // ifdef __DEBUG___
 
     sem_init(&m_distIdxFull,  0, 0);
@@ -226,6 +226,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
     // Stop Thread
     // not deallocate!
     m_nowWorking = FALSE;
+
     for (int i = 0; i < m_numOfWorker; i++) {
         sem_post(&m_globalEmpty);  // for thread terminate
     }
@@ -240,41 +241,37 @@ template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
     printf("Join dataloader base thread\r\n");
 }
 
-
-
 template<typename DTYPE> void DataLoader<DTYPE>::DistributeIdxOfData2Thread() {
     std::vector<int> *allOfIdx = new std::vector<int>(m_lenOfDataset);
     std::vector<int> *setOfIdx = NULL;
-    int dropLastSize = m_lenOfDataset % m_batchSize; //num of dropLast
-    int numOfBatchBlockSize = m_lenOfDataset / m_batchSize;
-    int cnt = 0;
+    int dropLastSize           = m_lenOfDataset % m_batchSize; // num of dropLast
+    int numOfBatchBlockSize    = m_lenOfDataset / m_batchSize;
+    int cnt                    = 0;
 
-    for(int i=0; i < m_lenOfDataset; i++) (*allOfIdx)[i] = i;
-    
+    for (int i = 0; i < m_lenOfDataset; i++) (*allOfIdx)[i] = i;
+
     if (m_useShuffle) std::random_shuffle(allOfIdx->begin(), allOfIdx->end(), random_generator);
 
     while (m_nowWorking) {
-
         setOfIdx = new std::vector<int>(m_batchSize);
-            
+
         for (int i = 0; i < m_batchSize; i++) {
             (*setOfIdx)[i] = (*allOfIdx)[m_batchSize * cnt + i];
             #ifdef __DEBUG__
-             std::cout << "idx:" << m_batchSize * cnt + i << " " <<(*setOfIdx)[i] << " " ;
-            #endif //__DEBUG__
+            std::cout << "idx:" << m_batchSize * cnt + i << " " << (*setOfIdx)[i] << " ";
+            #endif  // __DEBUG__
         }
         cnt++;
 
         this->Push2IdxBuffer(setOfIdx);
-        
-        if(numOfBatchBlockSize == cnt){
-            if(!m_dropLast && dropLastSize){
-            std::reverse(allOfIdx->begin(), allOfIdx->end());
-                if(m_useShuffle)
-                    std::random_shuffle(allOfIdx->begin() + dropLastSize, allOfIdx->end(), random_generator);
+
+        if (numOfBatchBlockSize == cnt) {
+            if (!m_dropLast && dropLastSize) {
+                std::reverse(allOfIdx->begin(), allOfIdx->end());
+
+                if (m_useShuffle) std::random_shuffle(allOfIdx->begin() + dropLastSize, allOfIdx->end(), random_generator);
             } else {
-                if(m_useShuffle)
-                    std::random_shuffle(allOfIdx->begin(), allOfIdx->end(), random_generator);
+                if (m_useShuffle) std::random_shuffle(allOfIdx->begin(), allOfIdx->end(), random_generator);
             }
             cnt = 0;
         }
@@ -412,6 +409,5 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *> *DataLoader<DTYPE>::GetDat
 
     return preprocessedData;
 }
-
 
 #endif  // ifndef DATALOADER_H_
