@@ -1,11 +1,11 @@
 #include "net/my_CNN.hpp"
 #include "net/my_NN.hpp"
 #include "net/my_Resnet.hpp"
-#include "MNIST_Reader.hpp"
+#include "MNIST.hpp"
 #include <time.h>
 
 #define BATCH             100
-#define EPOCH             2
+#define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             1
@@ -26,7 +26,12 @@ int main(int argc, char const *argv[]) {
     // NeuralNetwork<float> *net = Resnet14<float>(x, label);
 
     // ======================= Prepare Data ===================
-    MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
+    //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
+    MNISTDataSet<float> *train_dataset = new MNISTDataSet<float>(TRAINING);
+    DataLoader<float> * train_dataloader = new DataLoader<float>(train_dataset, BATCH, TRUE, 20, FALSE);
+
+    MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>(TESTING);
+    DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, FALSE, 20, FALSE);
 
 #ifdef __CUDNN__
     // x->SetDeviceGPU(GPUID);
@@ -40,7 +45,7 @@ int main(int argc, char const *argv[]) {
     int   epoch    = 0;
 
     // @ When load parameters
-    net->Load(filename);
+    // net->Load(filename);
 
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
@@ -63,10 +68,13 @@ int main(int argc, char const *argv[]) {
         startTime = clock();
 
         for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-            dataset->CreateTrainDataPair(BATCH);
+            //dataset->CreateTrainDataPair(BATCH);
+            std::vector<Tensor<float> *> * temp =  train_dataloader->GetDataFromGlobalBuffer();
+            // printf("%d\r\n", temp->size());
 
-            Tensor<float> *x_t = dataset->GetTrainFeedImage();
-            Tensor<float> *l_t = dataset->GetTrainFeedLabel();
+            Tensor<float> *x_t = (*temp)[0];
+            Tensor<float> *l_t = (*temp)[1];
+            delete temp;
 
 #ifdef __CUDNN__
             x_t->SetDeviceGPU(GPUID);  // 異뷀썑 ?먮룞???꾩슂
@@ -98,10 +106,13 @@ int main(int argc, char const *argv[]) {
         net->SetModeInference();
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
-            dataset->CreateTestDataPair(BATCH);
+            //dataset->CreateTestDataPair(BATCH);
+            std::vector<Tensor<float> *> * temp =  test_dataloader->GetDataFromGlobalBuffer();
+            // printf("%d\r\n", temp->size());
 
-            Tensor<float> *x_t = dataset->GetTestFeedImage();
-            Tensor<float> *l_t = dataset->GetTestFeedLabel();
+            Tensor<float> *x_t = (*temp)[0];
+            Tensor<float> *l_t = (*temp)[1];
+            delete temp;
 
 #ifdef __CUDNN__
             x_t->SetDeviceGPU(GPUID);
@@ -127,8 +138,12 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-    delete dataset;
+    //delete dataset;
     delete net;
+    delete train_dataloader;
+    delete train_dataset;
+    delete test_dataloader;
+    delete test_dataset;
 
     return 0;
 }
