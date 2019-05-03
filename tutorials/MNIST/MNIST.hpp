@@ -14,21 +14,11 @@
 #define NUMOFTESTDATA       10000
 #define NUMOFTRAINDATA      60000
 
-#define TEST_IMAGE_FILE     "data/t10k-images-idx3-ubyte"
-#define TEST_LABEL_FILE     "data/t10k-labels-idx1-ubyte"
-#define TRAIN_IMAGE_FILE    "data/train-images-idx3-ubyte"
-#define TRAIN_LABEL_FILE    "data/train-labels-idx1-ubyte"
-
 using namespace std;
 
 enum OPTION {
     TESTING,
-    TESTIMAGE,
-    TESTLABEL,
-    TRAINING,
-    TRAINIMAGE,
-    TRAINLABEL,
-    DEFAULT
+    TRAINING
 };
 
 int ReverseInt(int i) {
@@ -42,14 +32,9 @@ int ReverseInt(int i) {
     return ((int)ch1 << 24) + ((int)ch2 << 16) + ((int)ch3 << 8) + ch4;
 }
 
-template<typename DTYPE> void IMAGE_Reader(string DATAPATH, DTYPE **pImage) {
+template<typename DTYPE> void IMAGE_Reader(string pImagePath, DTYPE **pImage) {
     ifstream fin;
-
-    if (DATAPATH == TEST_IMAGE_FILE) {
-        fin.open(TEST_IMAGE_FILE, ios_base::binary);
-    } else if (DATAPATH == TRAIN_IMAGE_FILE) {
-        fin.open(TRAIN_IMAGE_FILE, ios_base::binary);
-    }
+    fin.open(pImagePath, ios_base::binary);
 
     if (fin.is_open()) {
         int magicNumber = 0;
@@ -85,14 +70,9 @@ template<typename DTYPE> void IMAGE_Reader(string DATAPATH, DTYPE **pImage) {
 }
 
 template<typename DTYPE>
-void LABEL_Reader(string DATAPATH, DTYPE **pLabel) {
+void LABEL_Reader(string pLabelPath, DTYPE **pLabel) {
     ifstream fin;
-
-    if (DATAPATH == TEST_LABEL_FILE) {
-        fin.open(TEST_LABEL_FILE, ios_base::binary);
-    } else if (DATAPATH == TRAIN_LABEL_FILE) {
-        fin.open(TRAIN_LABEL_FILE, ios_base::binary);
-    }
+    fin.open(pLabelPath, ios_base::binary);
 
     if (fin.is_open()) {
         int magicNumber = 0;
@@ -115,53 +95,29 @@ void LABEL_Reader(string DATAPATH, DTYPE **pLabel) {
 }
 
 template<typename DTYPE>
-DTYPE** ReShapeData(OPTION pOption) {
-    if (pOption == TESTIMAGE) {
-        DTYPE **TestImage = new DTYPE *[NUMOFTESTDATA];
-        IMAGE_Reader(TEST_IMAGE_FILE, TestImage);
-
-        return TestImage;
-    } else if (pOption == TESTLABEL) {
-        DTYPE **TestLabel = new DTYPE *[NUMOFTESTDATA];
-        LABEL_Reader(TEST_LABEL_FILE, TestLabel);
-
-        return TestLabel;
-    } else if (pOption == TRAINIMAGE) {
-        DTYPE **TrainImage = new DTYPE *[NUMOFTRAINDATA];
-        IMAGE_Reader(TRAIN_IMAGE_FILE, TrainImage);
-
-        return TrainImage;
-    } else if (pOption == TRAINLABEL) {
-        DTYPE **TrainLabel = new DTYPE *[NUMOFTRAINDATA];
-        LABEL_Reader(TRAIN_LABEL_FILE, TrainLabel);
-
-        return TrainLabel;
-    } else return NULL;
-}
-
-template<typename DTYPE>
 class MNISTDataSet : public Dataset<DTYPE>{
 private:
     DTYPE **m_aaImage;
     DTYPE **m_aaLabel;
+    int m_numOfImg;
 
     OPTION m_option;
 
 public:
-    MNISTDataSet(OPTION pOPTION) {
+    MNISTDataSet(string pImagePath, string pLabelPath, OPTION pOPTION) {
         m_aaImage = NULL;
         m_aaLabel = NULL;
 
         m_option = pOPTION;
 
-        Alloc();
+        Alloc(pImagePath, pLabelPath);
     }
 
     virtual ~MNISTDataSet() {
         Delete();
     }
 
-    virtual void                          Alloc();
+    virtual void                          Alloc(string pImagePath, string pLabelPath);
 
     virtual void                          Delete();
 
@@ -169,22 +125,21 @@ public:
 
     virtual int                           GetLength();
 
-    void                                  SetImage(DTYPE **pImage) {
-        m_aaImage = pImage;
-    }
-
-    void SetLabel(DTYPE **pLabel) {
-        m_aaLabel = pLabel;
-    }
 };
 
-template<typename DTYPE> void MNISTDataSet<DTYPE>::Alloc() {
+template<typename DTYPE> void MNISTDataSet<DTYPE>::Alloc(string pImagePath, string pLabelPath) {
     if (m_option == TRAINING) {
-        this->SetImage(ReShapeData<DTYPE>(TRAINIMAGE));
-        this->SetLabel(ReShapeData<DTYPE>(TRAINLABEL));
+        m_numOfImg = NUMOFTRAINDATA;
+        m_aaImage = new DTYPE *[m_numOfImg];
+        IMAGE_Reader(pImagePath, m_aaImage);
+        m_aaLabel = new DTYPE *[m_numOfImg];
+        LABEL_Reader(pLabelPath, m_aaLabel);
     } else if (m_option == TESTING) {
-        this->SetImage(ReShapeData<DTYPE>(TESTIMAGE));
-        this->SetLabel(ReShapeData<DTYPE>(TESTLABEL));
+        m_numOfImg = NUMOFTESTDATA;
+        m_aaImage = new DTYPE *[m_numOfImg];
+        IMAGE_Reader(pImagePath, m_aaImage);
+        m_aaLabel = new DTYPE *[m_numOfImg];
+        LABEL_Reader(pLabelPath, m_aaLabel);
     } else {
         printf("invalid option\n");
         exit(-1);
@@ -192,13 +147,8 @@ template<typename DTYPE> void MNISTDataSet<DTYPE>::Alloc() {
 }
 
 template<typename DTYPE> void MNISTDataSet<DTYPE>::Delete() {
-    int numOfImg = 0;
-
-    if (m_option == TRAINING) numOfImg = NUMOFTRAINDATA;
-    else numOfImg = NUMOFTESTDATA;
-
     if (m_aaImage) {
-        for (int i = 0; i < numOfImg; i++) {
+        for (int i = 0; i < m_numOfImg; i++) {
             if (m_aaImage[i]) {
                 delete[] m_aaImage[i];
                 m_aaImage[i] = NULL;
@@ -209,7 +159,7 @@ template<typename DTYPE> void MNISTDataSet<DTYPE>::Delete() {
     }
 
     if (m_aaLabel) {
-        for (int i = 0; i < numOfImg; i++) {
+        for (int i = 0; i < m_numOfImg; i++) {
             if (m_aaLabel[i]) {
                 delete[] m_aaLabel[i];
                 m_aaLabel[i] = NULL;

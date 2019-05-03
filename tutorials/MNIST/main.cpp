@@ -27,10 +27,10 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
-    MNISTDataSet<float> *train_dataset = new MNISTDataSet<float>(TRAINING);
+    MNISTDataSet<float> *train_dataset = new MNISTDataSet<float>("data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte", TRAINING);
     DataLoader<float> * train_dataloader = new DataLoader<float>(train_dataset, BATCH, TRUE, 20, FALSE);
 
-    MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>(TESTING);
+    MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>("data/t10k-images-idx3-ubyte", "data/t10k-labels-idx1-ubyte", TESTING);
     DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, FALSE, 20, FALSE);
 
 #ifdef __CUDNN__
