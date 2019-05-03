@@ -41,8 +41,8 @@ public:
 };
 
 template<typename DTYPE> MNIST<DTYPE>::MNIST(char* piamgePath, char* plabelPath, OPTIONS pOPTION){
-    strcpy(m_imagePath, piamgePath); 
-    strcpy(m_labelPath, plabelPath); 
+    strcpy(m_imagePath, piamgePath);
+    strcpy(m_labelPath, plabelPath);
     m_option = pOPTION;
 
     Alloc();
@@ -61,8 +61,8 @@ template<typename DTYPE> void MNIST<DTYPE>::Dealloc(){
 }
 
 template<typename DTYPE> std::vector<Tensor<DTYPE> *>* MNIST<DTYPE>::GetData(int idx){
-    std::vector<Tensor<DTYPE> *> *result = new std::vector<Tensor<DTYPE> *>(1, NULL);
-    Tensor<DTYPE> **temp = new Tensor<DTYPE> *[2]; 
+    std::vector<Tensor<DTYPE> *> *result = new std::vector<Tensor<DTYPE> *>(0, NULL);
+    Tensor<DTYPE> **temp = new Tensor<DTYPE> *[2];
     int capacity = DIMOFMNISTIMAGE;
     int numOfData = 0;
 
@@ -79,7 +79,7 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *>* MNIST<DTYPE>::GetData(int
 
     fin_data.open(m_imagePath, std::ios_base::binary);
     fin_label.open(m_labelPath, std::ios_base::binary);
-    
+
     if (fin_data.is_open() && fin_label.is_open()){
         //Load Image
         int magicNumber = 0;
@@ -103,13 +103,13 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *>* MNIST<DTYPE>::GetData(int
         Tensor<DTYPE> *temp_image = new Tensor<DTYPE>(1, 1, 1, 1, dimOfImage);
 
         fin_data.seekg(sizeof(unsigned char) * dimOfImage * idx, std::ios::cur);
-        
+
         for (int d = 0; d < dimOfImage; ++d) {
             unsigned char data = 0;
             fin_data.read((char *)&data, sizeof(data));
             (*temp_image)[d] =  (DTYPE)data / 255.0;
             // (*result)[0][d] = (DTYPE)data / 255.0;
-        }   
+        }
         result->push_back(temp_image);
 
         //load Label

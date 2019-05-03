@@ -5,7 +5,7 @@
 #include "MNIST.hpp"
 #include <time.h>
 
-#define BATCH             1
+#define BATCH             100
 #define EPOCH             2
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
@@ -30,7 +30,6 @@ int main(int argc, char const *argv[]) {
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
     MNIST<float> *train = new MNIST<float>("data/train-images-idx3-ubyte" ,"data/train-labels-idx1-ubyte", Train);
     DataLoader<float> * dl = new DataLoader<float>(train, BATCH, FALSE, 5, FALSE);
-
 
 #ifdef __CUDNN__
     // x->SetDeviceGPU(GPUID);
@@ -69,7 +68,7 @@ int main(int argc, char const *argv[]) {
         for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
             //dataset->CreateTrainDataPair(BATCH);
             std::vector<Tensor<float> *> * temp =  dl->GetDataFromGlobalBuffer();
-            printf("%d\r\n", temp->size());
+            // printf("%d\r\n", temp->size());
 
             Tensor<float> *x_t = (*temp)[0];
             Tensor<float> *l_t = (*temp)[1];
@@ -107,7 +106,7 @@ int main(int argc, char const *argv[]) {
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
             //dataset->CreateTestDataPair(BATCH);
             std::vector<Tensor<float> *> * temp =  dl->GetDataFromGlobalBuffer();
-            printf("%d\r\n", temp->size());
+            // printf("%d\r\n", temp->size());
 
             Tensor<float> *x_t = (*temp)[0];
             Tensor<float> *l_t = (*temp)[1];
@@ -139,6 +138,8 @@ int main(int argc, char const *argv[]) {
 
     //delete dataset;
     delete net;
+    delete dl;
+    delete train;
 
     return 0;
 }
