@@ -1,12 +1,11 @@
 #include "net/my_CNN.hpp"
 #include "net/my_NN.hpp"
 #include "net/my_Resnet.hpp"
-//#include "MNIST_Reader.hpp"
 #include "MNIST.hpp"
 #include <time.h>
 
 #define BATCH             100
-#define EPOCH             2
+#define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             1
@@ -28,8 +27,11 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
-    MNISTDataSet<float> *train = new MNISTDataSet<float>(TRAINING);
-    DataLoader<float> * dl = new DataLoader<float>(train, BATCH, TRUE, 8, FALSE);
+    MNISTDataSet<float> *train_dataset = new MNISTDataSet<float>(TRAINING);
+    DataLoader<float> * train_dataloader = new DataLoader<float>(train_dataset, BATCH, TRUE, 20, FALSE);
+
+    MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>(TESTING);
+    DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, TRUE, 20, FALSE);
 
 #ifdef __CUDNN__
     // x->SetDeviceGPU(GPUID);
@@ -67,7 +69,7 @@ int main(int argc, char const *argv[]) {
 
         for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
             //dataset->CreateTrainDataPair(BATCH);
-            std::vector<Tensor<float> *> * temp =  dl->GetDataFromGlobalBuffer();
+            std::vector<Tensor<float> *> * temp =  train_dataloader->GetDataFromGlobalBuffer();
             // printf("%d\r\n", temp->size());
 
             Tensor<float> *x_t = (*temp)[0];
@@ -105,7 +107,7 @@ int main(int argc, char const *argv[]) {
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
             //dataset->CreateTestDataPair(BATCH);
-            std::vector<Tensor<float> *> * temp =  dl->GetDataFromGlobalBuffer();
+            std::vector<Tensor<float> *> * temp =  test_dataloader->GetDataFromGlobalBuffer();
             // printf("%d\r\n", temp->size());
 
             Tensor<float> *x_t = (*temp)[0];
@@ -138,8 +140,10 @@ int main(int argc, char const *argv[]) {
 
     //delete dataset;
     delete net;
-    delete dl;
-    delete train;
+    delete train_dataloader;
+    delete train_dataset;
+    delete test_dataloader;
+    delete test_dataset;
 
     return 0;
 }
