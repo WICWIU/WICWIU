@@ -13,9 +13,11 @@
 #include <string.h>
 #include <errno.h>
 
-#ifdef __TURBOJPEG__
-# include <turbojpeg.h>
-#endif  // ifdef __TURBOJPEG__
+#define __TURBOJPEG__
+
+// #ifdef __TURBOJPEG__
+// # include <turbojpeg.h>
+// #endif  // ifdef __TURBOJPEG__
 
 #include "../../WICWIU_src/DataLoader.hpp"
 
@@ -25,8 +27,22 @@
 #define CAPACITY_OF_PLANE             50176
 #define CAPACITY_OF_IMAGE             150528
 
-#define TRAIN_DATA_PATH               "ILSVRC2012_img_train256"
-#define TEST_DATA_PATH                "ILSVRC2012_img_val256"
+#define LENGTH_224                    224
+#define LENGTH_256                    256
+
+#define __TURBOJPEG__
+
+#ifdef __TURBOJPEG__
+# include <turbojpeg.h>
+#endif  // ifdef __TURBOJPEG__
+
+class ImageWrapper {
+public:
+    unsigned char *imgBuf;
+    int width;
+    int height;
+    int channel;
+};
 
 template<typename DTYPE>
 class ImageNetDataset : public Dataset<DTYPE>{
@@ -43,18 +59,21 @@ private:
     std::vector<std::string> m_aImage;
     std::vector<int> m_aLable;
 
-
     void CheckClassList();
     void CreateImageListOfEachClass();
 
+#ifdef __TURBOJPEG__
+    void AllocImageBuffer(int idx, ImageWrapper& imgWrp);
+    void DeleteImageBuffer(ImageWrapper& imgWrp);
+#endif  // ifdef __TURBOJPEG__
+
 public:
-    ImageNetDataset(std::string rootPath, std::string dataPath, int useClassNum) {
-        m_numOfImg = 0;
-        m_rootPath = rootPath;
-        m_dataPath = dataPath;
+    ImageNetDataset(std::string rootPath, std::string dataPath, int useClassNum, std::string option) {
+        m_rootPath   = rootPath;
+        m_dataPath   = dataPath;
         m_useClasNum = useClassNum;
-        assert((useClassNum > 0)&&(useClassNum <= NUMBER_OF_CLASS));
-        // m_option   = option;
+        assert((useClassNum > 0) && (useClassNum <= NUMBER_OF_CLASS));
+        m_option = option;
 
         Alloc();
         CheckClassList();
@@ -65,36 +84,58 @@ public:
         Delete();
     }
 
-    virtual void                                                            Alloc();
+    virtual void                          Alloc();
 
-    virtual void                                                            Delete();
+    virtual void                          Delete();
 
-    virtual std::vector<Tensor<DTYPE> *>                                  * GetData(int idx);
+    virtual std::vector<Tensor<DTYPE> *>* GetData(int idx);
 
-    virtual int                                                             GetLength();
+    virtual int                           GetLength();
 };
 
-template<typename DTYPE> void ImageNetDataset<DTYPE                         >::Alloc() {}
+//
 
-template<typename DTYPE> void ImageNetDataset<DTYPE                         >::Delete() {}
+template<typename DTYPE> void ImageNetDataset<DTYPE>::Alloc()  {}
+
+template<typename DTYPE> void ImageNetDataset<DTYPE>::Delete() {}
+
+//
 
 template<typename DTYPE> std::vector<Tensor<DTYPE> *> *ImageNetDataset<DTYPE>::GetData(int idx) {
     std::vector<Tensor<DTYPE> *> *result = new std::vector<Tensor<DTYPE> *>(0, NULL);
 
-    Tensor<DTYPE> *image = Tensor<DTYPE>::Zeros(1, 1, 1, 1, CAPACITY_OF_IMAGE);
-    Tensor<DTYPE> *label = Tensor<DTYPE>::Zeros(1, 1, 1, 1, NUMBER_OF_CLASS);
+    Tensor<DTYPE> *image = NULL;
+    Tensor<DTYPE> *label = NULL;
+    ImageWrapper   imgWrp;
+
+    // image load
+#ifdef __TURBOJPEG__
+    this->AllocImageBuffer(idx, imgWrp);
+#endif  // ifdef __TURBOJPEG__
+
+    // if(m_option == "train") else if(m_option == "test") else exit(-1);
+    // image = this->Image2Tensor(unsigned char *imgBuf);
+    result->push_back(image);
+
+#ifdef __TURBOJPEG__
+    this->DeleteImageBuffer(imgWrp);
+#endif  // ifdef __TURBOJPEG__
+
+    label                   = Tensor<DTYPE>::Zeros(1, 1, 1, 1, m_useClasNum);
+    (*label)[m_aLable[idx]] = (DTYPE)1;
+    result->push_back(label);
 
     return result;
 }
 
 template<typename DTYPE> int ImageNetDataset<DTYPE>::GetLength() {
-    return 0;
+    return m_numOfImage;
 }
 
 template<typename DTYPE> void ImageNetDataset<DTYPE>::CheckClassList() {
     // mnt/ssd/Data/ImageNet/synset_words.txt
-    std::string filePath  = m_rootPath + "/synset_words.txt";
-    const char *cstr = filePath.c_str();
+    std::string filePath = m_rootPath + "/synset_words.txt";
+    const char *cstr     = filePath.c_str();
 
     // std::cout << filePath << '\n';
 
@@ -112,7 +153,7 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::CheckClassList() {
             if (fscanf(pFile, "%s", realValue)) {
                 m_className.push_back((std::string)realValue);
                 // m_className[i] = realValue;
-                std::cout << i << " : " << m_className[i] << '\n';
+                // std::cout << i << " : " << m_className[i] << '\n';
 
                 while (fgetc(pFile) != '\n') ;
             } else {
@@ -126,24 +167,24 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::CheckClassList() {
 }
 
 template<typename DTYPE> void ImageNetDataset<DTYPE>::CreateImageListOfEachClass() {
-
     // list file : 1st line - number of image, the others - image file name
     for (int classNum = 0; classNum < m_useClasNum; classNum++) {
-        std::string filePath  = m_rootPath + '/' + m_dataPath + '/' + m_className[classNum] + "/list.txt"; // check with printf
-        const char *cstr = filePath.c_str();
+        std::string filePath = m_rootPath + '/' + m_dataPath + '/' + m_className[classNum] + "/list.txt";  // check with printf
+        const char *cstr     = filePath.c_str();
 
         FILE *pFile = NULL;
         pFile = fopen(cstr, "r");
 
         char realValue[100];
-        int numOfImageOfClass = 0;
+        int  numOfImageOfClass = 0;
 
         if (pFile == NULL) {
             printf("file open fail\n");
             exit(-1);
         } else {
-            if (fscanf(pFile, "%s", realValue)) { // first realValue is already readed above
+            if (fscanf(pFile, "%s", realValue)) {  // first realValue is already readed above
                 numOfImageOfClass = atoi(realValue);
+
                 for (int imageNum = 0; imageNum < numOfImageOfClass; imageNum++) {
                     if (fscanf(pFile, "%s", realValue)) {
                         m_aImage.push_back((std::string)(m_className[classNum] + '/' + realValue));
@@ -165,5 +206,110 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::CreateImageListOfEachClass
     m_numOfImage = m_aImage.size();
     assert(m_numOfImage > 0);
     // std::cout << "m_numOfImage : " << m_numOfImage << '\n';
-
 }
+
+#ifdef __TURBOJPEG__
+
+template<typename DTYPE> void ImageNetDataset<DTYPE>::AllocImageBuffer(int idx, ImageWrapper& imgWrp) {
+    int   width, height;
+    FILE *jpegFile         = NULL;
+    unsigned char *jpegBuf = NULL;
+    int pixelFormat        = TJPF_RGB;
+    tjhandle tjInstance    = NULL;
+    long     size;
+    int inSubsamp, inColorspace;
+    unsigned long jpegSize;
+
+    // create file address
+    std::string filePath = m_rootPath + '/' + m_dataPath + '/' + m_aImage[idx];  // check with printf
+    const char *cstr     = filePath.c_str();
+
+    // Load image (no throw and catch)
+    /* Read the JPEG file into memory. */
+    jpegFile = fopen(cstr, "rb");
+
+    fseek(jpegFile, 0, SEEK_END);
+    size = ftell(jpegFile);
+    fseek(jpegFile, 0, SEEK_SET);
+
+    jpegSize = (unsigned long)size;
+    jpegBuf  = (unsigned char *)tjAlloc(jpegSize);
+
+    if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1) exit(-1);
+
+    fclose(jpegFile);
+    jpegFile = NULL;
+
+    tjInstance = tjInitDecompress();
+    tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height, &inSubsamp, &inColorspace);
+    imgWrp.imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat]);
+    tjDecompress2(tjInstance, jpegBuf, jpegSize, imgWrp.imgBuf, width, 0, height, pixelFormat, 0);
+
+    imgWrp.width   = width;
+    imgWrp.height  = height;
+    imgWrp.channel = 3;
+
+    tjFree(jpegBuf);
+    jpegBuf = NULL;
+    tjDestroy(tjInstance);
+    tjInstance = NULL;
+}
+
+template<typename DTYPE> void ImageNetDataset<DTYPE>::DeleteImageBuffer(ImageWrapper& imgWrp) {
+    tjFree(imgWrp.imgBuf);
+}
+
+#endif  // ifdef __TURBOJPEG__
+
+// not class method
+
+#ifdef __TURBOJPEG__
+
+
+template<typename DTYPE> Tensor<DTYPE>* Image2Tensor(unsigned char *imgBuf, int doValueScaling) {
+    return NULL;
+}
+
+template<typename DTYPE> void Tensor2Image(Tensor<DTYPE> *imgTensor, int doValuerScaling, std::string filename) {
+    int channel = imgTensor->GetShape()->GetDim(2);
+    int height  = imgTensor->GetShape()->GetDim(1);
+    int width   = imgTensor->GetShape()->GetDim(0);
+
+    unsigned char *imgBuf   = new unsigned char[channel * height * width];
+    int pixelFormat         = TJPF_RGB;
+    unsigned char *jpegBuf  = NULL;  /* Dynamically allocate the JPEG buffer */
+    unsigned long  jpegSize = 0;
+    FILE *jpegFile          = NULL;
+    tjhandle tjInstance     = NULL;
+
+    if (imgTensor) {
+        for (int ro = 0; ro < height; ro++) {
+            for (int co = 0; co < width; co++) {
+                for (int ch = 0; ch < channel; ch++) {
+                    imgBuf[ro * width * channel + co * channel + ch] = (*imgTensor)[Index5D(imgTensor->GetShape(), 0, 0, ch, ro, co)] * 255.0;
+                }
+            }
+        }
+
+        tjInstance = tjInitCompress();
+        tjCompress2(tjInstance, imgBuf, width, 0, height, pixelFormat,
+                    &jpegBuf, &jpegSize,  /*outSubsamp =*/ TJSAMP_444,  /*outQual =*/ 100,  /*flags =*/ 0);
+        tjDestroy(tjInstance);
+        tjInstance = NULL;
+        delete imgBuf;
+
+        if (!(jpegFile = fopen(filename.c_str(), "wb"))) {
+            printf("file open fail\n");
+            exit(-1);
+        }
+
+        fwrite(jpegBuf, jpegSize, 1, jpegFile);
+        fclose(jpegFile); jpegFile = NULL;
+        tjFree(jpegBuf); jpegBuf   = NULL;
+    } else {
+        printf("Invalid Tensor pointer");
+        exit(-1);
+    }
+}
+
+#endif  // ifdef __TURBOJPEG__
