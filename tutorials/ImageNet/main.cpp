@@ -27,7 +27,16 @@ int main(int argc, char const *argv[]) {
     char filename[]      = "ImageNet_parmas";
 
     ImageNetDataset<float> *ds = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_val256", 1000, "train");
-    ds->GetData(0);
+
+    int len = ds->GetLength();
+    std::vector<Tensor<float> *> *v;
+    for(int i = 0; i < len; i++){
+        std::cout << "imgNum: "<< i << '\n';
+        v = ds->GetData(i);
+        delete (*v)[0];
+        delete (*v)[1];
+        delete v;
+    }
 
 //     // create input, label data placeholder -> Tensorholder
 //     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");

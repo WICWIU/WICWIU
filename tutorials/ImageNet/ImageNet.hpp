@@ -76,7 +76,7 @@ private:
     void           AllocImageBuffer(int idx, ImageWrapper& imgWrp);
     void           DeleteImageBuffer(ImageWrapper& imgWrp);
     Tensor<DTYPE>* Image2Tensor(unsigned char *imgBuf, Shape *shapeOfImg, int doValueScaling);
-    void           Tensor2Image(Tensor<DTYPE> *imgTensor, int doValuerScaling, std::string filename);
+    void           Tensor2Image(std::string filename, Tensor<DTYPE> *imgTensor, int doValuerScaling);
 
 #endif  // ifdef __TURBOJPEG__
 
@@ -124,17 +124,14 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *> *ImageNetDataset<DTYPE>::G
     // image load
 #ifdef __TURBOJPEG__
     this->AllocImageBuffer(idx, imgWrp);
-    std::cout << imgWrp.imgShape << '\n';
+    // std::cout << imgWrp.imgShape << '\n';
 #endif  // ifdef __TURBOJPEG__
 
     // if(m_option == "train") else if(m_option == "test") else exit(-1);
     image = this->Image2Tensor(imgWrp.imgBuf, imgWrp.imgShape, TRUE);
-    std::cout << image->GetShape() << '\n';
+    // std::cout << image->GetShape() << '\n';
+    // this->Tensor2Image("test.jpeg", image, TRUE);
     result->push_back(image);
-
-#ifdef __TURBOJPEG__
-    this->DeleteImageBuffer(imgWrp);
-#endif  // ifdef __TURBOJPEG__
 
     label                   = Tensor<DTYPE>::Zeros(1, 1, 1, 1, m_useClasNum);
     (*label)[m_aLable[idx]] = (DTYPE)1;
@@ -268,13 +265,6 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::AllocImageBuffer(int idx, 
     tjInstance = NULL;
 }
 
-template<typename DTYPE> void ImageNetDataset<DTYPE>::DeleteImageBuffer(ImageWrapper& imgWrp) {
-    if (imgWrp.imgBuf) {
-        tjFree(imgWrp.imgBuf);
-        imgWrp.imgBuf = NULL;
-    }
-}
-
 template<typename DTYPE> Tensor<DTYPE> *ImageNetDataset<DTYPE>::Image2Tensor(unsigned char *imgBuf, Shape *shapeOfImg, int doValueScaling) {
     int width   = shapeOfImg->GetDim(2);
     int height  = shapeOfImg->GetDim(1);
@@ -303,7 +293,7 @@ template<typename DTYPE> Tensor<DTYPE> *ImageNetDataset<DTYPE>::Image2Tensor(uns
     return result;
 }
 
-template<typename DTYPE> void ImageNetDataset<DTYPE>::Tensor2Image(Tensor<DTYPE> *imgTensor, int doValuerScaling, std::string filename) {
+template<typename DTYPE> void ImageNetDataset<DTYPE>::Tensor2Image(std::string filename, Tensor<DTYPE> *imgTensor, int doValuerScaling) {
     int width   = imgTensor->GetShape()->GetDim(4);
     int height  = imgTensor->GetShape()->GetDim(3);
     int channel = imgTensor->GetShape()->GetDim(2);
