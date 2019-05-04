@@ -27,6 +27,7 @@ int main(int argc, char const *argv[]) {
     char filename[]      = "ImageNet_parmas";
 
     ImageNetDataset<float> *ds = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_val256", 1000, "train");
+    ds->GetData(0);
 
 //     // create input, label data placeholder -> Tensorholder
 //     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");

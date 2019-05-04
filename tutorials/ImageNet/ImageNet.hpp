@@ -39,9 +39,19 @@
 class ImageWrapper {
 public:
     unsigned char *imgBuf;
-    int width;
-    int height;
-    int channel;
+    Shape *imgShape;
+
+    ~ImageWrapper() {
+        if (imgBuf) {
+            delete[] imgBuf;
+            imgBuf = NULL;
+        }
+
+        if (imgShape) {
+            delete imgShape;
+            imgShape = NULL;
+        }
+    }
 };
 
 template<typename DTYPE>
@@ -59,12 +69,15 @@ private:
     std::vector<std::string> m_aImage;
     std::vector<int> m_aLable;
 
-    void CheckClassList();
-    void CreateImageListOfEachClass();
+    void           CheckClassList();
+    void           CreateImageListOfEachClass();
 
 #ifdef __TURBOJPEG__
-    void AllocImageBuffer(int idx, ImageWrapper& imgWrp);
-    void DeleteImageBuffer(ImageWrapper& imgWrp);
+    void           AllocImageBuffer(int idx, ImageWrapper& imgWrp);
+    void           DeleteImageBuffer(ImageWrapper& imgWrp);
+    Tensor<DTYPE>* Image2Tensor(unsigned char *imgBuf, Shape *shapeOfImg, int doValueScaling);
+    void           Tensor2Image(Tensor<DTYPE> *imgTensor, int doValuerScaling, std::string filename);
+
 #endif  // ifdef __TURBOJPEG__
 
 public:
@@ -111,10 +124,12 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *> *ImageNetDataset<DTYPE>::G
     // image load
 #ifdef __TURBOJPEG__
     this->AllocImageBuffer(idx, imgWrp);
+    std::cout << imgWrp.imgShape << '\n';
 #endif  // ifdef __TURBOJPEG__
 
     // if(m_option == "train") else if(m_option == "test") else exit(-1);
-    // image = this->Image2Tensor(unsigned char *imgBuf);
+    image = this->Image2Tensor(imgWrp.imgBuf, imgWrp.imgShape, TRUE);
+    std::cout << image->GetShape() << '\n';
     result->push_back(image);
 
 #ifdef __TURBOJPEG__
@@ -245,9 +260,7 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::AllocImageBuffer(int idx, 
     imgWrp.imgBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[pixelFormat]);
     tjDecompress2(tjInstance, jpegBuf, jpegSize, imgWrp.imgBuf, width, 0, height, pixelFormat, 0);
 
-    imgWrp.width   = width;
-    imgWrp.height  = height;
-    imgWrp.channel = 3;
+    imgWrp.imgShape = new Shape(tjPixelSize[pixelFormat], height, width);
 
     tjFree(jpegBuf);
     jpegBuf = NULL;
@@ -256,24 +269,44 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::AllocImageBuffer(int idx, 
 }
 
 template<typename DTYPE> void ImageNetDataset<DTYPE>::DeleteImageBuffer(ImageWrapper& imgWrp) {
-    tjFree(imgWrp.imgBuf);
+    if (imgWrp.imgBuf) {
+        tjFree(imgWrp.imgBuf);
+        imgWrp.imgBuf = NULL;
+    }
 }
 
-#endif  // ifdef __TURBOJPEG__
+template<typename DTYPE> Tensor<DTYPE> *ImageNetDataset<DTYPE>::Image2Tensor(unsigned char *imgBuf, Shape *shapeOfImg, int doValueScaling) {
+    int width   = shapeOfImg->GetDim(2);
+    int height  = shapeOfImg->GetDim(1);
+    int channel = shapeOfImg->GetDim(0);
 
-// not class method
+    Tensor<DTYPE> *result = Tensor<DTYPE>::Zeros(1, 1, channel, height, width);
 
-#ifdef __TURBOJPEG__
+    if (doValueScaling) {
+        for (int ro = 0; ro < height; ro++) {
+            for (int co = 0; co < width; co++) {
+                for (int ch = 0; ch < channel; ch++) {
+                    (*result)[Index5D(result->GetShape(), 0, 0, ch, ro, co)] = imgBuf[ro * width * channel + co * channel + ch] / 255.0;
+                }
+            }
+        }
+    } else {
+        for (int ro = 0; ro < height; ro++) {
+            for (int co = 0; co < width; co++) {
+                for (int ch = 0; ch < channel; ch++) {
+                    (*result)[Index5D(result->GetShape(), 0, 0, ch, ro, co)] = imgBuf[ro * width * channel + co * channel + ch];
+                }
+            }
+        }
+    }
 
-
-template<typename DTYPE> Tensor<DTYPE>* Image2Tensor(unsigned char *imgBuf, int doValueScaling) {
-    return NULL;
+    return result;
 }
 
-template<typename DTYPE> void Tensor2Image(Tensor<DTYPE> *imgTensor, int doValuerScaling, std::string filename) {
+template<typename DTYPE> void ImageNetDataset<DTYPE>::Tensor2Image(Tensor<DTYPE> *imgTensor, int doValuerScaling, std::string filename) {
+    int width   = imgTensor->GetShape()->GetDim(4);
+    int height  = imgTensor->GetShape()->GetDim(3);
     int channel = imgTensor->GetShape()->GetDim(2);
-    int height  = imgTensor->GetShape()->GetDim(1);
-    int width   = imgTensor->GetShape()->GetDim(0);
 
     unsigned char *imgBuf   = new unsigned char[channel * height * width];
     int pixelFormat         = TJPF_RGB;
@@ -283,10 +316,20 @@ template<typename DTYPE> void Tensor2Image(Tensor<DTYPE> *imgTensor, int doValue
     tjhandle tjInstance     = NULL;
 
     if (imgTensor) {
-        for (int ro = 0; ro < height; ro++) {
-            for (int co = 0; co < width; co++) {
-                for (int ch = 0; ch < channel; ch++) {
-                    imgBuf[ro * width * channel + co * channel + ch] = (*imgTensor)[Index5D(imgTensor->GetShape(), 0, 0, ch, ro, co)] * 255.0;
+        if (doValuerScaling) {
+            for (int ro = 0; ro < height; ro++) {
+                for (int co = 0; co < width; co++) {
+                    for (int ch = 0; ch < channel; ch++) {
+                        imgBuf[ro * width * channel + co * channel + ch] = (*imgTensor)[Index5D(imgTensor->GetShape(), 0, 0, ch, ro, co)] * 255.0;
+                    }
+                }
+            }
+        } else {
+            for (int ro = 0; ro < height; ro++) {
+                for (int co = 0; co < width; co++) {
+                    for (int ch = 0; ch < channel; ch++) {
+                        imgBuf[ro * width * channel + co * channel + ch] = (*imgTensor)[Index5D(imgTensor->GetShape(), 0, 0, ch, ro, co)];
+                    }
                 }
             }
         }
@@ -301,11 +344,19 @@ template<typename DTYPE> void Tensor2Image(Tensor<DTYPE> *imgTensor, int doValue
         if (!(jpegFile = fopen(filename.c_str(), "wb"))) {
             printf("file open fail\n");
             exit(-1);
+        } else {
+            fwrite(jpegBuf, jpegSize, 1, jpegFile);
         }
 
-        fwrite(jpegBuf, jpegSize, 1, jpegFile);
-        fclose(jpegFile); jpegFile = NULL;
-        tjFree(jpegBuf); jpegBuf   = NULL;
+        if (jpegFile) {
+            fclose(jpegFile);
+            jpegFile = NULL;
+        }
+
+        if (jpegBuf) {
+            tjFree(jpegBuf);
+            jpegBuf = NULL;
+        }
     } else {
         printf("Invalid Tensor pointer");
         exit(-1);
