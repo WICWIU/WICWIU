@@ -6,33 +6,6 @@
 
 #include "Tensor.hpp"
 
-template<typename DTYPE> class WData {
-public:
-    DTYPE *m_aData;
-    int m_capacity;
-
-    WData(DTYPE *data, int capacity) {
-        m_aData    = data;
-        m_capacity = capacity;
-    }
-
-    virtual ~WData() {
-        delete[] m_aData;
-    }
-
-    virtual DTYPE* GetData() {
-        return m_aData;
-    }
-
-    virtual int GetCapacity() {
-        return m_capacity;
-    }
-
-    DTYPE& operator[](int idx) {
-        return m_aData[idx];
-    }
-};
-
 template<typename DTYPE> class Dataset {  // [] operator override
 private:
     /* data */

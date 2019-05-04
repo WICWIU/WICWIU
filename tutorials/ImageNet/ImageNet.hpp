@@ -75,7 +75,7 @@ private:
 #ifdef __TURBOJPEG__
     void           AllocImageBuffer(int idx, ImageWrapper& imgWrp);
     void           DeleteImageBuffer(ImageWrapper& imgWrp);
-    Tensor<DTYPE>* Image2Tensor(unsigned char *imgBuf, Shape *shapeOfImg, int doValueScaling);
+    Tensor<DTYPE>* Image2Tensor(unsigned char *imgBuf, Shape *imgShape, int doValueScaling);
     void           Tensor2Image(std::string filename, Tensor<DTYPE> *imgTensor, int doValuerScaling);
 
 #endif  // ifdef __TURBOJPEG__
@@ -265,10 +265,10 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::AllocImageBuffer(int idx, 
     tjInstance = NULL;
 }
 
-template<typename DTYPE> Tensor<DTYPE> *ImageNetDataset<DTYPE>::Image2Tensor(unsigned char *imgBuf, Shape *shapeOfImg, int doValueScaling) {
-    int width   = shapeOfImg->GetDim(2);
-    int height  = shapeOfImg->GetDim(1);
-    int channel = shapeOfImg->GetDim(0);
+template<typename DTYPE> Tensor<DTYPE> *ImageNetDataset<DTYPE>::Image2Tensor(unsigned char *imgBuf, Shape *imgShape, int doValueScaling) {
+    int width   = imgShape->GetDim(2);
+    int height  = imgShape->GetDim(1);
+    int channel = imgShape->GetDim(0);
 
     Tensor<DTYPE> *result = Tensor<DTYPE>::Zeros(1, 1, channel, height, width);
 
