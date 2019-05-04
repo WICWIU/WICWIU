@@ -26,9 +26,10 @@ int main(int argc, char const *argv[]) {
 
     char filename[]      = "ImageNet_parmas";
 
-    ImageNetDataset<float> *ds = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_val256", 1000, "train");
+    ImageNetDataset<float> *ds = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_train256", 1000);
 
     int len = ds->GetLength();
+    std::cout << "len: " << len << '\n';
     std::vector<Tensor<float> *> *v;
     for(int i = 0; i < len; i++){
         std::cout << "imgNum: "<< i << '\n';

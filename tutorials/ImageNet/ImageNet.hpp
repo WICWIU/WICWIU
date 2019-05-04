@@ -27,8 +27,8 @@
 #define CAPACITY_OF_PLANE             50176
 #define CAPACITY_OF_IMAGE             150528
 
-#define LENGTH_224                    224
-#define LENGTH_256                    256
+#define  TRAIN_FOLDER                 "ILSVRC2012_img_train256";
+#define  TEST_FOLDER                  "ILSVRC2012_img_val256";
 
 #define __TURBOJPEG__
 
@@ -60,7 +60,6 @@ private:
     int m_numOfImg;
     std::string m_rootPath;
     std::string m_dataPath;
-    std::string m_option;
 
     // set of name of Class
     int m_useClasNum;
@@ -81,12 +80,11 @@ private:
 #endif  // ifdef __TURBOJPEG__
 
 public:
-    ImageNetDataset(std::string rootPath, std::string dataPath, int useClassNum, std::string option) {
+    ImageNetDataset(std::string rootPath, std::string dataPath, int useClassNum) {
         m_rootPath   = rootPath;
         m_dataPath   = dataPath;
         m_useClasNum = useClassNum;
         assert((useClassNum > 0) && (useClassNum <= NUMBER_OF_CLASS));
-        m_option = option;
 
         Alloc();
         CheckClassList();
