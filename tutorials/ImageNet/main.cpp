@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #define NUMBER_OF_CLASS               1000
-#define BATCH                         50
+#define BATCH                         100
 #define EPOCH                         1000
 #define GPUID                         0
 #define LOG_LENGTH                    5
@@ -130,9 +130,9 @@ int main(int argc, char const *argv[]) {
             temp = NULL;
             net->ResetParameterGradient();
             net->Train();
-            train_cur_accuracy      = net->GetAccuracy(NUMBER_OF_CLASS);
+            train_cur_accuracy = net->GetAccuracy(NUMBER_OF_CLASS);
             // train_cur_top5_accuracy = net->GetTop5Accuracy(NUMBER_OF_CLASS);
-            train_cur_loss          = net->GetLoss();
+            train_cur_loss = net->GetLoss();
 
             train_avg_accuracy      += train_cur_accuracy;
             train_avg_top5_accuracy += train_cur_top5_accuracy;
@@ -141,7 +141,7 @@ int main(int argc, char const *argv[]) {
             printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.5f, cur_acc : %0.5f, avg_acc : %0.5f"  /*(ExcuteTime : %f)*/,
                    j + 1, loop_for_train,
                    train_cur_loss,
-                   train_avg_loss,
+                   train_avg_loss / (j + 1),
                    train_cur_accuracy,
                    train_avg_accuracy / (j + 1));
             fflush(stdout);
@@ -171,9 +171,9 @@ int main(int argc, char const *argv[]) {
             delete temp;
             net->Test();
 
-            test_avg_accuracy      += net->GetAccuracy(NUMBER_OF_CLASS);
+            test_avg_accuracy += net->GetAccuracy(NUMBER_OF_CLASS);
             // test_avg_top5_accuracy += net->GetTop5Accuracy(NUMBER_OF_CLASS);
-            test_avg_loss          += net->GetLoss();
+            test_avg_loss += net->GetLoss();
 
             printf("\r%d / %d -> avg_loss : %0.4f, avg_acc : %0.4f"  /*(ExcuteTime : %f)*/,
                    j + 1, loop_for_test,
