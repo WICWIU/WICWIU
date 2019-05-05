@@ -7,18 +7,15 @@
 #include <unistd.h>
 
 #define NUMBER_OF_CLASS               1000
-#define BATCH                         30
+#define BATCH                         50
 #define EPOCH                         1000
-#define LOOP_FOR_TRAIN                (1281144 / BATCH)
-#define LOOP_FOR_ACCUM                (10000 / BATCH) * 10
-#define LOOP_FOR_TEST                 (50000 / BATCH)
 #define GPUID                         0
-#define LOG_LENGTH                    1
+#define LOG_LENGTH                    5
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    10
 
 int main(int argc, char const *argv[]) {
-    time_t startTime, endTime;
+    time_t startTime;
     struct tm *curr_tm;
     double     nProcessExcuteTime;
     float mean[]   = { 0.485, 0.456, 0.406 };
@@ -26,204 +23,178 @@ int main(int argc, char const *argv[]) {
 
     char filename[] = "ImageNet_parmas";
 
-    vision::Compose *transform = new vision::Compose({ new vision::Resize(256), new vision::CenterCrop(224) });
-    ImageNetDataset<float> *ds = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_train256", 1000, transform);
-    DataLoader<float> *dl      = new DataLoader<float>(ds, BATCH, FALSE, 20, FALSE);
+    //// create input, label data placeholder -> Tensorholder
+    Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
+    Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 1000, "label");
+
+    // ======================= Select net ===================
+    NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
+    // NeuralNetwork<float> *net = DenseNetLite<float>(x, label, NUMBER_OF_CLASS);
+    net->PrintGraphInformation();
+
+    // ======================= Prepare Data ===================
+    vision::Compose *transform            = new vision::Compose({ new vision::Resize(256), new vision::CenterCrop(224) });
+    ImageNetDataset<float> *train_dataset = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_train256", 1000, transform);
+    DataLoader<float> *train_dataloader   = new DataLoader<float>(train_dataset, BATCH, TRUE, 15, FALSE);
+
+    ImageNetDataset<float> *test_dataset = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_val256", 1000, transform);
+    DataLoader<float> *test_dataloader   = new DataLoader<float>(test_dataset, BATCH, FALSE, 5, TRUE);
 
     // int len = ds->GetLength();
-    int len = ds->GetLength() / BATCH;
-    std::cout << "len: " << len << '\n';
-    std::vector<Tensor<float> *> *v;
+    // int len = ds->GetLength() / BATCH;
+    // std::cout << "len: " << len << '\n';
+    // std::vector<Tensor<float> *> *v;
 
-    startTime = clock();
-
-    for (int i = 0; i < len; i++) {
-        std::cout << "batch sample: " << i << '\n';
-        // v = ds->GetData(i);
-        v = dl->GetDataFromGlobalBuffer();
-        delete (*v)[0];
-        delete (*v)[1];
-        delete v;
-    }
-
-    endTime = clock();
-    std::cout << "time : " << ((double)(endTime - startTime)) / CLOCKS_PER_SEC << '\n';
-
-    delete dl;
-    delete ds;
-    delete transform;
-    //// create input, label data placeholder -> Tensorholder
-    // Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
-    // Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 1000, "label");
-    //
-    //// ======================= Select net ===================
-    // NeuralNetwork<float> *net = Resnet18<float>(x, label, NUMBER_OF_CLASS);
-    //// NeuralNetwork<float> *net = Resnet34<float>(x, label, NUMBER_OF_CLASS);
-    //// NeuralNetwork<float> *net = DenseNetLite<float>(x, label, NUMBER_OF_CLASS);
-    // net->PrintGraphInformation();
-    //
-    //// ======================= Prepare Data ===================
-    // ImageNetDataReader<float> *train_data_reader = new ImageNetDataReader<float>(BATCH, 25, TRUE);
-    // train_data_reader->UseNormalization(TRUE, mean, stddev);
-    // train_data_reader->UseRandomHorizontalFlip();
-    //// train_data_reader->UseRandomVerticalFlip();
-    //
-    // ImageNetDataReader<float> *test_data_reader = new ImageNetDataReader<float>(BATCH, 25, FALSE);
-    // test_data_reader->UseNormalization(TRUE, mean, stddev);
-    //
-    // train_data_reader->StartProduce();
-    // test_data_reader->StartProduce();
-    //
-    // Tensor<float> **data = NULL;
-    //
-    // #ifdef __CUDNN__
-    // net->SetDeviceGPU(GPUID);  // CUDNN ERROR
-    // #endif  // __CUDNN__
-    //
-    // float best_acc = 0.f;
-    // int   epoch    = 0;
-    //
-    //// @ When load parameters
-    //// std::cout << "Loading..." << '\n';
-    //// net->Load(filename);
-    //// std::cout << "Done!" << '\n';
-    //
-    // std::cout << "filename : " << filename << '\n';
-    // std::cout << "best_acc : " << best_acc << '\n';
-    // std::cout << "epoch : " << epoch << '\n';
-    //
-    // if (epoch / LEARNING_RATE_DECAY_TIMING) {
-    // float lr = net->GetOptimizer()->GetLearningRate();
-    // net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / LEARNING_RATE_DECAY_TIMING)));
-    // std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / LEARNING_RATE_DECAY_TIMING)) << '\n';
-    // }
-    //
-    //// net->GetOptimizer()->SetLearningRate(0.000001);
-    // epoch = 0;
-    //
-    // for (int i = epoch + 1; i < EPOCH; i++) {
-    // std::cout << "EPOCH : " << i << '\n';
-    //
     // startTime = time(NULL);
     // curr_tm   = localtime(&startTime);
-    // cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s" << endl;
+    // std::cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s\n" << std::endl;
     //
-    // if (i % LEARNING_RATE_DECAY_TIMING == 0) {
-    // std::cout << "Change learning rate!" << '\n';
-    // float lr = net->GetOptimizer()->GetLearningRate();
-    // net->GetOptimizer()->SetLearningRate(lr * LEARNING_RATE_DECAY_RATE);
-    // std::cout << "lr : " << lr * LEARNING_RATE_DECAY_RATE << '\n';
-    // } else {
-    // float lr = net->GetOptimizer()->GetLearningRate();
-    // std::cout << "lr : " << lr << '\n';
-    // }
-    //// ======================= Train =======================
-    // float train_avg_accuracy      = 0.f;
-    // float train_avg_top5_accuracy = 0.f;
-    // float train_cur_accuracy      = 0.f;
-    // float train_cur_top5_accuracy = 0.f;
-    // float train_avg_loss          = 0.f;
-    // float train_cur_loss          = 0.f;
-    //
-    // net->SetModeTrain();
-    //
-    // for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
-    // data = train_data_reader->GetDataFromBuffer();
-    //
-    // #ifdef __CUDNN__
-    // data[0]->SetDeviceGPU(GPUID);  // 異뷀썑 ?먮룞???꾩슂
-    //// std::cout << data[0]->GetShape() << '\n';
-    // data[1]->SetDeviceGPU(GPUID);
-    //// std::cout << data[1]->GetShape() << '\n';
-    // #endif  // __CUDNN__
-    //
-    //// std::cin >> temp;
-    //// std::cout << "test" << '\n';
-    // net->FeedInputTensor(2, data[0], data[1]);
-    //// std::cout << "test" << '\n';
-    // delete data;
-    // data = NULL;
-    // net->ResetParameterGradient();
-    //// std::cout << "test" << '\n';
-    // net->Train();
-    //// std::cout << "test" << '\n';
-    //// std::cin >> temp;
-    // train_cur_accuracy      = net->GetAccuracy(NUMBER_OF_CLASS);
-    // train_cur_top5_accuracy = net->GetTop5Accuracy(NUMBER_OF_CLASS);
-    // train_cur_loss          = net->GetLoss();
-    //
-    // train_avg_accuracy      += train_cur_accuracy;
-    // train_avg_top5_accuracy += train_cur_top5_accuracy;
-    // train_avg_loss          += train_cur_loss;
-    //
-    // printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.4f, cur_acc : %0.5f, avg_acc : %0.5f, cur_top5_acc : %0.5f, avg_top5_acc : %0.5f"  /*(ExcuteTime : %f)*/,
-    // j + 1, LOOP_FOR_TRAIN,
-    // train_cur_loss,
-    // train_avg_loss / (j + 1),
-    // train_cur_accuracy,
-    // train_avg_accuracy / (j + 1),
-    // train_cur_top5_accuracy,
-    // train_avg_top5_accuracy / (j + 1));
-    // fflush(stdout);
-    //
-    //// if (train_cur_accuracy > train_cur_top5_accuracy) {
-    //// std::cout << "anomaly" << '\n';
-    //// int temp  = 0;
-    //// std::cin >> temp;
-    //// }
-    //// sleep(30);
-    // if (j % (LOOP_FOR_TRAIN / LOG_LENGTH) == (LOOP_FOR_TRAIN / LOG_LENGTH) - 1) {
-    // std::cout << '\n';
-    // }
+    // for (int i = 0; i < len; i++) {
+    // std::cout << "\rbatch sample: " << i;
+    //// v = ds->GetData(i);
+    // v = dl->GetDataFromGlobalBuffer();
+    // delete (*v)[0];
+    // delete (*v)[1];
+    // delete v;
     // }
     // std::cout << '\n';
-    //
-    //
-    //// ======================= Test ======================
-    // float test_avg_accuracy      = 0.f;
-    // float test_avg_top5_accuracy = 0.f;
-    // float test_avg_loss          = 0.f;
-    //
-    // net->SetModeInference();
-    //
-    // for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
-    // data = test_data_reader->GetDataFromBuffer();
-    //
-    // #ifdef __CUDNN__
-    // data[0]->SetDeviceGPU(GPUID);  // 異뷀썑 ?먮룞???꾩슂
-    // data[1]->SetDeviceGPU(GPUID);
-    // #endif  // __CUDNN__
-    //
-    // net->FeedInputTensor(2, data[0], data[1]);
-    // delete data;
-    // data = NULL;
-    // net->Test();
-    //
-    // test_avg_accuracy      += net->GetAccuracy(NUMBER_OF_CLASS);
-    // test_avg_top5_accuracy += net->GetTop5Accuracy(NUMBER_OF_CLASS);
-    // test_avg_loss          += net->GetLoss();
-    //
-    // printf("\r%d / %d -> avg_loss : %0.4f, avg_acc : %0.4f, avg_top5_acc : %0.4f"  /*(ExcuteTime : %f)*/,
-    // j + 1, LOOP_FOR_TEST,
-    // test_avg_loss / (j + 1),
-    // test_avg_accuracy / (j + 1),
-    // test_avg_top5_accuracy / (j + 1));
-    // fflush(stdout);
-    // }
-    //
-    // if (best_acc < test_avg_accuracy / LOOP_FOR_TEST) {
-    // std::cout << "\nsave parameters...";
-    // net->Save(filename);
-    // std::cout << "done" << "\n\n";
-    // } else std::cout << "\n\n";
-    // }
-    //
-    // train_data_reader->StopProduce();
-    // test_data_reader->StopProduce();
-    //
-    // delete train_data_reader;
-    // delete test_data_reader;
-    // delete net;
+
+    // startTime = time(NULL);
+    // curr_tm   = localtime(&startTime);
+    // std::cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s" << std::endl;
+
+    #ifdef __CUDNN__
+    net->SetDeviceGPU(GPUID);  // CUDNN ERROR
+    #endif  // __CUDNN__
+
+    float best_acc = 0.f;
+    int   epoch    = 0;
+
+    // @ When load parameters
+    // std::cout << "Loading..." << '\n';
+    // net->Load(filename);
+    // std::cout << "Done!" << '\n';
+
+    std::cout << "filename : " << filename << '\n';
+    std::cout << "best_acc : " << best_acc << '\n';
+    std::cout << "epoch : " << epoch << '\n';
+
+    if (epoch / LEARNING_RATE_DECAY_TIMING) {
+        float lr = net->GetOptimizer()->GetLearningRate();
+        net->GetOptimizer()->SetLearningRate(lr * pow(0.1, (int)(epoch / LEARNING_RATE_DECAY_TIMING)));
+        std::cout << "lr : " << lr * pow(LEARNING_RATE_DECAY_RATE, (int)(epoch / LEARNING_RATE_DECAY_TIMING)) << '\n';
+    }
+
+    int loop_for_train = train_dataset->GetLength() / BATCH;
+    int loop_for_test  = test_dataset->GetLength() / BATCH;
+    int log_len        = loop_for_train / LOG_LENGTH;
+
+    epoch = 0;
+
+    for (int i = epoch + 1; i < EPOCH; i++) {
+        std::cout << "EPOCH : " << i << '\n';
+
+        startTime = time(NULL);
+        curr_tm   = localtime(&startTime);
+        std::cout << curr_tm->tm_hour << "\'h " << curr_tm->tm_min << "\'m " << curr_tm->tm_sec << "\'s" << std::endl;
+
+        if (i % LEARNING_RATE_DECAY_TIMING == 0) {
+            std::cout << "Change learning rate!" << '\n';
+            float lr = net->GetOptimizer()->GetLearningRate();
+            net->GetOptimizer()->SetLearningRate(lr * LEARNING_RATE_DECAY_RATE);
+            std::cout << "lr : " << lr * LEARNING_RATE_DECAY_RATE << '\n';
+        } else {
+            float lr = net->GetOptimizer()->GetLearningRate();
+            std::cout << "lr : " << lr << '\n';
+        }
+        // ======================= Train =======================
+        float train_avg_accuracy      = 0.f;
+        float train_avg_top5_accuracy = 0.f;
+        float train_cur_accuracy      = 0.f;
+        float train_cur_top5_accuracy = 0.f;
+        float train_avg_loss          = 0.f;
+        float train_cur_loss          = 0.f;
+
+        net->SetModeTrain();
+
+        for (int j = 0; j < loop_for_train; j++) {
+            std::vector<Tensor<float> *> *temp = train_dataloader->GetDataFromGlobalBuffer();
+
+    #ifdef __CUDNN__
+            (*temp)[0]->SetDeviceGPU(GPUID);
+            (*temp)[1]->SetDeviceGPU(GPUID);
+    #endif  // __CUDNN__
+            net->FeedInputTensor(2, (*temp)[0], (*temp)[1]);
+            delete temp;
+            temp = NULL;
+            net->ResetParameterGradient();
+            net->Train();
+            train_cur_accuracy      = net->GetAccuracy(NUMBER_OF_CLASS);
+            // train_cur_top5_accuracy = net->GetTop5Accuracy(NUMBER_OF_CLASS);
+            train_cur_loss          = net->GetLoss();
+
+            train_avg_accuracy      += train_cur_accuracy;
+            train_avg_top5_accuracy += train_cur_top5_accuracy;
+            train_avg_loss          += train_cur_loss;
+
+            printf("\r%d / %d -> cur_loss : %0.4f, avg_loss : %0.5f, cur_acc : %0.5f, avg_acc : %0.5f"  /*(ExcuteTime : %f)*/,
+                   j + 1, loop_for_train,
+                   train_cur_loss,
+                   train_avg_loss,
+                   train_cur_accuracy,
+                   train_avg_accuracy / (j + 1));
+            fflush(stdout);
+
+            if (j % log_len == log_len - 1) {
+                std::cout << '\n';
+            }
+        }
+        std::cout << '\n';
+
+
+        // ======================= Test ======================
+        float test_avg_accuracy      = 0.f;
+        float test_avg_top5_accuracy = 0.f;
+        float test_avg_loss          = 0.f;
+
+        net->SetModeInference();
+
+        for (int j = 0; j < loop_for_test; j++) {
+            std::vector<Tensor<float> *> *temp = test_dataloader->GetDataFromGlobalBuffer();
+
+    #ifdef __CUDNN__
+            (*temp)[0]->SetDeviceGPU(GPUID);
+            (*temp)[1]->SetDeviceGPU(GPUID);
+    #endif  // __CUDNN__
+            net->FeedInputTensor(2, (*temp)[0], (*temp)[1]);
+            delete temp;
+            net->Test();
+
+            test_avg_accuracy      += net->GetAccuracy(NUMBER_OF_CLASS);
+            // test_avg_top5_accuracy += net->GetTop5Accuracy(NUMBER_OF_CLASS);
+            test_avg_loss          += net->GetLoss();
+
+            printf("\r%d / %d -> avg_loss : %0.4f, avg_acc : %0.4f"  /*(ExcuteTime : %f)*/,
+                   j + 1, loop_for_test,
+                   test_avg_loss / (j + 1),
+                   test_avg_accuracy / (j + 1));
+            fflush(stdout);
+        }
+
+        if (best_acc < test_avg_accuracy / loop_for_test) {
+            std::cout << "\nsave parameters...";
+            net->Save(filename);
+            std::cout << "done" << "\n\n";
+        } else std::cout << "\n\n";
+    }
+
+    delete test_dataloader;
+    delete test_dataset;
+    delete train_dataloader;
+    delete train_dataset;
+    delete transform;
+    delete net;
 
     return 0;
 }
