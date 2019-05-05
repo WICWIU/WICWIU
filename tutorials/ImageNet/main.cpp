@@ -18,7 +18,7 @@
 #define LEARNING_RATE_DECAY_TIMING    10
 
 int main(int argc, char const *argv[]) {
-    time_t startTime;
+    time_t startTime, endTime;
     struct tm *curr_tm;
     double     nProcessExcuteTime;
     float mean[]   = { 0.485, 0.456, 0.406 };
@@ -26,17 +26,19 @@ int main(int argc, char const *argv[]) {
 
     char filename[] = "ImageNet_parmas";
 
-    vision::Compose *transform = new vision::Compose({new vision::CenterCrop(1)});
+    vision::Compose *transform = new vision::Compose({ new vision::Resize(256), new vision::CenterCrop(224) });
     ImageNetDataset<float> *ds = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_train256", 1000, transform);
-    DataLoader<float> * dl = new DataLoader<float>(ds, BATCH, FALSE, 20, FALSE);
+    DataLoader<float> *dl      = new DataLoader<float>(ds, BATCH, FALSE, 20, FALSE);
 
     // int len = ds->GetLength();
     int len = ds->GetLength() / BATCH;
     std::cout << "len: " << len << '\n';
     std::vector<Tensor<float> *> *v;
 
+    startTime = clock();
+
     for (int i = 0; i < len; i++) {
-        std::cout << "batch sample: "<< i << '\n';
+        std::cout << "batch sample: " << i << '\n';
         // v = ds->GetData(i);
         v = dl->GetDataFromGlobalBuffer();
         delete (*v)[0];
@@ -44,6 +46,12 @@ int main(int argc, char const *argv[]) {
         delete v;
     }
 
+    endTime = clock();
+    std::cout << "time : " << ((double)(endTime - startTime)) / CLOCKS_PER_SEC << '\n';
+
+    delete dl;
+    delete ds;
+    delete transform;
     //// create input, label data placeholder -> Tensorholder
     // Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 150528, "x");
     // Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 1000, "label");

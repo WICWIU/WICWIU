@@ -72,8 +72,12 @@ public:
         // std::cout << "do Compose" << '\n';
         // std::cout << "size: " << m_size << '\n';
 
+        // std::cout << imgWrp.imgShape << '\n';
         for (int i = 0; i < m_size; i++) {
+            // std::cout << "start i : " << i << '\n';
             m_listOfTransform[i]->DoTransform(imgWrp);
+            // std::cout << imgWrp.imgShape << '\n';
+            // std::cout << "end" << '\n';
         }
     }
 };
@@ -95,15 +99,14 @@ public:
     virtual ~CenterCrop() {}
 
     virtual void DoTransform(ImageWrapper& imgWrp) {
-        // std::cout << "do CenterCrop" << '\n';
-
         unsigned char *imgBuf = imgWrp.imgBuf;
         Shape *imgShape       = imgWrp.imgShape;
 
         int width = imgShape->GetDim(2);
-        assert(width >= m_width); // assert는 전처리 코드로 막을 것
+
+        // assert(width >= m_width);  // assert는 전처리 코드로 막을 것
         int height = imgShape->GetDim(1);
-        assert(height >= m_heigth);
+        // assert(height >= m_heigth);
         int channel = imgShape->GetDim(0);
 
         unsigned char *newImgBuf = new unsigned char[m_width * m_heigth * channel];
@@ -113,9 +116,14 @@ public:
         int start_w = (width - m_width) / 2;
 
         for (int h = 0; h < m_heigth; h++) {
+            int oldh = start_h + h;
+
             for (int w = 0; w < m_width; w++) {
+                int oldw = start_w + w;
+
                 for (int ch = 0; ch < channel; ch++) {
-                    newImgBuf[h * m_width * channel + w * channel + ch] = imgBuf[(start_h + h) * width * channel + (start_w + w) * channel + ch];
+                    newImgBuf[h * m_width * channel + w * channel + ch]
+                        = imgBuf[oldh * width * channel + oldw * channel + ch];
                 }
             }
         }
@@ -129,20 +137,55 @@ public:
         imgWrp.imgShape = NewImgShape;
     }
 };
-}
 
-class Resize {
+class Resize : public Transform {
 private:
-    /* data */
+    int newHeight;
+    int newWidth;
 
 public:
-    Resize() {
-        // std::cout << "Transform" << '\n';
+    Resize(int heigth, int width) : newHeight(heigth), newWidth(width) {
+        // std::cout << "CenterCrop" << '\n';
+    }
+
+    Resize(int size) : newHeight(size), newWidth(size) {
+        // std::cout << "CenterCrop" << '\n';
     }
 
     virtual ~Resize() {}
 
     virtual void DoTransform(ImageWrapper& imgWrp) {
-        // std::cout << "do Transform" << '\n';
+        unsigned char *oldImgBuf = imgWrp.imgBuf;
+        Shape *oldImgShape       = imgWrp.imgShape;
+
+        int oldWidth  = oldImgShape->GetDim(2);
+        int oldHeight = oldImgShape->GetDim(1);
+        int channel   = oldImgShape->GetDim(0);
+
+        unsigned char *newImgBuf = new unsigned char[newWidth * newHeight * channel];
+        Shape *NewImgShape       = new Shape(channel, newHeight, newWidth);
+
+
+        for (int newy = 0; newy < newHeight; newy++) {
+            int oldy = newy * oldHeight / newHeight;
+
+            for (int newx = 0; newx < newWidth; newx++) {
+                int oldx = newx * oldWidth / newWidth;
+
+                for (int c = 0; c < channel; c++) {
+                    newImgBuf[newy * newWidth * channel + newx * channel + c]
+                        = oldImgBuf[oldy * oldWidth * channel + oldx * channel + c];
+                }
+            }
+        }
+
+        delete[] oldImgBuf;
+        oldImgBuf = NULL;
+        delete oldImgShape;
+        oldImgShape = NULL;
+
+        imgWrp.imgBuf   = newImgBuf;
+        imgWrp.imgShape = NewImgShape;
     }
 };
+}
