@@ -28,11 +28,15 @@ int main(int argc, char const *argv[]) {
 
     ImageNetDataset<float> *ds = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_train256", 1000);
 
+    vision::Compose cp({new vision::CenterCrop(256), new vision::CenterCrop(256)});
+    ImageWrapper imgWrp;
+    cp.DoTransform(imgWrp);
+
     int len = ds->GetLength();
     std::cout << "len: " << len << '\n';
     std::vector<Tensor<float> *> *v;
     for(int i = 0; i < len; i++){
-        std::cout << "imgNum: "<< i << '\n';
+        // std::cout << "imgNum: "<< i << '\n';
         v = ds->GetData(i);
         delete (*v)[0];
         delete (*v)[1];

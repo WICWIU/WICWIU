@@ -33,11 +33,67 @@ public:
     }
 };
 
-class TransformForImageWrapper {
+namespace vision {
+class Transform {
 private:
     /* data */
 
 public:
-    TransformForImageWrapper();
-    virtual ~TransformForImageWrapper();
+    Transform() {
+        // std::cout << "Transform" << '\n';
+    }
+
+    virtual ~Transform() {}
+
+    virtual void DoTransform(ImageWrapper& imgWrp) {}
 };
+
+class Compose : public Transform {
+private:
+    std::vector<Transform *> m_listOfTransform;
+    int m_size;
+
+public:
+    Compose(std::initializer_list<Transform *> lvalue) : m_listOfTransform(lvalue) {
+        // std::cout << "Compose" << '\n';
+        m_size = m_listOfTransform.size();
+    }
+
+    virtual ~Compose() {
+        for (int i = 0; i < m_size; i++) {
+            delete m_listOfTransform[i];
+            m_listOfTransform[i] = NULL;
+        }
+    }
+
+    virtual void DoTransform(ImageWrapper& imgWrp) {
+        std::cout << "do Compose" << '\n';
+        std::cout << "size: " << m_size << '\n';
+
+        for (int i = 0; i < m_size; i++) {
+            m_listOfTransform[i]->DoTransform(imgWrp);
+        }
+    }
+};
+
+class CenterCrop : public Transform {
+private:
+    int m_heigth;
+    int m_width;
+
+public:
+    CenterCrop(int heigth, int width) : m_heigth(heigth), m_width(width) {
+        // std::cout << "CenterCrop" << '\n';
+    }
+
+    CenterCrop(int size) : m_heigth(size), m_width(size) {
+        // std::cout << "CenterCrop" << '\n';
+    }
+
+    virtual ~CenterCrop() {}
+
+    virtual void DoTransform(ImageWrapper& imgWrp) {
+        std::cout << "do CenterCrop" << '\n';
+    }
+};
+}
