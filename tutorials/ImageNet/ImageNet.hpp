@@ -20,6 +20,7 @@
 // #endif  // ifdef __TURBOJPEG__
 
 #include "../../WICWIU_src/DataLoader.hpp"
+#include "ImageProcess.hpp"
 
 #define NUMBER_OF_CLASS               1000
 #define NUMBER_OF_CHANNEL             3
@@ -36,23 +37,6 @@
 # include <turbojpeg.h>
 #endif  // ifdef __TURBOJPEG__
 
-class ImageWrapper {
-public:
-    unsigned char *imgBuf;
-    Shape *imgShape;
-
-    ~ImageWrapper() {
-        if (imgBuf) {
-            delete[] imgBuf;
-            imgBuf = NULL;
-        }
-
-        if (imgShape) {
-            delete imgShape;
-            imgShape = NULL;
-        }
-    }
-};
 
 template<typename DTYPE>
 class ImageNetDataset : public Dataset<DTYPE>{
