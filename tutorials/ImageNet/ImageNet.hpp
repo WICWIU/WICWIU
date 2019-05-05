@@ -44,6 +44,7 @@ private:
     int m_numOfImg;
     std::string m_rootPath;
     std::string m_dataPath;
+    vision::Compose *m_transform;
 
     // set of name of Class
     int m_useClasNum;
@@ -58,17 +59,19 @@ private:
 #ifdef __TURBOJPEG__
     void           AllocImageBuffer(int idx, ImageWrapper& imgWrp);
     void           DeleteImageBuffer(ImageWrapper& imgWrp);
-    Tensor<DTYPE>* Image2Tensor(unsigned char *imgBuf, Shape *imgShape, int doValueScaling);
+    Tensor<DTYPE>* Image2Tensor(ImageWrapper& imgWrp, int doValueScaling);
     void           Tensor2Image(std::string filename, Tensor<DTYPE> *imgTensor, int doValuerScaling);
 
 #endif  // ifdef __TURBOJPEG__
 
 public:
-    ImageNetDataset(std::string rootPath, std::string dataPath, int useClassNum) {
+    ImageNetDataset(std::string rootPath, std::string dataPath, int useClassNum, vision::Compose *transform) {
         m_rootPath   = rootPath;
         m_dataPath   = dataPath;
         m_useClasNum = useClassNum;
         assert((useClassNum > 0) && (useClassNum <= NUMBER_OF_CLASS));
+        m_transform  = transform;
+        assert(m_transform != NULL);
 
         Alloc();
         CheckClassList();
@@ -110,7 +113,10 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *> *ImageNetDataset<DTYPE>::G
 #endif  // ifdef __TURBOJPEG__
 
     // if(m_option == "train") else if(m_option == "test") else exit(-1);
-    image = this->Image2Tensor(imgWrp.imgBuf, imgWrp.imgShape, TRUE);
+    m_transform->DoTransform(imgWrp);
+    // std::cout << imgWrp.imgShape << '\n';
+
+    image = this->Image2Tensor(imgWrp, TRUE);
     // std::cout << image->GetShape() << '\n';
     // this->Tensor2Image("test.jpeg", image, TRUE);
     result->push_back(image);
@@ -247,7 +253,10 @@ template<typename DTYPE> void ImageNetDataset<DTYPE>::AllocImageBuffer(int idx, 
     tjInstance = NULL;
 }
 
-template<typename DTYPE> Tensor<DTYPE> *ImageNetDataset<DTYPE>::Image2Tensor(unsigned char *imgBuf, Shape *imgShape, int doValueScaling) {
+template<typename DTYPE> Tensor<DTYPE> *ImageNetDataset<DTYPE>::Image2Tensor(ImageWrapper& imgWrp, int doValueScaling) {
+    unsigned char *imgBuf = imgWrp.imgBuf;
+    Shape *imgShape       = imgWrp.imgShape;
+
     int width   = imgShape->GetDim(2);
     int height  = imgShape->GetDim(1);
     int channel = imgShape->GetDim(0);
