@@ -2,6 +2,8 @@
 #include "LossFunction/CrossEntropy.hpp"
 #include "LossFunction/MSE.hpp"
 #include "LossFunction/HingeLoss.hpp"
+#include "LossFunction/TripletLoss.hpp"
+
 
 #include "LossFunction/VanillaGeneratorLoss.hpp"
 #include "LossFunction/VanillaDiscriminatorLoss.hpp"
