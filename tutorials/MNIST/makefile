@@ -7,8 +7,13 @@ ENABLE_CUDNN = -D__CUDNN__
 
 #DFLAGS = -D__DEBUG__
 
-INCLUDE_PATH = -I/usr/local/cuda/include
-LIB_PATH = -L. -L/usr/local/cuda/lib64
+ifdef ENABLE_CUDNN
+	INCLUDE_PATH = -I/usr/local/cuda/include
+	LIB_PATH = -L. -L/usr/local/cuda/lib64
+else
+	INCLUDE_PATH = -I.
+	LIB_PATH = -L.
+endif
 
 CC = g++
 ifdef ENABLE_CUDNN
@@ -16,7 +21,7 @@ ifdef ENABLE_CUDNN
 	LFLAGS = -lcudart -lcudnn -lpthread
 else
 	LINKER = g++
-	LFLAGS = -lpthread
+	LFLAGS = -lpthread -pthread
 endif
 
 WICWIU_LIB = ../../lib/libwicwiu.a
