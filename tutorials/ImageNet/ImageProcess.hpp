@@ -138,6 +138,153 @@ public:
     }
 };
 
+class RandomCrop : public Transform {
+private:
+    int m_heigth;
+    int m_width;
+
+public:
+    RandomCrop(int heigth, int width) : m_heigth(heigth), m_width(width) {
+    }
+
+    RandomCrop(int size) : m_heigth(size), m_width(size) {
+    }
+
+    virtual ~RandomCrop() {}
+
+    virtual void DoTransform(ImageWrapper& imgWrp) {
+        unsigned char *imgBuf = imgWrp.imgBuf;
+        Shape *imgShape       = imgWrp.imgShape;
+
+        int width = imgShape->GetDim(2);
+        int height = imgShape->GetDim(1);
+        int channel = imgShape->GetDim(0);
+
+        unsigned char *newImgBuf = new unsigned char[m_width * m_heigth * channel];
+        Shape *NewImgShape       = new Shape(channel, m_heigth, m_width);
+        srand((unsigned)time(NULL) + (unsigned int)(intptr_t)NewImgShape);
+
+        int limit_h = height - m_heigth;
+        int limit_w = width - m_width;
+
+        int start_h = rand() % limit_h;
+        int start_w = rand() % limit_w;
+
+        for (int h = 0; h < m_heigth; h++) {
+            int oldh = start_h + h;
+
+            for (int w = 0; w < m_width; w++) {
+                int oldw = start_w + w;
+
+                for (int ch = 0; ch < channel; ch++) {
+                    newImgBuf[h * m_width * channel + w * channel + ch]
+                        = imgBuf[oldh * width * channel + oldw * channel + ch];
+                }
+            }
+        }
+
+        delete[] imgBuf;
+        imgBuf = NULL;
+        delete imgShape;
+        imgShape = NULL;
+
+        imgWrp.imgBuf   = newImgBuf;
+        imgWrp.imgShape = NewImgShape;
+    }
+};
+
+class HorizentalFlip : public Transform {
+private:
+    int m_heigth;
+    int m_width;
+
+public:
+    HorizentalFlip(int heigth, int width) : m_heigth(heigth), m_width(width) {
+    }
+
+    HorizentalFlip(int size) : m_heigth(size), m_width(size) {
+    }
+
+    virtual ~HorizentalFlip() {}
+
+    virtual void DoTransform(ImageWrapper& imgWrp) {
+        unsigned char *imgBuf = imgWrp.imgBuf;
+        Shape *imgShape       = imgWrp.imgShape;
+
+        int width = imgShape->GetDim(2);
+        int height = imgShape->GetDim(1);
+        int channel = imgShape->GetDim(0);
+
+        unsigned char *newImgBuf = new unsigned char[m_width * m_heigth * channel];
+        Shape *NewImgShape       = new Shape(channel, m_heigth, m_width);
+
+
+        //가로 플립.
+        for (int h = 0; h < m_heigth; h++) {
+            for (int w = 0; w < m_width; w++) {
+                for (int ch = 0; ch < channel; ch++) {
+                    newImgBuf[h * m_width * channel + w * channel + ch]
+                        = imgBuf[h * width * channel + (width - w - 1) * channel + ch];
+                }
+            }
+        }
+
+        delete[] imgBuf;
+        imgBuf = NULL;
+        delete imgShape;
+        imgShape = NULL;
+
+        imgWrp.imgBuf   = newImgBuf;
+        imgWrp.imgShape = NewImgShape;
+    }
+};
+
+class VerticalFlip : public Transform {
+private:
+    int m_heigth;
+    int m_width;
+
+public:
+    VerticalFlip(int heigth, int width) : m_heigth(heigth), m_width(width) {
+    }
+
+    VerticalFlip(int size) : m_heigth(size), m_width(size) {
+    }
+
+    virtual ~VerticalFlip() {}
+
+    virtual void DoTransform(ImageWrapper& imgWrp) {
+        unsigned char *imgBuf = imgWrp.imgBuf;
+        Shape *imgShape       = imgWrp.imgShape;
+
+        int width = imgShape->GetDim(2);
+        int height = imgShape->GetDim(1);
+        int channel = imgShape->GetDim(0);
+
+        unsigned char *newImgBuf = new unsigned char[m_width * m_heigth * channel];
+        Shape *NewImgShape       = new Shape(channel, m_heigth, m_width);
+
+
+        //세로 플립.
+        for (int h = 0; h < m_heigth; h++) {
+            for (int w = 0; w < m_width; w++) {
+                for (int ch = 0; ch < channel; ch++) {
+                    newImgBuf[h * m_width * channel + w * channel + ch]
+                        = imgBuf[(height - h -1) * width * channel + w * channel + ch];
+                }
+            }
+        }
+
+        delete[] imgBuf;
+        imgBuf = NULL;
+        delete imgShape;
+        imgShape = NULL;
+
+        imgWrp.imgBuf   = newImgBuf;
+        imgWrp.imgShape = NewImgShape;
+    }
+};
+
 class Resize : public Transform {
 private:
     int newHeight;
