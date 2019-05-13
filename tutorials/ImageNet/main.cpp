@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #define NUMBER_OF_CLASS               1000
-#define BATCH                         100
+#define BATCH                         1
 #define EPOCH                         1000
 #define GPUID                         7  
 #define LOG_LENGTH                    5
@@ -120,9 +120,6 @@ int main(int argc, char const *argv[]) {
 
         for (int j = 0; j < loop_for_train; j++) {
             std::vector<Tensor<float> *> *temp = train_dataloader->GetDataFromGlobalBuffer();
-            std::string filePath  = "test/inputed_image" + std::to_string(j) + ".JPEG";
-            // 이거 쓰는법을 모르갰다... ㅅㅂ
-            //Tensor2Image<flaot>(filePath, (*temp)[0], TRUE);
 
     #ifdef __CUDNN__
             (*temp)[0]->SetDeviceGPU(GPUID);

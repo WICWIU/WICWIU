@@ -60,7 +60,6 @@ private:
     void           AllocImageBuffer(int idx, ImageWrapper& imgWrp);
     void           DeleteImageBuffer(ImageWrapper& imgWrp);
     Tensor<DTYPE>* Image2Tensor(ImageWrapper& imgWrp, int doValueScaling);
-    void           Tensor2Image(std::string filename, Tensor<DTYPE> *imgTensor, int doValuerScaling);
 
 #endif  // ifdef __TURBOJPEG__
 
@@ -89,6 +88,8 @@ public:
     virtual std::vector<Tensor<DTYPE> *>* GetData(int idx);
 
     virtual int                           GetLength();
+    void Tensor2Image(std::string filename, Tensor<DTYPE> *imgTensor, int doValuerScaling);
+
 };
 
 //

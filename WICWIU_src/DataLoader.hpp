@@ -453,9 +453,9 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     // We need to consider Timesize
 
     temp     = setOfData.front();
-    capacity = temp->GetCapacity();
+    // capacity = temp->GetCapacity();
     // Shape를 이용해서 Shape대로 만들어질 수 있도록 수정(Shape constructor 잘돌아가는지 확인)
-    result = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, capacity);
+    result = Tensor<DTYPE>::Zeros(1, m_batchSize, temp->GetShape()->GetDim(2), temp->GetShape()->GetDim(3), temp->GetShape()->GetDim(4));
 
     // std::cout << result->GetShape() << '\n';
     // std::cout << setOfData.size() << '\n';
