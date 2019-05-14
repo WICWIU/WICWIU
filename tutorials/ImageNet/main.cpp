@@ -7,9 +7,9 @@
 #include <unistd.h>
 
 #define NUMBER_OF_CLASS               1000
-#define BATCH                         1
+#define BATCH                         30
 #define EPOCH                         1000
-#define GPUID                         7  
+#define GPUID                         7
 #define LOG_LENGTH                    5
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    10
@@ -18,8 +18,8 @@ int main(int argc, char const *argv[]) {
     time_t startTime;
     struct tm *curr_tm;
     double     nProcessExcuteTime;
-    float mean[]   = { 0.485, 0.456, 0.406 };
-    float stddev[] = { 0.229, 0.224, 0.225 };
+    float mean[]   = { 0.485*255, 0.456*255, 0.406*255 };
+    float stddev[] = { 0.229*255, 0.224*255, 0.225*255 };
 
     char filename[] = "ImageNet_parmas";
 
@@ -34,7 +34,7 @@ int main(int argc, char const *argv[]) {
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
-    vision::Compose *transform            = new vision::Compose({ new vision::Resize(256), new vision::CenterCrop(224), new vision::VerticalFlip(224) });
+    vision::Compose *transform            = new vision::Compose({new vision::Normalize({ 0.485*255, 0.456*255, 0.406*255 }, { 0.229*255, 0.224*255, 0.225*255 }), new vision::Resize(256), new vision::Padding(2), new vision::RandomCrop(224) });
     ImageNetDataset<float> *train_dataset = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_train256", 1000, transform);
     DataLoader<float> *train_dataloader   = new DataLoader<float>(train_dataset, BATCH, TRUE, 15, FALSE);
 
@@ -121,6 +121,8 @@ int main(int argc, char const *argv[]) {
         for (int j = 0; j < loop_for_train; j++) {
             std::vector<Tensor<float> *> *temp = train_dataloader->GetDataFromGlobalBuffer();
 
+        train_dataset -> Tensor2Image("test_img.jpeg", (*temp)[0], TRUE);
+
     #ifdef __CUDNN__
             (*temp)[0]->SetDeviceGPU(GPUID);
             (*temp)[1]->SetDeviceGPU(GPUID);
@@ -131,6 +133,7 @@ int main(int argc, char const *argv[]) {
             net->ResetParameterGradient();
             net->Train();
             train_cur_accuracy = net->GetAccuracy(NUMBER_OF_CLASS);
+            // printf("train_cur : %.f\n", train_cur_accuracy);
             // train_cur_top5_accuracy = net->GetTop5Accuracy(NUMBER_OF_CLASS);
             train_cur_loss = net->GetLoss();
 

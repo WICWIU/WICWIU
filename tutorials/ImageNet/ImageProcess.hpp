@@ -335,4 +335,102 @@ public:
         imgWrp.imgShape = NewImgShape;
     }
 };
+
+class Normalize : public Transform{
+private:
+  std::vector<float> list_mean;
+  std::vector<float> list_stddev;
+
+public:
+  Normalize(std::initializer_list<float> mean_value, std::initializer_list<float> stddev_value) : list_mean(mean_value), list_stddev(stddev_value){
+
+  }
+
+  virtual ~Normalize() {
+  }
+
+  virtual void DoTransform(ImageWrapper& imgWrp){
+    unsigned char *oldImgBuf = imgWrp.imgBuf;
+    Shape *oldImgShape       = imgWrp.imgShape;
+
+    int oldWidth  = oldImgShape->GetDim(2);
+    int oldHeight = oldImgShape->GetDim(1);
+    int channel   = oldImgShape->GetDim(0);
+    int a;
+    unsigned char *newImgBuf = new unsigned char[oldWidth * oldHeight * channel];
+    Shape *NewImgShape       = new Shape(channel, oldHeight, oldWidth);
+
+    for(int newy = 0; newy < oldHeight; newy++){
+      for(int newx = 0; newx < oldWidth; newx++){
+        for(int c = 0; c < channel; c++){
+          newImgBuf[newy * oldWidth * channel + newx * channel + c]
+            = (oldImgBuf[newy * oldWidth * channel + newx * channel + c] - list_mean[c]) / list_stddev[c];
+        }
+      }
+    }
+
+    delete[] oldImgBuf;
+    oldImgBuf = NULL;
+    delete oldImgShape;
+    oldImgShape = NULL;
+
+    imgWrp.imgBuf   = newImgBuf;
+    imgWrp.imgShape = NewImgShape;
+  }
+};
+
+class Padding : public Transform{
+private:
+  int p_value;
+  int newHeight;
+  int newWidth;
+
+public:
+  Padding(int padding_value) : p_value(padding_value){
+
+  }
+
+  virtual ~Padding() {}
+
+  virtual void DoTransform(ImageWrapper& imgWrp){
+    unsigned char *oldImgBuf = imgWrp.imgBuf;
+    Shape *oldImgShape       = imgWrp.imgShape;
+
+    int oldWidth  = oldImgShape->GetDim(2);
+    int oldHeight = oldImgShape->GetDim(1);
+    int channel   = oldImgShape->GetDim(0);
+
+    newHeight = oldHeight + (p_value*2);
+    newWidth  = oldWidth + (p_value*2);
+
+    unsigned char *newImgBuf = new unsigned char[newWidth * newHeight * channel];
+    Shape *NewImgShape       = new Shape(channel, newHeight, newWidth);
+
+    for(int newy = 0; newy < newHeight; newy++){
+      for(int newx = 0; newx < newWidth; newx++){
+        for(int c = 0; c < channel; c++){
+          if(newx < p_value || newy < p_value)
+            newImgBuf[newy * newWidth * channel + newx * channel + c] = 0;
+
+          else if((newx >= (newWidth - p_value) && newx <= newWidth - 1) || (newy >= (newHeight - p_value) && newx <= newHeight - 1))
+            newImgBuf[newy * newWidth * channel + newx * channel + c] = 0;
+
+          else{
+            newImgBuf[newy * newWidth * channel + newx * channel + c]
+              = oldImgBuf[(newy-p_value) * oldWidth * channel + (newx-p_value) * channel + c];
+          }
+        }
+      }
+    }
+
+    delete[] oldImgBuf;
+    oldImgBuf = NULL;
+    delete oldImgShape;
+    oldImgShape = NULL;
+
+    imgWrp.imgBuf   = newImgBuf;
+    imgWrp.imgShape = NewImgShape;
+  }
+};
+
 }
