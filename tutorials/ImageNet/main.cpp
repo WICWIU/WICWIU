@@ -5,6 +5,7 @@
 #include <time.h>
 #include <ctime>
 #include <unistd.h>
+#include <string>
 
 #define NUMBER_OF_CLASS               1000
 #define BATCH                         30
@@ -34,7 +35,7 @@ int main(int argc, char const *argv[]) {
     net->PrintGraphInformation();
 
     // ======================= Prepare Data ===================
-    vision::Compose *transform            = new vision::Compose({new vision::Normalize({ 0.485*255, 0.456*255, 0.406*255 }, { 0.229*255, 0.224*255, 0.225*255 }), new vision::Resize(256), new vision::Padding(2), new vision::RandomCrop(224) });
+    vision::Compose *transform            = new vision::Compose({/*new vision::Normalize({ 0.485*255, 0.456*255, 0.406*255 }, { 0.229*255, 0.224*255, 0.225*255 }),*/ new vision::Resize(256), new vision::RandomCrop(224), new vision::HorizentalFlip(224) });
     ImageNetDataset<float> *train_dataset = new ImageNetDataset<float>("/mnt/ssd/Data/ImageNet", "ILSVRC2012_img_train256", 1000, transform);
     DataLoader<float> *train_dataloader   = new DataLoader<float>(train_dataset, BATCH, TRUE, 15, FALSE);
 
@@ -121,7 +122,7 @@ int main(int argc, char const *argv[]) {
         for (int j = 0; j < loop_for_train; j++) {
             std::vector<Tensor<float> *> *temp = train_dataloader->GetDataFromGlobalBuffer();
 
-        train_dataset -> Tensor2Image("test_img.jpeg", (*temp)[0], TRUE);
+            train_dataset -> Tensor2Image("test/test_img_" + std::to_string(j) + ".jpeg", (*temp)[0], TRUE);
 
     #ifdef __CUDNN__
             (*temp)[0]->SetDeviceGPU(GPUID);

@@ -217,14 +217,25 @@ public:
 
         unsigned char *newImgBuf = new unsigned char[m_width * m_heigth * channel];
         Shape *NewImgShape       = new Shape(channel, m_heigth, m_width);
+        
+        srand((unsigned)time(NULL) + (unsigned int)(intptr_t)NewImgShape);
 
-
-        //가로 플립.
-        for (int h = 0; h < m_heigth; h++) {
-            for (int w = 0; w < m_width; w++) {
-                for (int ch = 0; ch < channel; ch++) {
-                    newImgBuf[h * m_width * channel + w * channel + ch]
-                        = imgBuf[h * width * channel + (width - w - 1) * channel + ch];
+        if(rand() % 2 == 0){
+            for (int h = 0; h < m_heigth; h++) {
+                for (int w = 0; w < m_width; w++) {
+                    for (int ch = 0; ch < channel; ch++) {
+                        newImgBuf[h * m_width * channel + w * channel + ch]
+                            = imgBuf[h * width * channel + (width - w - 1) * channel + ch];
+                    }
+                }
+            }
+        } else {
+            for (int h = 0; h < m_heigth; h++) {
+                for (int w = 0; w < m_width; w++) {
+                    for (int ch = 0; ch < channel; ch++) {
+                        newImgBuf[h * m_width * channel + w * channel + ch]
+                            = imgBuf[h * m_width * channel + w * channel + ch];
+                    }
                 }
             }
         }
@@ -264,13 +275,24 @@ public:
         unsigned char *newImgBuf = new unsigned char[m_width * m_heigth * channel];
         Shape *NewImgShape       = new Shape(channel, m_heigth, m_width);
 
+        srand((unsigned)time(NULL) + (unsigned int)(intptr_t)NewImgShape);
 
-        //세로 플립.
-        for (int h = 0; h < m_heigth; h++) {
-            for (int w = 0; w < m_width; w++) {
-                for (int ch = 0; ch < channel; ch++) {
-                    newImgBuf[h * m_width * channel + w * channel + ch]
-                        = imgBuf[(height - h -1) * width * channel + w * channel + ch];
+        if(rand() % 2 == 0){
+            for (int h = 0; h < m_heigth; h++) {
+                for (int w = 0; w < m_width; w++) {
+                    for (int ch = 0; ch < channel; ch++) {
+                        newImgBuf[h * m_width * channel + w * channel + ch]
+                            = imgBuf[(height - h -1) * width * channel + w * channel + ch];
+                    }
+                }
+            }
+        } else {
+            for (int h = 0; h < m_heigth; h++) {
+                for (int w = 0; w < m_width; w++) {
+                    for (int ch = 0; ch < channel; ch++) {
+                        newImgBuf[h * m_width * channel + w * channel + ch]
+                            = imgBuf[h * m_width * channel + w * channel + ch];
+                    }
                 }
             }
         }
