@@ -29,4 +29,6 @@
 
 #include "Operator/SwitchInput.hpp"
 
+#include "Operator/L2_norm.hpp"
+
 #endif  // __OPERATER_UTIL_H__
