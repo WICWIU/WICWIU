@@ -31,7 +31,7 @@ public:
         out = new Relu<float>(out, "Relu_3");
         //
         //// ======================= layer 4=======================
-        // out = new L2_norm<float>(out, "L2_NORM");
+        out = new L2_norm<float>(out, "L2_NORM");
         // out = new Linear<float>(out, 1024, 10, TRUE, "Fully-connected_2");
 
 
@@ -43,7 +43,7 @@ public:
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
         // SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
-        SetLossFunction(new TripletLoss<float>(out, label, 0.1, "TPL"));
+        SetLossFunction(new TripletLoss<float>(out, label, 0.f, "TPL"));
         // ======================= Select Optimizer ===================
         // SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
         // SetOptimizer(new RMSPropOptimizer<float>(GetParameter(), 0.001, 0.9, 1e-08, FALSE, MINIMIZE));
