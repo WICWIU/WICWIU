@@ -14,8 +14,8 @@ private:
 
 
 public:
-    TripletLoss(Operator<DTYPE> *pOperator, DTYPE margine, std::string pName = "NO NAME")
-     : LossFunction<DTYPE>(pOperator, NULL, pName) {
+    TripletLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE margine, std::string pName = "NO NAME")
+     : LossFunction<DTYPE>(pOperator, pLabel, pName) {
         #ifdef __DEBUG__
         std::cout << "TripletLoss::TripletLoss(LossFunction<DTYPE> * 3, float, )" << '\n';
         #endif  // __DEBUG__
@@ -147,11 +147,8 @@ public:
              (*input_delta)[idx_pos] = 0.f;
              (*input_delta)[idx_neg] = 0.f;
            } else {
-             // (*input_delta)[idx_anc] = (2.f * (m_neg[ti][idx] - m_pos[ti][idx]));
              (*input_delta)[idx_anc] = (2.f * ((*input)[idx_neg] - (*input)[idx_pos])) / capacity;
-             // (*input_delta)[idx_pos] = (2.f * (m_pos[ti][idx] - m_anc[ti][idx]));
-             (*input_delta)[idx_pos] = (2.f * ((*input)[idx_pos] - (*input)[idx_anc])) / capacity;
-             // (*input_delta)[idx_neg] = (2.f * (m_anc[ti][idx] - m_neg[ti][idx]));
+             (*input_delta)[idx_pos] = (-2.f * ((*input)[idx_pos] - (*input)[idx_anc])) / capacity;
              (*input_delta)[idx_neg] = (2.f * ((*input)[idx_anc]- (*input)[idx_neg])) / capacity;
            }
         }
