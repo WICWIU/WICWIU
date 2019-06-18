@@ -56,16 +56,13 @@ public:
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index         = i * capacity + j;
-                  (*result)[i] += ((*input)[index] * (*input)[index]);
-                  // (*result)[i] = std::sqrt((*result)[i]);
+                (*result)[i] += ((*input)[index] * (*input)[index]);
             }
-
+            (*result)[i] = std::sqrt((*result)[i]);
             // int a;
             // std::cin >> a;
         }
-        std::cout << "1" << '\n';
-        std::cout << "input" << input<< '\n';
-        std::cout << "result" << result<< '\n';
+
         return TRUE;
     }
 
@@ -95,8 +92,7 @@ public:
             }
 
         }
-        std::cout << "inputdd" << input<< '\n';
-        std::cout << "resulddd" << input_delta<< '\n';
+
         // std::cout << "/* message */" << '\n';
         return TRUE;
     }

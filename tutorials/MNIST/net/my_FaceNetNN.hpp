@@ -3,10 +3,10 @@
 
 #include "../../../WICWIU_src/NeuralNetwork.hpp"
 
-class my_CNN : public NeuralNetwork<float>{
+class my_FaceNetNN : public NeuralNetwork<float>{
 private:
 public:
-    my_CNN(Tensorholder<float> *x, Tensorholder<float> *label) {
+    my_FaceNetNN(Tensorholder<float> *x, Tensorholder<float> *label) {
         SetInput(2, x, label);
 
         Operator<float> *out = NULL;
@@ -28,28 +28,29 @@ public:
 
         // ======================= layer 3=======================
         out = new Linear<float>(out, 5 * 5 * 20, 1024, TRUE, "Fully-Connected_1");
-
-        // out = new Relu<float>(out, "Relu_3");
-        // //
-        // //// ======================= layer 4=======================
-        // out = new Linear<float>(out, 1024, 10, TRUE, "Fully-connected_2");
+        out = new Relu<float>(out, "Relu_3");
+        //
+        //// ======================= layer 4=======================
         // out = new L2_norm<float>(out, "L2_NORM");
+        // out = new Linear<float>(out, 1024, 10, TRUE, "Fully-connected_2");
+
 
         AnalyzeGraph(out);
+
 
         // ======================= Select LossFunction Function ===================
         // SetLossFunction(new HingeLoss<float>(out, label, "HL"));
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
-        SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
+        // SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
-
+        SetLossFunction(new TripletLoss<float>(out, label, 0.1, "TPL"));
         // ======================= Select Optimizer ===================
-        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
-        // SetOptimizer(new RMSPropOptimizer<float>(GetParameter(), 0.01, 0.9, 1e-08, FALSE, MINIMIZE));
-        // SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.001, 0.9, 0.999, 1e-08, MINIMIZE));
+        // SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
+        // SetOptimizer(new RMSPropOptimizer<float>(GetParameter(), 0.001, 0.9, 1e-08, FALSE, MINIMIZE));
+        SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.0001, 0.9, 0.999, 1e-08, MINIMIZE));
         // SetOptimizer(new NagOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
         // SetOptimizer(new AdagradOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
     }
 
-    virtual ~my_CNN() {}
+    virtual ~my_FaceNetNN() {}
 };
