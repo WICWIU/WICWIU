@@ -14,7 +14,7 @@
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
-    char filename[]      = "MNIST_parmas";
+    // char filename[]      = "MNIST_parmas";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 784, "x");
@@ -96,14 +96,14 @@ int main(int argc, char const *argv[]) {
             net->Train();
             // std::cin >> temp;
 
-            train_accuracy += net->GetAccuracy();
+            // train_accuracy += net->GetAccuracy();
             train_avg_loss += net->GetLoss();
             // train_avg_loss += net->GetClassifierLoss();
 
-            printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
+            printf("\rTrain complete percentage is %d / %d -> loss : %f"/*, acc : %f"*/  /*(ExcuteTime : %f)*/,
                    j + 1, LOOP_FOR_TRAIN,
-                   train_avg_loss / (j + 1),
-                   train_accuracy / (j + 1)
+                   train_avg_loss / (j + 1)/*,
+                   train_accuracy / (j + 1)*/
                    /*nProcessExcuteTime*/);
             fflush(stdout);
         }
@@ -155,13 +155,13 @@ int main(int argc, char const *argv[]) {
             net->FeedInputTensor(2, x_t, l_t);
             net->Test();
 
-            test_accuracy += net->GetAccuracy();
+            // test_accuracy += net->GetAccuracy();
             test_avg_loss += net->GetLoss();
             // test_avg_loss += net->GetClassifierLoss();
-            printf("\rTest complete percentage is %d / %d -> loss : %f, acc : %f",
+            printf("\rTest complete percentage is %d / %d -> loss : %f"/*, acc : %f"*/,
                    j + 1, LOOP_FOR_TEST,
-                   test_avg_loss / (j + 1),
-                   test_accuracy / (j + 1));
+                   test_avg_loss / (j + 1)/*,
+                   test_accuracy / (j + 1)*/);
             fflush(stdout);
         }
         std::cout << "\n\n";
