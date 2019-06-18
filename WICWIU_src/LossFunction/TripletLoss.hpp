@@ -14,8 +14,8 @@ private:
 
 
 public:
-    TripletLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE margine, std::string pName = "NO NAME")
-     : LossFunction<DTYPE>(pOperator, pLabel, pName) {
+    TripletLoss(Operator<DTYPE> *pOperator, DTYPE margine, std::string pName = "NO NAME")
+     : LossFunction<DTYPE>(pOperator, NULL, pName) {
         #ifdef __DEBUG__
         std::cout << "TripletLoss::TripletLoss(LossFunction<DTYPE> * 3, float, )" << '\n';
         #endif  // __DEBUG__
