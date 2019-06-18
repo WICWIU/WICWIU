@@ -4,7 +4,7 @@
 #include "MNIST.hpp"
 #include <time.h>
 
-#define BATCH             100
+#define BATCH             120
 #define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
@@ -25,6 +25,14 @@ int main(int argc, char const *argv[]) {
     // NeuralNetwork<float> *net = new my_NN(x, label, isMLP);
     // NeuralNetwork<float> *net = Resnet14<float>(x, label);
 
+#ifdef __CUDNN__
+    // x->SetDeviceGPU(GPUID);
+    // label->SetDeviceGPU(GPUID);
+    net->SetDeviceGPU(GPUID);
+#endif  // __CUDNN__
+
+    net->PrintGraphInformation();
+
     // ======================= Prepare Data ===================
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
     MNISTDataSet<float> *train_dataset = new MNISTDataSet<float>("data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte", TRAINING);
@@ -33,13 +41,13 @@ int main(int argc, char const *argv[]) {
     MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>("data/t10k-images-idx3-ubyte", "data/t10k-labels-idx1-ubyte", TESTING);
     DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, FALSE, 20, FALSE);
 
+    // ======================= for KNN ===================
+    std::cout << "KNN Reference" << '\n';
+    Operator<float> *knn_ref = new ReShape<float>(net, 1, 1024, "KNN_REF");
 #ifdef __CUDNN__
-    // x->SetDeviceGPU(GPUID);
-    // label->SetDeviceGPU(GPUID);
-    net->SetDeviceGPU(GPUID);
+    knn_ref->SetDeviceGPU(net->GetCudnnHandle(), GPUID);
 #endif  // __CUDNN__
-
-    net->PrintGraphInformation();
+    knn_ref->PrintInformation(0);
 
     float best_acc = 0;
     int   epoch    = 0;
@@ -60,7 +68,7 @@ int main(int argc, char const *argv[]) {
         }
 
         // ======================= Train =======================
-        float train_accuracy = 0.f;
+        // float train_accuracy = 0.f;
         float train_avg_loss = 0.f;
 
         net->SetModeTrain();
@@ -100,10 +108,31 @@ int main(int argc, char const *argv[]) {
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
         // ======================= Test ======================
-        float test_accuracy = 0.f;
+        // float test_accuracy = 0.f;
         float test_avg_loss = 0.f;
 
         net->SetModeInference();
+        // create KNN reference
+        std::vector<Tensor<float> *> * temp =  train_dataloader->GetDataFromGlobalBuffer();
+        // printf("%d\r\n", temp->size());
+
+        Tensor<float> *x_t = (*temp)[0];
+        Tensor<float> *l_t = (*temp)[1];
+        delete temp;
+
+#ifdef __CUDNN__
+        x_t->SetDeviceGPU(GPUID);  // 異뷀썑 ?먮룞???꾩슂
+        l_t->SetDeviceGPU(GPUID);
+#endif  // __CUDNN__
+        // std::cin >> temp;
+        net->FeedInputTensor(2, x_t, l_t);
+        net->Test();
+
+#ifdef __CUDNN__
+        knn_ref->ForwardPropagateOnGPU();
+#else
+        knn_ref->ForwardPropagate();
+#endif  // __CUDNN__
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
             //dataset->CreateTestDataPair(BATCH);
@@ -133,9 +162,9 @@ int main(int argc, char const *argv[]) {
         }
         std::cout << "\n\n";
 
-        if ((best_acc < (test_accuracy / LOOP_FOR_TEST))) {
-            net->Save(filename);
-        }
+        // if ((best_acc < (test_accuracy / LOOP_FOR_TEST))) {
+        //     net->Save(filename);
+        // }
     }
 
     //delete dataset;
