@@ -31,7 +31,7 @@ public:
         out = new Relu<float>(out, "Relu_3");
         //
         //// ======================= layer 4=======================
-        out = new L2_norm<float>(out, "L2_NORM");
+        out = new L2_normalize<float>(out, "L2_normalize");
         // out = new Linear<float>(out, 1024, 10, TRUE, "Fully-connected_2");
 
 

@@ -7,6 +7,7 @@ template<typename DTYPE>
 class L2_normalize : public Operator<DTYPE>{
 private:
   DTYPE m_eplsilon;
+
 public:
     L2_normalize(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
