@@ -148,8 +148,8 @@ public:
              (*input_delta)[idx_neg] = 0.f;
            } else {
              (*input_delta)[idx_anc] = (2.f * ((*input)[idx_neg] - (*input)[idx_pos])) / capacity;
-             (*input_delta)[idx_pos] = (-2.f * ((*input)[idx_pos] - (*input)[idx_anc])) / capacity;
-             (*input_delta)[idx_neg] = (2.f * ((*input)[idx_anc]- (*input)[idx_neg])) / capacity;
+             (*input_delta)[idx_pos] = (2.f * ((*input)[idx_pos] - (*input)[idx_anc])) / capacity;
+             (*input_delta)[idx_neg] = (2.f * ((*input)[idx_anc] - (*input)[idx_neg])) / capacity;
            }
         }
       }
