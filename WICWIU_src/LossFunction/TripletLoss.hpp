@@ -85,35 +85,29 @@ public:
      int end   = 0;
 
 
-     for(int ba = 0; ba < m_NumOfAnchorSample; ba++){
+     for(int ns = 0; ns < m_NumOfAnchorSample; ns++){
        for(int ca = 0; ca < capacity; ca++){
 
-        DTYPE idx_anc = (ti * batchsize + ba)* capacity + ca;
-        DTYPE idx_pos = (ti * batchsize + (ba + m_NumOfAnchorSample))* capacity + ca;
-        DTYPE idx_neg = (ti * batchsize + (ba + 2 * m_NumOfAnchorSample))* capacity + ca;
+        DTYPE idx_anc = (ti * batchsize + ns)* capacity + ca;
+        DTYPE idx_pos = (ti * batchsize + (ns + m_NumOfAnchorSample))* capacity + ca;
+        DTYPE idx_neg = (ti * batchsize + (ns + 2 * m_NumOfAnchorSample))* capacity + ca;
 
-        int idx = ba * capacity + ca;
+        int idx = ns * capacity + ca;
 
         DTYPE m_anc = (*input)[idx_anc];
-        std::cout << "m_anc's label  " << (*label)[idx_anc] <<  '\n';
         DTYPE m_pos = (*input)[idx_pos];
-        std::cout << "m_pos's label  " << (*label)[idx_anc] <<  '\n';
         DTYPE m_neg = (*input)[idx_neg];
-        std::cout << "m_neg's label  " << (*label)[idx_anc] <<  '\n';
 
         DTYPE d_pos = ((m_anc - m_pos) * (m_anc - m_pos));
-        std::cout << "positive distance " << d_pos << '\n';
         DTYPE d_neg = ((m_anc - m_neg) * (m_anc - m_neg));
-        std::cout << "negative distance " << d_neg << '\n';
 
         m_LossPerSample[ti][idx] = (m_margine + (d_pos - d_neg));
-        std::cout << "m_LossPerSample " << '\n';
         DTYPE temp = m_LossPerSample[ti][idx];
 
-        if(temp <= 0.f) (*result)[ti * m_NumOfAnchorSample + ba] += 0.f;
-        else (*result)[ti * m_NumOfAnchorSample + ba] += temp;
+        if(temp <= 0.f) (*result)[ti * m_NumOfAnchorSample + ns] += 0.f;
+        else (*result)[ti * m_NumOfAnchorSample + ns] += temp;
       }
-      (*result)[ti * m_NumOfAnchorSample + ba] /= capacity;
+      (*result)[ti * m_NumOfAnchorSample + ns] /= capacity;
      }
 
         return result;
@@ -139,13 +133,13 @@ public:
       DTYPE idx_neg = 0.f;
       DTYPE temp    = 0.f;
 
-        for(int ba = 0; ba < m_NumOfAnchorSample; ba++){
+        for(int ns = 0; ns < m_NumOfAnchorSample; ns++){
           for(int ca = 0; ca < capacity; ca++){
-             idx_anc = (ti * batchsize + ba)* capacity + ca;
-             idx_pos = (ti * batchsize + (ba + m_NumOfAnchorSample))* capacity + ca;
-             idx_neg = (ti * batchsize + (ba + 2 * m_NumOfAnchorSample))* capacity + ca;
+             idx_anc = (ti * batchsize + ns)* capacity + ca;
+             idx_pos = (ti * batchsize + (ns + m_NumOfAnchorSample))* capacity + ca;
+             idx_neg = (ti * batchsize + (ns + 2 * m_NumOfAnchorSample))* capacity + ca;
 
-             idx = ba * capacity + ca;
+             idx = ns * capacity + ca;
              temp = m_LossPerSample[ti][idx];
 
            if(temp <= 0) {
