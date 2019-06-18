@@ -1,5 +1,6 @@
 #include "net/my_CNN.hpp"
 #include "net/my_NN.hpp"
+#include "net/my_FaceNetNN.hpp"
 #include "net/my_Resnet.hpp"
 #include "MNIST.hpp"
 #include <time.h>
@@ -8,7 +9,7 @@
 #define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             1
+#define GPUID             6
 
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
@@ -20,10 +21,11 @@ int main(int argc, char const *argv[]) {
     Tensorholder<float> *label = new Tensorholder<float>(1, BATCH, 1, 1, 10, "label");
 
     // ======================= Select net ===================
-    NeuralNetwork<float> *net = new my_CNN(x, label);
+    // NeuralNetwork<float> *net = new my_CNN(x, label);
     // NeuralNetwork<float> *net = new my_NN(x, label, isSLP);
     // NeuralNetwork<float> *net = new my_NN(x, label, isMLP);
     // NeuralNetwork<float> *net = Resnet14<float>(x, label);
+    NeuralNetwork<float> *net = new my_FaceNetNN(x, label);
 
     // ======================= Prepare Data ===================
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
@@ -85,8 +87,10 @@ int main(int argc, char const *argv[]) {
             net->ResetParameterGradient();
             net->Train();
             // std::cin >> temp;
+
             train_accuracy += net->GetAccuracy();
             train_avg_loss += net->GetLoss();
+            // train_avg_loss += net->GetClassifierLoss();
 
             printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
                    j + 1, LOOP_FOR_TRAIN,
@@ -124,7 +128,7 @@ int main(int argc, char const *argv[]) {
 
             test_accuracy += net->GetAccuracy();
             test_avg_loss += net->GetLoss();
-
+            // test_avg_loss += net->GetClassifierLoss();
             printf("\rTest complete percentage is %d / %d -> loss : %f, acc : %f",
                    j + 1, LOOP_FOR_TEST,
                    test_avg_loss / (j + 1),

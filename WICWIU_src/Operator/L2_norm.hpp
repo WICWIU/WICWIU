@@ -56,16 +56,19 @@ public:
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index         = i * capacity + j;
-                  (*result)[i] += ((*input)[index] * (*input)[index]);
-                  // (*result)[i] = std::sqrt((*result)[i]);
+                std::cout << "x = " << (*input)[index] << '\n';
+                (*result)[i] += ((*input)[index] * (*input)[index]);
+                std::cout << "x^2 = " << (*result)[i] << '\n';
+                int a;
+                std::cin >> a;
             }
+            (*result)[i] = std::sqrt((*result)[i]);
+            std::cout << "sqrt x = " << (*result)[i] << '\n';
 
             // int a;
             // std::cin >> a;
         }
-        std::cout << "1" << '\n';
-        std::cout << "input" << input<< '\n';
-        std::cout << "result" << result<< '\n';
+
         return TRUE;
     }
 
