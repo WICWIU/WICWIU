@@ -56,15 +56,9 @@ public:
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index         = i * capacity + j;
-                std::cout << "x = " << (*input)[index] << '\n';
                 (*result)[i] += ((*input)[index] * (*input)[index]);
-                std::cout << "x^2 = " << (*result)[i] << '\n';
-                int a;
-                std::cin >> a;
             }
             (*result)[i] = std::sqrt((*result)[i]);
-            std::cout << "sqrt x = " << (*result)[i] << '\n';
-
             // int a;
             // std::cin >> a;
         }
@@ -98,8 +92,7 @@ public:
             }
 
         }
-        std::cout << "inputdd" << input<< '\n';
-        std::cout << "resulddd" << input_delta<< '\n';
+
         // std::cout << "/* message */" << '\n';
         return TRUE;
     }
