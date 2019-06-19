@@ -120,7 +120,7 @@ int main(int argc, char const *argv[]) {
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
         // ======================= Test ======================
-        // float test_accuracy = 0.f;
+        float test_accuracy = 0.f;
         float test_avg_loss = 0.f;
 
         net->SetModeInference();
@@ -165,7 +165,7 @@ int main(int argc, char const *argv[]) {
             net->FeedInputTensor(2, x_t, l_t);
             net->Test();
 
-            // test_accuracy += net->GetAccuracy();
+            test_accuracy += GetAccuracy(1, net, label, knn_ref, ref_label);
             test_avg_loss += net->GetLoss();
             // test_avg_loss += net->GetClassifierLoss();
             printf("\rTest complete percentage is %d / %d -> loss : %f"/*, acc : %f"*/,
@@ -204,5 +204,6 @@ float knn(int k, Operator<float> * pred, Operator<float> * ref, Operator<float> 
 }
 
 float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef){
+
     return 0.f;
 }
