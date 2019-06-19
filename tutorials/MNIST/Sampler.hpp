@@ -74,6 +74,7 @@ template<typename DTYPE> void Sampler<DTYPE>::DataPreprocess() {
         for (int i = 0; i < numOfPosSample; i++) {
             label = setOflable.front();  // same as anchor
             setOflable.pop();
+            setOflable.push(label);
             // printf("%d ", label);
             data = m_pDataset->GetData(label);
 
@@ -90,9 +91,14 @@ template<typename DTYPE> void Sampler<DTYPE>::DataPreprocess() {
         // printf("\n");
 
         // neg
-        for (int i = 0; i < numOfNegSample; i++) {
+        for (int i = numOfAnchorSample, j = 0; j < numOfNegSample; i++) {
             label = (*setOfIdx)[i] % m_numOfClass;  // random
 
+            if (setOflable.front() == label) continue;
+            else {
+                setOflable.pop();
+                j++;
+            }
             // printf("%d", idx);
             data = m_pDataset->GetData(label);
 
