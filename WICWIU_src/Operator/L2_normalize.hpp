@@ -6,8 +6,7 @@
 template<typename DTYPE>
 class L2_normalize : public Operator<DTYPE>{
 private:
-  DTYPE m_eplsilon;
-
+  DTYPE m_epsilon;
 public:
     L2_normalize(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
@@ -35,7 +34,7 @@ public:
 
         this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, 1, 1, colsize));
 
-        m_eplsilon = 1e-08;
+        m_epsilon = 1e-12;
 
         return TRUE;
     }
@@ -55,6 +54,7 @@ public:
         int capacity    = channelsize * rowsize * colsize;
 
         int ti = pTime;
+        DTYPE sqrt_x = 0.f;
 
         for (int ba = 0, i = 0; ba < batchsize; ba++) {
             i = ti * batchsize + ba;
@@ -62,12 +62,15 @@ public:
             for (int j = 0, index = 0; j < capacity; j++) {
                 index         = i * capacity + j;
                 (*result)[i] += ((*input)[index] * (*input)[index]);
-                if((*result)[i] > m_eplsilon)
-                  (*result)[index] = ((*input)[index] / std::sqrt((*result)[i]));
-                else (*result)[index] = ((*input)[index] / std::sqrt(m_eplsilon));
 
             }
 
+            sqrt_x = std::sqrt((*result)[i]);
+
+            for (int j = 0, index = 0; j < capacity; j++) {
+                index         = i * capacity + j;
+                (*result)[index] = ((*input)[index] / (sqrt_x + m_epsilon));
+            }
         }
 
         return TRUE;
@@ -77,14 +80,15 @@ public:
       Container<Operator<DTYPE> *> *input_container = this->GetInputContainer();
        //
        Tensor<DTYPE> *input       = (*input_container)[0]->GetResult();
+       Tensor<DTYPE> *result      = this->GetResult();
        Tensor<DTYPE> *input_delta = (*input_container)[0]->GetGradient();
        Tensor<DTYPE> *this_delta  = this->GetDelta();
 
-        int timesize    = input->GetTimeSize();
-        int batchsize   = input->GetBatchSize();
-        int channelsize = input->GetChannelSize();
-        int rowsize     = input->GetRowSize();
-        int colsize     = input->GetColSize();
+        int timesize    = this_delta->GetTimeSize();
+        int batchsize   = this_delta->GetBatchSize();
+        int channelsize = this_delta->GetChannelSize();
+        int rowsize     = this_delta->GetRowSize();
+        int colsize     = this_delta->GetColSize();
 
         int capacity    = channelsize * rowsize * colsize;
 
@@ -95,12 +99,14 @@ public:
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index                  = i * capacity + j;
-                (*input_delta)[index] += (*this_delta)[index];
-            }
 
+                if(i == index)
+                  (*input_delta)[index] += ((((*result)[i] - (*input)[index]) / (std::pow((*result)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
+                else
+                  (*input_delta)[index] -= ((((*input)[index] *(*input)[i]) / (std::pow((*result)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
+            }
         }
 
-        // std::cout << "/* message */" << '\n';
         return TRUE;
     }
 
