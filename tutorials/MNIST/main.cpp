@@ -3,6 +3,8 @@
 #include "net/my_FaceNetNN.hpp"
 #include "net/my_Resnet.hpp"
 #include "MNIST.hpp"
+#include "MNISTForSample.hpp"
+#include "Sampler.hpp"
 #include "knn.hpp"
 #include <time.h>
 #include <map>
@@ -40,11 +42,11 @@ int main(int argc, char const *argv[]) {
 
     // ======================= Prepare Data ===================
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
-    MNISTDataSet<float> *train_dataset = new MNISTDataSet<float>("data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte", TRAINING);
-    DataLoader<float> * train_dataloader = new DataLoader<float>(train_dataset, BATCH, TRUE, 20, FALSE);
+    MNISTDataSetForSample<float> *train_dataset = new MNISTDataSetForSample<float>("data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte", TRAINING);
+    DataLoader<float> * train_dataloader = new Sampler<float>(10, train_dataset, BATCH, TRUE, 1, FALSE);
 
     MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>("data/t10k-images-idx3-ubyte", "data/t10k-labels-idx1-ubyte", TESTING);
-    DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, FALSE, 20, FALSE);
+    DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, FALSE, 1, FALSE);
 
     // ======================= for KNN ===================
     std::cout << "KNN Reference" << '\n';

@@ -100,25 +100,27 @@ void LABEL_Reader(string pLabelPath, DTYPE **pLabel) {
 #endif
 
 template<typename DTYPE>
-class MNISTDataSet : public Dataset<DTYPE>{
+class MNISTDataSetForSample : public Dataset<DTYPE>{
 private:
     DTYPE **m_aaImage;
     DTYPE **m_aaLabel;
     int m_numOfImg;
+    int m_curImg;
 
     OPTION m_option;
 
 public:
-    MNISTDataSet(string pImagePath, string pLabelPath, OPTION pOPTION) {
+    MNISTDataSetForSample(string pImagePath, string pLabelPath, OPTION pOPTION) {
         m_aaImage = NULL;
         m_aaLabel = NULL;
+        m_curImg = -1;
 
         m_option = pOPTION;
 
         Alloc(pImagePath, pLabelPath);
     }
 
-    virtual ~MNISTDataSet() {
+    virtual ~MNISTDataSetForSample() {
         Delete();
     }
 
@@ -126,13 +128,13 @@ public:
 
     virtual void                          Delete();
 
-    virtual std::vector<Tensor<DTYPE> *>* GetData(int idx);
+    virtual std::vector<Tensor<DTYPE> *>* GetData(int rquestedLabel);
 
     virtual int                           GetLength();
 
 };
 
-template<typename DTYPE> void MNISTDataSet<DTYPE>::Alloc(string pImagePath, string pLabelPath) {
+template<typename DTYPE> void MNISTDataSetForSample<DTYPE>::Alloc(string pImagePath, string pLabelPath) {
     if (m_option == TRAINING) {
         m_numOfImg = NUMOFTRAINDATA;
         m_aaImage = new DTYPE *[m_numOfImg];
@@ -151,7 +153,7 @@ template<typename DTYPE> void MNISTDataSet<DTYPE>::Alloc(string pImagePath, stri
     }
 }
 
-template<typename DTYPE> void MNISTDataSet<DTYPE>::Delete() {
+template<typename DTYPE> void MNISTDataSetForSample<DTYPE>::Delete() {
     if (m_aaImage) {
         for (int i = 0; i < m_numOfImg; i++) {
             if (m_aaImage[i]) {
@@ -175,17 +177,22 @@ template<typename DTYPE> void MNISTDataSet<DTYPE>::Delete() {
     }
 }
 
-template<typename DTYPE> std::vector<Tensor<DTYPE> *> *MNISTDataSet<DTYPE>::GetData(int idx) {
+template<typename DTYPE> std::vector<Tensor<DTYPE> *> *MNISTDataSetForSample<DTYPE>::GetData(int rquestedLabel) {
     std::vector<Tensor<DTYPE> *> *result = new std::vector<Tensor<DTYPE> *>(0, NULL);
+
+    do{
+        m_curImg = (m_curImg != m_numOfImg - 1)? m_curImg + 1 : 0;
+        if((int)m_aaLabel[m_curImg][0] == rquestedLabel) break;
+    }while(TRUE);
 
     Tensor<DTYPE> *image = Tensor<DTYPE>::Zeros(1, 1, 1, 1, DIMOFMNISTIMAGE);
     Tensor<DTYPE> *label = Tensor<DTYPE>::Zeros(1, 1, 1, 1, DIMOFMNISTLABEL);
 
     for (int i = 0; i < DIMOFMNISTIMAGE; i++) {
-        (*image)[i] = m_aaImage[idx][i];
+        (*image)[i] = m_aaImage[m_curImg][i];
     }
 
-    (*label)[(int)m_aaLabel[idx][0]] = 1.f;
+    (*label)[(int)m_aaLabel[m_curImg][0]] = 1.f;
 
     result->push_back(image);
     result->push_back(label);
@@ -193,7 +200,7 @@ template<typename DTYPE> std::vector<Tensor<DTYPE> *> *MNISTDataSet<DTYPE>::GetD
     return result;
 }
 
-template<typename DTYPE> int MNISTDataSet<DTYPE>::GetLength() {
+template<typename DTYPE> int MNISTDataSetForSample<DTYPE>::GetLength() {
     if (m_option == TRAINING) {
         return NUMOFTRAINDATA;
     } else if (m_option == TESTING) {

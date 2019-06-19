@@ -58,7 +58,7 @@ public:
     // distribute data idx to each thread
     void                          DistributeIdxOfData2Thread();
 
-    void                          DataPreprocess();
+    virtual void                  DataPreprocess();
 
     void                          Push2IdxBuffer(std::vector<int> *setOfIdx);
 
@@ -69,6 +69,11 @@ public:
     void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
 
     std::vector<Tensor<DTYPE> *>* GetDataFromGlobalBuffer();
+
+    int GetBatchSize(){return m_batchSize;}
+    int GetWorkingSignal(){return m_nowWorking;}
+    int GetNumOfEachDatasetMember(){return m_numOfEachDatasetMember;}
+    Dataset<DTYPE> * GetDataset(){return m_pDataset;}
 
     // static int random_generator(int upperbound);
 };
@@ -288,7 +293,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::DataPreprocess() {
     std::vector<Tensor<DTYPE> *> *data             = NULL;
     Tensor<DTYPE> *pick                            = NULL;
     std::vector<Tensor<DTYPE> *> *preprocessedData = NULL;
-
+    std::cout << "DataLoader worker" << '\n';
     while (m_nowWorking) {
         // get information from IdxBuffer
         setOfIdx = this->GetIdxSetFromIdxBuffer();
