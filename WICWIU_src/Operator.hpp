@@ -112,6 +112,9 @@ public:
     virtual int                           ResetResult();
     virtual int                           ResetGradient();
 
+    virtual int                           ResetClassifierResult();
+    virtual int                           ResetClassifierGradient();
+
     // virtual void                          PrintInformation();
     virtual void                          PrintInformation(int level);
 
@@ -737,7 +740,51 @@ template<typename DTYPE> int Operator<DTYPE>::ResetResult() {
     return TRUE;
 }
 
+template<typename DTYPE> int Operator<DTYPE>::ResetClassifierResult() {
+    // Tensorholder의 경우는 하면 안된다.
+    int size = m_aaResult->GetSize();
+
+    if (m_Device == CPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaResult)[i]->Reset();
+        }
+    }
+
+#ifdef __CUDNN__
+    else if (m_Device == GPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaResult)[i]->Reset(this->GetCudnnHandle());
+        }
+    }
+#endif  // if __CUDNN__
+
+    else return FALSE;
+
+    return TRUE;
+}
+
 template<typename DTYPE> int Operator<DTYPE>::ResetGradient() {
+    int size = m_aaGradient->GetSize();
+
+    if (m_Device == CPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaGradient)[i]->Reset();
+        }
+    }
+
+#ifdef __CUDNN__
+    else if (m_Device == GPU) {
+        for (int i = 0; i < size; i++) {
+            (*m_aaGradient)[i]->Reset(this->GetCudnnHandle());
+        }
+    }
+#endif  // if __CUDNN__
+
+    else return FALSE;
+
+    return TRUE;
+}
+template<typename DTYPE> int Operator<DTYPE>::ResetClassifierGradient() {
     int size = m_aaGradient->GetSize();
 
     if (m_Device == CPU) {

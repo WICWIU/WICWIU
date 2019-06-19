@@ -4,9 +4,11 @@
 #include "../Operator.hpp"
 
 template<typename DTYPE>
-class L2_norm : public Operator<DTYPE>{
+class L2_normalize : public Operator<DTYPE>{
+private:
+  DTYPE m_epsilon;
 public:
-    L2_norm(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+    L2_normalize(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "L2_norm::L2_norm(Operator *)" << '\n';
         #endif  // __DEBUG__
@@ -14,23 +16,25 @@ public:
     }
 
 
-    ~L2_norm() {
-        std::cout << "L2_norm::~L2_norm()" << '\n';
+    ~L2_normalize() {
+        std::cout << "L2_normalize::~L2_normalize()" << '\n';
     }
 
 
     int Alloc(Operator<DTYPE> *pInput) {
         #ifdef __DEBUG__
-        std::cout << "L2_norm::Alloc(Operator *)" << '\n';
+        std::cout << "L2_normalize::Alloc(Operator *)" << '\n';
         #endif  // __DEBUG__
 
         int timesize    = pInput->GetResult()->GetTimeSize();
         int batchsize   = pInput->GetResult()->GetBatchSize();
+        int colsize   = pInput->GetResult()->GetColSize();
 
+        this->SetResult(new Tensor<DTYPE>(timesize, batchsize, 1, 1, colsize));
 
-        this->SetResult(new Tensor<DTYPE>(timesize, batchsize, 1, 1, 1));
+        this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, 1, 1, colsize));
 
-        this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, 1, 1, 1));
+        m_epsilon = 1e-12;
 
         return TRUE;
     }
@@ -50,6 +54,7 @@ public:
         int capacity    = channelsize * rowsize * colsize;
 
         int ti = pTime;
+        DTYPE sqrt_x = 0.f;
 
         for (int ba = 0, i = 0; ba < batchsize; ba++) {
             i = ti * batchsize + ba;
@@ -57,26 +62,33 @@ public:
             for (int j = 0, index = 0; j < capacity; j++) {
                 index         = i * capacity + j;
                 (*result)[i] += ((*input)[index] * (*input)[index]);
+
             }
-            (*result)[i] = std::sqrt((*result)[i]);
-            // int a;
-            // std::cin >> a;
+
+            sqrt_x = std::sqrt((*result)[i]);
+
+            for (int j = 0, index = 0; j < capacity; j++) {
+                index         = i * capacity + j;
+                (*result)[index] = ((*input)[index] / (sqrt_x + m_epsilon));
+            }
         }
 
         return TRUE;
     }
 
     int BackPropagate(int pTime = 0) {
-        Container<Operator<DTYPE> *> *input_container = this->GetInputContainer();
+      Container<Operator<DTYPE> *> *input_container = this->GetInputContainer();
        //
        Tensor<DTYPE> *input       = (*input_container)[0]->GetResult();
+       Tensor<DTYPE> *result      = this->GetResult();
        Tensor<DTYPE> *input_delta = (*input_container)[0]->GetGradient();
+       Tensor<DTYPE> *this_delta  = this->GetDelta();
 
-        int timesize    = input->GetTimeSize();
-        int batchsize   = input->GetBatchSize();
-        int channelsize = input->GetChannelSize();
-        int rowsize     = input->GetRowSize();
-        int colsize     = input->GetColSize();
+        int timesize    = this_delta->GetTimeSize();
+        int batchsize   = this_delta->GetBatchSize();
+        int channelsize = this_delta->GetChannelSize();
+        int rowsize     = this_delta->GetRowSize();
+        int colsize     = this_delta->GetColSize();
 
         int capacity    = channelsize * rowsize * colsize;
 
@@ -87,13 +99,14 @@ public:
 
             for (int j = 0, index = 0; j < capacity; j++) {
                 index                  = i * capacity + j;
-                (*input_delta)[i] += 2.f * ((*input)[index]);
-                // (*input_delta)[i] = 1/2 * ((*input_delta)[i]);
-            }
 
+                if(i == index)
+                  (*input_delta)[index] += ((((*result)[i] - (*input)[index]) / (std::pow((*result)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
+                else
+                  (*input_delta)[index] -= ((((*input)[index] *(*input)[i]) / (std::pow((*result)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
+            }
         }
 
-        // std::cout << "/* message */" << '\n';
         return TRUE;
     }
 
