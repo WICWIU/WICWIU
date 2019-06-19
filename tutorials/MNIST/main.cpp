@@ -11,6 +11,11 @@
 #define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             6
 
+float calDist(Operator<float> * pred, Operator<float> * ref);
+int maxArg(float* distList);
+float knn(int k, Operator<float> * pred, Operator<float> * ref, Operator<float> * labelOfRef);
+float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef);
+
 int main(int argc, char const *argv[]) {
     clock_t startTime, endTime;
     double  nProcessExcuteTime;
@@ -46,10 +51,13 @@ int main(int argc, char const *argv[]) {
     // ======================= for KNN ===================
     std::cout << "KNN Reference" << '\n';
     Operator<float> *knn_ref = new ReShape<float>(net, 1, 1024, "KNN_REF");
+    Operator<float> *ref_label = new ReShape<float>(label, 1, 10, "REF_label");
 #ifdef __CUDNN__
     knn_ref->SetDeviceGPU(net->GetCudnnHandle(), GPUID);
+    ref_label->SetDeviceGPU(net->GetCudnnHandle(), GPUID);
 #endif  // __CUDNN__
     knn_ref->PrintInformation(0);
+    ref_label->PrintInformation(0);
 
     float best_acc = 0;
     int   epoch    = 0;
@@ -134,8 +142,10 @@ int main(int argc, char const *argv[]) {
 
 #ifdef __CUDNN__
         knn_ref->ForwardPropagateOnGPU();
+        ref_label->ForwardPropagateOnGPU();
 #else
         knn_ref->ForwardPropagate();
+        ref_label->ForwardPropagate();
 #endif  // __CUDNN__
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
@@ -179,4 +189,20 @@ int main(int argc, char const *argv[]) {
     delete test_dataset;
 
     return 0;
+}
+
+float calDist(Operator<float> * pred, Operator<float> * ref){
+    return 0.f;
+}
+
+int maxArg(float* distList){
+    return 0;
+}
+
+float knn(int k, Operator<float> * pred, Operator<float> * ref, Operator<float> * labelOfRef){
+    return 0.f;
+}
+
+float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef){
+    return 0.f;
 }
