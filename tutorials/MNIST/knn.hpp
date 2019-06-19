@@ -23,7 +23,7 @@ void calDist(int imgNum, Tensor<float> * pred, Tensor<float> * ref, std::multima
     }
 }
 
-int argMax(int imgNum, Tensor<float> * labelOfPred){
+int onehot2label(int imgNum, Tensor<float> * labelOfPred){
     int numOfClass = labelOfPred->GetColSize();
     for(int j = 0; j < numOfClass; j++){
         // std::cout << (*labelOfPred)[imgNum * numOfClass + j] << ' ';
@@ -71,7 +71,7 @@ float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, 
     for(int i = 0; i < numOfImg; i++){
         calDist(i, pred_t, ref_t, dist_map);
         predClass = knn(k, labelOfRef_t, dist_map);
-        realClass = argMax(i, labelOfPred_t);
+        realClass = onehot2label(i, labelOfPred_t);
         if(predClass == realClass) correct++;
         // std::cout << "predClass: " << predClass << " realClass: " << realClass << '\n';
         // std::cin >> predClass;
