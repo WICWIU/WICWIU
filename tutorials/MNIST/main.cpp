@@ -12,7 +12,7 @@
 #define GPUID             6
 
 float calDist(Operator<float> * pred, Operator<float> * ref);
-int maxArg(float* distList);
+int argMax(float* distList);
 float knn(int k, Operator<float> * pred, Operator<float> * ref, Operator<float> * labelOfRef);
 float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef);
 
