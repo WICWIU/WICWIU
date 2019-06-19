@@ -11,8 +11,8 @@
 #define LOOP_FOR_TEST     (10000 / BATCH)
 #define GPUID             6
 
-float calDist(Operator<float> * pred, Operator<float> * ref);
-int argMax(float* distList);
+float* calDist(Operator<float> * pred, Operator<float> * ref);
+int argMax(Tensor<float> * dist);
 float knn(int k, Operator<float> * pred, Operator<float> * ref, Operator<float> * labelOfRef);
 float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef);
 
@@ -52,9 +52,11 @@ int main(int argc, char const *argv[]) {
     std::cout << "KNN Reference" << '\n';
     Operator<float> *knn_ref = new ReShape<float>(net, 1, 1024, "KNN_REF");
     Operator<float> *ref_label = new ReShape<float>(label, 1, 10, "REF_label");
+
 #ifdef __CUDNN__
     knn_ref->SetDeviceGPU(net->GetCudnnHandle(), GPUID);
     ref_label->SetDeviceGPU(net->GetCudnnHandle(), GPUID);
+
 #endif  // __CUDNN__
     knn_ref->PrintInformation(0);
     ref_label->PrintInformation(0);
@@ -165,6 +167,9 @@ int main(int argc, char const *argv[]) {
             net->FeedInputTensor(2, x_t, l_t);
             net->Test();
 
+            calDist(net, knn_ref);
+
+
             test_accuracy += GetAccuracy(1, net, label, knn_ref, ref_label);
             test_avg_loss += net->GetLoss();
             // test_avg_loss += net->GetClassifierLoss();
@@ -191,8 +196,42 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
-float calDist(Operator<float> * pred, Operator<float> * ref){
-    return 0.f;
+float* calDist(Operator<float> * pred, Operator<float> * ref){
+    Tensor<float> *x = pred->GetResult();
+    Tensor<float> *y = ref->GetResult();
+
+    int timesize    = pred->GetResult()->GetTimeSize();
+    int batchsize   = pred->GetResult()->GetBatchSize();
+    int channelsize = pred->GetResult()->GetChannelSize();
+    int rowsize     = pred->GetResult()->GetRowSize();
+    int colsize     = pred->GetResult()->GetColSize();
+
+    int ref_col     = ref->GetResult()->GetColSize();
+
+    int ref_capacity = channelsize * rowsize * ref_col;
+    int capacity    = channelsize * rowsize * colsize;
+
+    float *res;
+
+    for (int ba = 0, i = 0; ba < batchsize; ba++) {
+        i = timesize * batchsize + ba;
+
+        for (int j = 0, ref_index = 0; j < ref_capacity; j++) {
+          for(int k = 0, index = 0; k < capacity; k++){
+            index         = i * capacity + k;
+            ref_index     = i * ref_capacity + j;
+            std::cout << "1" << '\n';
+            res[i] += (((*x)[index] - (*y)[ref_index]) * ((*x)[index] - (*y)[ref_index]));
+
+            std::cout << "x: " << x << '\n';
+            std::cout << "y: " << y << '\n';
+            std::cout << "result: " << res <<'\n';
+            int f;
+            std::cin >> f;
+          }
+        }
+      }
+
 }
 
 int maxArg(float* distList){
