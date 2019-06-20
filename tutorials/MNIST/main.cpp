@@ -14,7 +14,7 @@
 #define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             7
+#define GPUID             6
 #define KNN_K             10
 
 int main(int argc, char const *argv[]) {

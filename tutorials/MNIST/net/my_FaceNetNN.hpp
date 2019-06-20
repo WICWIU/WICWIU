@@ -36,7 +36,7 @@ public:
         out = new Linear<float>(out, 256, 2, TRUE, "Fully-connected_2");
         // out = new Relu<float>(out, "Relu_3");
         // out = new Linear<float>(out, 256, 2, TRUE, "Fully-connected_2");
-        // out = new L2_normalize<float>(out, "L2_normalize");
+        out = new L2_normalize<float>(out, "L2_normalize");
 
         AnalyzeGraph(out);
 

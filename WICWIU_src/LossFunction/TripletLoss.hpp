@@ -95,23 +95,9 @@ public:
 
 
      for(int ba = 0; ba < m_NumOfAnchorSample; ba++){
-       // std::cout << "acn:" << '\n';
-       // for(int i = 0; i < 10; i++){
-       //     std::cout << (*label)[(ti * batchsize + ba)* 10 + i] << ' ';
-       // }
-       // std::cout << '\n';
-       // std::cout << "pos:" << '\n';
-       // for(int i = 0; i < 10; i++){
-       //     std::cout << (*label)[(ti * batchsize + (ba + m_NumOfAnchorSample))* 10 + i] << ' ';
-       // }
-       // std::cout << '\n';
-       // std::cout << "neg:" << '\n';
-       // for(int i = 0; i < 10; i++){
-       //     std::cout << (*label)[(ti * batchsize + (ba + 2 * m_NumOfAnchorSample))* 10 + i] << ' ';
-       // }
-       // std::cout << '\n';
        DTYPE d_pos = 0;
        DTYPE d_neg = 0;
+
        for(int ca = 0; ca < capacity; ca++){
         DTYPE idx_anc = (ti * batchsize + ba)* capacity + ca;
         DTYPE idx_pos = (ti * batchsize + (ba + m_NumOfAnchorSample))* capacity + ca;
@@ -124,12 +110,6 @@ public:
 
         d_pos += ((m_anc - m_pos) * (m_anc - m_pos));
         d_neg += ((m_anc - m_neg) * (m_anc - m_neg));
-
-        // m_LossPerSample[ti][idx] = (m_margine + (d_pos - d_neg));
-        // DTYPE temp = m_LossPerSample[ti][idx];
-        // printf("m_anc: %f, m_pos: %f, m_neg: %f\n", m_anc, m_pos, m_neg);
-        // printf("d_pos: %f, d_neg: %f, temp: %f\n", d_pos, d_neg, temp);
-        // std::cin >> idx;
 
       }
       DTYPE temp = m_margine + (d_pos - d_neg);
