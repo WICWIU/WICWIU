@@ -5,11 +5,12 @@
 #include "MNIST.hpp"
 #include "MNISTForSample.hpp"
 #include "Sampler.hpp"
+#include "SamplerForNeighbor.hpp"
 #include "knn.hpp"
 #include <time.h>
 #include <map>
 
-#define BATCH             120
+#define BATCH             60
 #define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
@@ -44,6 +45,9 @@ int main(int argc, char const *argv[]) {
     //MNISTDataSet<float> *dataset = CreateMNISTDataSet<float>();
     MNISTDataSetForSample<float> *train_dataset = new MNISTDataSetForSample<float>("data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte", TRAINING);
     DataLoader<float> * train_dataloader = new Sampler<float>(10, train_dataset, BATCH, TRUE, 1, FALSE);
+
+    MNISTDataSetForSample<float> *neighbors_dataset = new MNISTDataSetForSample<float>("data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte", TRAINING);
+    DataLoader<float> * neighbors_dataloader = new SamplerForNeighbor<float>(10, neighbors_dataset, BATCH, FALSE, 1, FALSE);
 
     MNISTDataSet<float> *test_dataset = new MNISTDataSet<float>("data/t10k-images-idx3-ubyte", "data/t10k-labels-idx1-ubyte", TESTING);
     DataLoader<float> * test_dataloader = new DataLoader<float>(test_dataset, BATCH, FALSE, 1, FALSE);
@@ -134,11 +138,18 @@ int main(int argc, char const *argv[]) {
 
         net->SetModeInference();
         // create KNN reference
-        std::vector<Tensor<float> *> * temp =  train_dataloader->GetDataFromGlobalBuffer();
+        std::vector<Tensor<float> *> * temp =  neighbors_dataloader->GetDataFromGlobalBuffer();
         // printf("%d\r\n", temp->size());
 
         Tensor<float> *x_t = (*temp)[0];
         Tensor<float> *l_t = (*temp)[1];
+        std::cout << "neighbors "<< '\n';
+        for(int n = 0; n < BATCH; n++){
+            std::cout << onehot2label(n, l_t) << ' ';
+            if(n == BATCH / 3 - 1 || n == BATCH / 3 * 2 - 1) std::cout << '\n';
+        }
+        std::cout << '\n';
+        std::cin >> startTime;
         delete temp;
 
 #ifdef __CUDNN__
