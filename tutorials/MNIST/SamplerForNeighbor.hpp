@@ -41,13 +41,13 @@ template<typename DTYPE> void SamplerForNeighbor<DTYPE>::DataPreprocess() {
     Dataset<DTYPE> *m_pDataset = this->GetDataset();
 
     std::queue<Tensor<DTYPE> *> *localBuffer       = new std::queue<Tensor<DTYPE> *>[m_numOfEachDatasetMember];
-    std::vector<int> *setOfIdx                     = NULL;
     int label                                      = 0;
     std::vector<Tensor<DTYPE> *> *data             = NULL;
     std::vector<Tensor<DTYPE> *> *preprocessedData = NULL;
 
     while (this->GetWorkingSignal()) {
         // get information from IdxBuffer
+        std::random_shuffle(m_labelSet.begin(), m_labelSet.end(), random_generator);
 
         // Anchor
         for (int i = 0; i < m_batchSize; i++) {
