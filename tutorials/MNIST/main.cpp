@@ -10,11 +10,11 @@
 #include <time.h>
 #include <map>
 
-#define BATCH             60
+#define BATCH             120
 #define EPOCH             100
 #define LOOP_FOR_TRAIN    (60000 / BATCH)
 #define LOOP_FOR_TEST     (10000 / BATCH)
-#define GPUID             6
+#define GPUID             7
 #define KNN_K             10
 
 int main(int argc, char const *argv[]) {
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[]) {
 
     // ======================= for KNN ===================
     std::cout << "KNN Reference" << '\n';
-    Operator<float> *knn_ref = new ReShape<float>(net, 1, 256, "KNN_REF");
+    Operator<float> *knn_ref = new ReShape<float>(net, 1, 2, "KNN_REF");
     Operator<float> *ref_label = new ReShape<float>(label, 1, 10, "REF_label");
 
 #ifdef __CUDNN__
@@ -131,7 +131,7 @@ int main(int argc, char const *argv[]) {
         endTime            = clock();
         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
-
+        // std::cin >> startTime;
         // ======================= Test ======================
         float test_accuracy = 0.f;
         float test_avg_loss = 0.f;
@@ -143,13 +143,13 @@ int main(int argc, char const *argv[]) {
 
         Tensor<float> *x_t = (*temp)[0];
         Tensor<float> *l_t = (*temp)[1];
-        std::cout << "neighbors "<< '\n';
-        for(int n = 0; n < BATCH; n++){
-            std::cout << onehot2label(n, l_t) << ' ';
-            if(n == BATCH / 3 - 1 || n == BATCH / 3 * 2 - 1) std::cout << '\n';
-        }
-        std::cout << '\n';
-        std::cin >> startTime;
+        // std::cout << "neighbors "<< '\n';
+        // for(int n = 0; n < BATCH; n++){
+        //     std::cout << onehot2label(n, l_t) << ' ';
+        //     if(n == BATCH / 3 - 1 || n == BATCH / 3 * 2 - 1) std::cout << '\n';
+        // }
+        // std::cout << '\n';
+        // std::cin >> startTime;
         delete temp;
 
 #ifdef __CUDNN__
@@ -167,6 +167,9 @@ int main(int argc, char const *argv[]) {
         knn_ref->ForwardPropagate();
         ref_label->ForwardPropagate();
 #endif  // __CUDNN__
+
+        // std::cout << knn_ref->GetResult() << '\n';
+        // std::cin >> startTime;
 
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
             //dataset->CreateTestDataPair(BATCH);
@@ -193,6 +196,7 @@ int main(int argc, char const *argv[]) {
                    test_avg_loss / (j + 1),
                    test_accuracy / (j + 1));
             fflush(stdout);
+            // std::cin >> startTime;
         }
         std::cout << "\n\n";
 

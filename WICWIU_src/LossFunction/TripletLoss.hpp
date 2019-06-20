@@ -23,6 +23,15 @@ public:
         Alloc(pOperator, margine);
     }
 
+    TripletLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE margine, std::string pName = "NO NAME")
+     : LossFunction<DTYPE>(pOperator, pLabel, pName) {
+        #ifdef __DEBUG__
+        std::cout << "TripletLoss::TripletLoss(LossFunction<DTYPE> * 3, float, )" << '\n';
+        #endif  // __DEBUG__
+
+        Alloc(pOperator, margine);
+    }
+
     ~TripletLoss() {
         #ifdef __DEBUG__
         std::cout << "TripletLoss::~TripletLoss()" << '\n';
@@ -52,7 +61,7 @@ public:
         m_NumOfAnchorSample = (batchsize / 3);
 
         for (int i = 0; i < timesize; i++) {
-            m_LossPerSample[i] = new DTYPE[m_NumOfAnchorSample * channelsize * rowsize * colsize];
+            m_LossPerSample[i] = new DTYPE[m_NumOfAnchorSample/* * channelsize * rowsize * colsize*/];
         }
 
         this->SetResult(new Tensor<DTYPE>(timesize, m_NumOfAnchorSample, 1, 1, 1));
@@ -70,6 +79,7 @@ public:
    Tensor<DTYPE>* ForwardPropagate(int pTime = 0) {
      Tensor<DTYPE> *input         = this->GetTensor();
      Tensor<DTYPE> *result        = this->GetResult();
+     Tensor<DTYPE> *label  = this->GetLabel()->GetResult();
 
      int batchsize   = input->GetBatchSize();
      int channelsize = input->GetChannelSize();
@@ -85,6 +95,23 @@ public:
 
 
      for(int ba = 0; ba < m_NumOfAnchorSample; ba++){
+       // std::cout << "acn:" << '\n';
+       // for(int i = 0; i < 10; i++){
+       //     std::cout << (*label)[(ti * batchsize + ba)* 10 + i] << ' ';
+       // }
+       // std::cout << '\n';
+       // std::cout << "pos:" << '\n';
+       // for(int i = 0; i < 10; i++){
+       //     std::cout << (*label)[(ti * batchsize + (ba + m_NumOfAnchorSample))* 10 + i] << ' ';
+       // }
+       // std::cout << '\n';
+       // std::cout << "neg:" << '\n';
+       // for(int i = 0; i < 10; i++){
+       //     std::cout << (*label)[(ti * batchsize + (ba + 2 * m_NumOfAnchorSample))* 10 + i] << ' ';
+       // }
+       // std::cout << '\n';
+       DTYPE d_pos = 0;
+       DTYPE d_neg = 0;
        for(int ca = 0; ca < capacity; ca++){
         DTYPE idx_anc = (ti * batchsize + ba)* capacity + ca;
         DTYPE idx_pos = (ti * batchsize + (ba + m_NumOfAnchorSample))* capacity + ca;
@@ -95,14 +122,24 @@ public:
         DTYPE m_pos = (*input)[idx_pos];
         DTYPE m_neg = (*input)[idx_neg];
 
-        DTYPE d_pos = ((m_anc - m_pos) * (m_anc - m_pos));
-        DTYPE d_neg = ((m_anc - m_neg) * (m_anc - m_neg));
+        d_pos += ((m_anc - m_pos) * (m_anc - m_pos));
+        d_neg += ((m_anc - m_neg) * (m_anc - m_neg));
 
-        m_LossPerSample[ti][idx] = (m_margine + (d_pos - d_neg));
-        DTYPE temp = m_LossPerSample[ti][idx];
+        // m_LossPerSample[ti][idx] = (m_margine + (d_pos - d_neg));
+        // DTYPE temp = m_LossPerSample[ti][idx];
+        // printf("m_anc: %f, m_pos: %f, m_neg: %f\n", m_anc, m_pos, m_neg);
+        // printf("d_pos: %f, d_neg: %f, temp: %f\n", d_pos, d_neg, temp);
+        // std::cin >> idx;
 
-        if(temp > 0.f) (*result)[ti * m_NumOfAnchorSample + ba] += temp;
       }
+      DTYPE temp = m_margine + (d_pos - d_neg);
+      if(temp > 0.f) {
+          (*result)[ti * m_NumOfAnchorSample + ba] += temp;
+          m_LossPerSample[ti][ba] = 1;
+      } else {
+          m_LossPerSample[ti][ba] = 0;
+      }
+
       (*result)[ti * m_NumOfAnchorSample + ba] /= capacity;
      }
 
@@ -130,23 +167,21 @@ public:
       DTYPE temp    = 0.f;
 
         for(int ba = 0; ba < m_NumOfAnchorSample; ba++){
-          for(int ca = 0; ca < capacity; ca++){
-             idx_anc = (ti * batchsize + ba)* capacity + ca;
-             idx_pos = (ti * batchsize + (ba + m_NumOfAnchorSample))* capacity + ca;
-             idx_neg = (ti * batchsize + (ba + 2 * m_NumOfAnchorSample))* capacity + ca;
+          if(m_LossPerSample[ti][ba]){
+              for(int ca = 0; ca < capacity; ca++){
+                 idx_anc = (ti * batchsize + ba)* capacity + ca;
+                 idx_pos = (ti * batchsize + (ba + m_NumOfAnchorSample))* capacity + ca;
+                 idx_neg = (ti * batchsize + (ba + 2 * m_NumOfAnchorSample))* capacity + ca;
 
-             idx = ba * capacity + ca;
-             temp = m_LossPerSample[ti][idx];
+                 // (*input_delta)[idx_anc] = (2.f * (m_neg[ti][idx] - m_pos[ti][idx]));
+                 (*input_delta)[idx_anc] = (2.f * ((*input)[idx_neg] - (*input)[idx_pos])) / capacity;
+                 // (*input_delta)[idx_pos] = (2.f * (m_pos[ti][idx] - m_anc[ti][idx]));
+                 (*input_delta)[idx_pos] = (2.f * ((*input)[idx_pos] - (*input)[idx_anc])) / capacity;
+                 // (*input_delta)[idx_neg] = (2.f * (m_anc[ti][idx] - m_neg[ti][idx]));
+                 (*input_delta)[idx_neg] = (2.f * ((*input)[idx_anc]- (*input)[idx_neg])) / capacity;
+              }
+          }
 
-           if(temp > 0) {
-             // (*input_delta)[idx_anc] = (2.f * (m_neg[ti][idx] - m_pos[ti][idx]));
-             (*input_delta)[idx_anc] = (2.f * ((*input)[idx_neg] - (*input)[idx_pos])) / capacity;
-             // (*input_delta)[idx_pos] = (2.f * (m_pos[ti][idx] - m_anc[ti][idx]));
-             (*input_delta)[idx_pos] = (2.f * ((*input)[idx_pos] - (*input)[idx_anc])) / capacity;
-             // (*input_delta)[idx_neg] = (2.f * (m_anc[ti][idx] - m_neg[ti][idx]));
-             (*input_delta)[idx_neg] = (2.f * ((*input)[idx_anc]- (*input)[idx_neg])) / capacity;
-           }
-        }
       }
         return NULL;
    }

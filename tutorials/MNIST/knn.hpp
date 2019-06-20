@@ -17,6 +17,8 @@ void calDist(int imgNum, Tensor<float> * pred, Tensor<float> * ref, std::multima
         for(int k = 0; k < dimOfFeature; k++){
             float temp = (*pred)[Index5D(predShape,0,0,imgNum,0,k)] - (*ref)[Index5D(refShape,0,0,j,0,k)];
             distance += temp * temp;
+            // printf("pred: %f, ref: %f, temp: %f\n", (*pred)[Index5D(predShape,0,0,imgNum,0,k)], (*ref)[Index5D(refShape,0,0,j,0,k)], temp);
+            // std::cin >> temp;
             // (*dist)[i * numOfRef + j] += temp * temp;
         }
         dist_map.insert(pair<float, int>(distance, j));
