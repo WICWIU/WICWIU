@@ -55,7 +55,6 @@ public:
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
         Tensor<float> *sumOfExpInput   = m_sumOfExp;
-        Tensor<float> *sumOfInput      = m_sumOfInput;
 
         int timesize    = input->GetTimeSize();
         int batchsize   = input->GetBatchSize();
@@ -70,7 +69,6 @@ public:
 
         for(int i = 0; i < batchsize; i++){
           (*sumOfExpInput)[i] = 0.f;
-          (*sumOfInput)[i] = 0.f;
         }
 
         for (int ba = 0, i = 0; ba < batchsize; ba++) {
@@ -79,9 +77,6 @@ public:
             for (int j = 0, index = 0; j < capacity; j++) {
                 index         = i * capacity + j;
                 (*sumOfExpInput)[i] += ((*input)[index] * (*input)[index]);
-                (*sumOfInput)[i] += (*input)[index];
-                // std::cout << "sumOfExpInput " << (*sumOfExpInput)[i] << "  i = "<< i <<'\n';
-                // std::cout << "sumOfInput " << (*sumOfInput)[i] << "  i = "<< i <<'\n';
             }
         }
 
@@ -92,8 +87,6 @@ public:
             for (int j = 0, index = 0; j < capacity; j++) {
                 index         = i * capacity + j;
                 (*result)[index] = ((*input)[index] / (sqrt_x + m_epsilon));
-                // std::cout << "result" << (*result)[index] << '\n';
-
             }
        }
 
@@ -121,32 +114,26 @@ public:
 
         int ti = pTime;
 
+        for(int i = 0; i < batchsize; i++){
+          (*sumOfInput)[i] = 0.f;
+        }
+
+        for (int ba = 0, i = 0; ba < batchsize; ba++) {
+            i = ti * batchsize + ba;
+
+            for (int j = 0, index = 0; j < capacity; j++) {
+              (*sumOfInput)[i] += ((*this_delta)[index] * (*input)[index]);
+            }
+        }
+
         for (int ba = 0, i = 0; ba < batchsize; ba++) {
             i = ti * batchsize + ba;
 
             for (int j = 0, index = 0; j < capacity; j++) {
               (*input_delta)[index] += ((((*sumOfExpInput)[i] - ((*input)[index] * (*sumOfInput)[i])) / (std::pow((*sumOfExpInput)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
-              // std::cout << "input:  " << (*input)[index] <<'\n';
-              // std::cout << "temp:  " << sumOfExpInput <<'\n';
-              // std::cout << "sumOf:  " << (std::pow((*sumOfExpInput)[i], 1.5) + m_epsilon) <<'\n';
+
             }
         }
-
-
-            // for (int j = 0, index = 0; j < capacity; j++) {
-            //   if(i == index)
-            //     temp += ((((*sumOfExp)[i] - ((*input)[index] * (*input)[index] ) ) / (std::pow((*temp)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
-            //   else
-            //     temp -= ((((*input)[index] *(*input)[i]) / (std::pow((*temp)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
-            // }
-
-            // for (int j = 0, index = 0; j < capacity; j++) {
-            //     index                  = i * capacity + j;
-            //     if(i == index)
-            //       (*input_delta)[index] += ((((*temp)[i] - ((*input)[index] * (*input)[index] ) ) / (std::pow((*temp)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
-            //     else
-            //       (*input_delta)[index] -= ((((*input)[index] *(*input)[i]) / (std::pow((*temp)[i], 1.5) + m_epsilon)) * (*this_delta)[index]);
-            // }
 
         return TRUE;
     }

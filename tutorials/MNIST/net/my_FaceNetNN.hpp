@@ -46,7 +46,7 @@ public:
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
         // SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
-        SetLossFunction(new TripletLoss<float>(out, label, 0.0, "TPL"));
+        SetLossFunction(new TripletLoss<float>(out, label, 1.0, "TPL"));
         // ======================= Select Optimizer ===================
         // SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
         // SetOptimizer(new RMSPropOptimizer<float>(GetParameter(), 0.001, 0.9, 1e-08, FALSE, MINIMIZE));
