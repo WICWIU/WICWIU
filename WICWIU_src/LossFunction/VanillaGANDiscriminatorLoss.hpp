@@ -1,37 +1,37 @@
-#ifndef VANILLADISCRIMINATORLOSS_H_
-#define VANILLADISCRIMINATORLOSS_H_    value
+#ifndef VANILLAGANDISCRIMINATORLOSS_H_
+#define VANILLAGANDISCRIMINATORLOSS_H_    value
 
 #include "../LossFunction.hpp"
 
 template<typename DTYPE>
-class VanillaDiscriminatorLoss : public LossFunction<DTYPE>{
+class VanillaGANDiscriminatorLoss : public LossFunction<DTYPE>{
 private:
     DTYPE m_epsilon;
 public:
-    VanillaDiscriminatorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
+    VanillaGANDiscriminatorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
         #ifdef __DEBUG__
-        std::cout << "VanillaDiscriminatorLoss::VanillaDiscriminatorLoss(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
+        std::cout << "VanillaGANDiscriminatorLoss::VanillaGANDiscriminatorLoss(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pOperator, epsilon);
     }
 
-    VanillaDiscriminatorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
+    VanillaGANDiscriminatorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
         #ifdef __DEBUG__
-        std::cout << "VanillaDiscriminatorLoss::VanillaDiscriminatorLoss(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
+        std::cout << "VanillaGANDiscriminatorLoss::VanillaGANDiscriminatorLoss(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pOperator, 1e-6f);
     }
 
-    virtual ~VanillaDiscriminatorLoss(){
+    virtual ~VanillaGANDiscriminatorLoss(){
         #ifdef __DEBUG__
-        std::cout << "VanillaDiscriminatorLoss::~VanillaDiscriminatorLoss()" << '\n';
+        std::cout << "VanillaGANDiscriminatorLoss::~VanillaGANDiscriminatorLoss()" << '\n';
         #endif  // __DEBUG__
         Delete();
     }
 
     virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon){
         #ifdef __DEBUG__
-        std::cout << "VanillaDiscriminatorLoss::Alloc(Operator<DTYPE> *)" << '\n';
+        std::cout << "VanillaGANDiscriminatorLoss::Alloc(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
         Operator<DTYPE> *pInput = pOperator;

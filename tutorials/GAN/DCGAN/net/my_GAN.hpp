@@ -26,7 +26,7 @@ public:
         this->SetLabel(label);
 
         // ======================= Select LossFunction ===================
-        this->SetGANLossFunctions(new VanillaGeneratorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaGeneratorLoss"), new VanillaDiscriminatorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaDiscriminatorLoss"));
+        this->SetGANLossFunctions(new VanillaGANGeneratorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaGANGeneratorLoss"), new VanillaGANDiscriminatorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaGANDiscriminatorLoss"));
 
         // ======================= Select Optimizer ===================
         // this->SetGANOptimizers(new GradientDescentOptimizer<float>(this->GetGenerator()->GetParameter(), 0.000001, MINIMIZE), new GradientDescentOptimizer<float>(this->GetDiscriminator()->GetParameter(), 0.000001, MAXIMIZE));

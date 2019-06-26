@@ -1,5 +1,5 @@
-#include "LossFunction/VanillaGeneratorLoss.hpp"
-#include "LossFunction/VanillaDiscriminatorLoss.hpp"
+#include "LossFunction/VanillaGANGeneratorLoss.hpp"
+#include "LossFunction/VanillaGANDiscriminatorLoss.hpp"
 #include "NeuralNetwork.hpp"
 
 template<typename DTYPE> class GAN : public NeuralNetwork<DTYPE> {

@@ -1,37 +1,37 @@
-#ifndef VANILLAGENERATORLOSS_H_
-#define VANILLAGENERATORLOSS_H_    value
+#ifndef VANILLAGANGENERATORLOSS_H_
+#define VANILLAGANGENERATORLOSS_H_    value
 
 #include "../LossFunction.hpp"
 
 template<typename DTYPE>
-class VanillaGeneratorLoss : public LossFunction<DTYPE>{
+class VanillaGANGeneratorLoss : public LossFunction<DTYPE>{
 private:
 DTYPE m_epsilon;
 public:
-    VanillaGeneratorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon,  std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
+    VanillaGANGeneratorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon,  std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
         #ifdef __DEBUG__
-        std::cout << "VanillaGeneratorLoss::VanillaGeneratorLoss(Operator<DTYPE> *, Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
+        std::cout << "VanillaGANGeneratorLoss::VanillaGANGeneratorLoss(Operator<DTYPE> *, Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pOperator, epsilon);
     }
 
-    VanillaGeneratorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
+    VanillaGANGeneratorLoss(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName) : LossFunction<DTYPE>(pOperator, pLabel, pName){
         #ifdef __DEBUG__
-        std::cout << "VanillaGeneratorLoss::VanillaGeneratorLoss(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
+        std::cout << "VanillaGANGeneratorLoss::VanillaGANGeneratorLoss(Operator<DTYPE> *, MetaParameter *, std::string)" << '\n';
         #endif  // __DEBUG__
         this->Alloc(pOperator, 1e-6f);
     }
 
-    virtual ~VanillaGeneratorLoss(){
+    virtual ~VanillaGANGeneratorLoss(){
         #ifdef __DEBUG__
-        std::cout << "VanillaGeneratorLoss::~VanillaGeneratorLoss()" << '\n';
+        std::cout << "VanillaGANGeneratorLoss::~VanillaGANGeneratorLoss()" << '\n';
         #endif  // __DEBUG__
         Delete();
     }
 
     virtual int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon){
         #ifdef __DEBUG__
-        std::cout << "VanillaGeneratorLoss::Alloc(Operator<DTYPE> *)" << '\n';
+        std::cout << "VanillaGANGeneratorLoss::Alloc(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
         Operator<DTYPE> *pInput = pOperator;
