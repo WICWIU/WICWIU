@@ -14,15 +14,17 @@ private:
     LossFunction<DTYPE> *m_pDiscriminatorLossFunction;
 
 private:
-    int AllocLabel(DTYPE plabelValue);
+    int AllocLabelOnCPU(float plabelValue);
 
 #ifdef __CUDNN__
-    int AllocLabelOnGPU(DTYPE plabelValue);
+    int AllocLabelOnGPU(float plabelValue);
 #endif
 
 public:
     GAN();
     virtual ~GAN();
+
+    int                                 AllocLabel(float plabelValue);
 
     NeuralNetwork<DTYPE>*               SetGenerator(NeuralNetwork<DTYPE> *pGen);
     NeuralNetwork<DTYPE>*               SetDiscriminator(NeuralNetwork<DTYPE> *pDiscLoss);
@@ -82,9 +84,9 @@ public:
 #endif  // __CUDNN__
 };
 
-template<typename DTYPE> int GAN<DTYPE>::AllocLabel(DTYPE plabelValue){
+template<typename DTYPE> int GAN<DTYPE>::AllocLabelOnCPU(float plabelValue){
     #ifdef __DEBUG__
-    std::cout << "GAN<DTYPE>::AllocLabel(int plabel)" << '\n';
+    std::cout << "GAN<DTYPE>::AllocLabelOnCPU(int plabel)" << '\n';
     #endif  // __DEBUG__
 
     int m_timesize = m_pLabel->GetResult()->GetDim(0);
@@ -99,9 +101,9 @@ template<typename DTYPE> int GAN<DTYPE>::AllocLabel(DTYPE plabelValue){
 }
 
 #ifdef __CUDNN__
-template<typename DTYPE> int GAN<DTYPE>::AllocLabelOnGPU(DTYPE plabelValue){
+template<typename DTYPE> int GAN<DTYPE>::AllocLabelOnGPU(float plabelValue){
     #ifdef __DEBUG__
-    std::cout << "GAN<DTYPE>::AllocLabel(int plabel)" << '\n';
+    std::cout << "GAN<DTYPE>::AllocLabelOnGPU(int plabel)" << '\n';
     #endif  // __DEBUG__
 
     int m_timesize = m_pLabel->GetResult()->GetDim(0);
@@ -138,6 +140,14 @@ template<typename DTYPE> GAN<DTYPE>::~GAN(){
     #ifdef __DEBUG__
     std::cout << "GAN<DTYPE>::~GAN()" << '\n';
     #endif  // __DEBUG__
+}
+
+template<typename DTYPE> int GAN<DTYPE>::AllocLabel(float plabelValue){
+    if(this->GetDevice() == CPU) {
+        this->AllocLabelOnCPU(plabelValue);
+    } else if(this->GetDevice() == GPU) {
+        this->AllocLabelOnGPU(plabelValue);
+    } else return FALSE;
 }
 
 // Setter
