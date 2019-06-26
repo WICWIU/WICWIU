@@ -19,8 +19,8 @@ public:
         this->SetInput(3, z, x, label);
 
         this->SetGenerator(new my_Generator<float>(z));
-        this->SetSwitchInput(new SwitchInput<float>(this->GetGenerator(), x));
-        this->SetDiscriminator(new my_Discriminator<float>(this->GetSwitchInput()));
+        this->SetSwitch(new Switch<float>(this->GetGenerator(), x));
+        this->SetDiscriminator(new my_Discriminator<float>(this->GetSwitch()));
         this->AnalyzeGraph(this->GetDiscriminator());
 
         this->SetLabel(label);

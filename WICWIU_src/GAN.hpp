@@ -9,7 +9,7 @@ private:
     NeuralNetwork<DTYPE> *m_pDiscriminator;
 
     Tensorholder<DTYPE> *m_pLabel;
-    SwitchInput<DTYPE> *m_pSwitchInput;
+    Switch<DTYPE> *m_pSwitch;
 
     LossFunction<DTYPE> *m_pGeneratorLossFunction;
     LossFunction<DTYPE> *m_pDiscriminatorLossFunction;
@@ -31,7 +31,7 @@ public:
     NeuralNetwork<DTYPE>*               SetDiscriminator(NeuralNetwork<DTYPE> *pDiscLoss);
 
     Tensorholder<DTYPE>*                SetLabel(Tensorholder<DTYPE> *pLabel);
-    SwitchInput<DTYPE>*                 SetSwitchInput(SwitchInput<DTYPE> *pSwitchInput);
+    Switch<DTYPE>*                      SetSwitch(Switch<DTYPE> *pSwitch);
 
     void                                SetGANLossFunctions(LossFunction<DTYPE> *pGenLoss, LossFunction<DTYPE> *pDiscLoss);
     LossFunction<DTYPE>*                SetGeneratorLossFunction(LossFunction<DTYPE> *pGenLoss);
@@ -46,7 +46,7 @@ public:
     NeuralNetwork<DTYPE>*               GetDiscriminator();
 
     Tensorholder<DTYPE>*                GetLabel();
-    SwitchInput<DTYPE>*                 GetSwitchInput();
+    Switch<DTYPE>*                      GetSwitch();
 
     LossFunction<DTYPE>*                GetGeneratorLossFunction();
     LossFunction<DTYPE>*                GetDiscriminatorLossFunction();
@@ -136,7 +136,7 @@ template<typename DTYPE> GAN<DTYPE>::GAN() : NeuralNetwork<DTYPE>() {
     m_pDiscriminator = NULL;
 
     m_pLabel = NULL;
-    m_pSwitchInput = NULL;
+    m_pSwitch = NULL;
 
     m_pGeneratorLossFunction = NULL;
     m_pDiscriminatorLossFunction = NULL;
@@ -168,9 +168,9 @@ template<typename DTYPE> NeuralNetwork<DTYPE>* GAN<DTYPE>::SetDiscriminator(Neur
     return m_pDiscriminator;
 }
 
-template<typename DTYPE> SwitchInput<DTYPE>* GAN<DTYPE>::SetSwitchInput(SwitchInput<DTYPE> *pSwitchInput){
-    m_pSwitchInput = pSwitchInput;
-    return m_pSwitchInput;
+template<typename DTYPE> Switch<DTYPE>* GAN<DTYPE>::SetSwitch(Switch<DTYPE> *pSwitch){
+    m_pSwitch = pSwitch;
+    return m_pSwitch;
 }
 
 template<typename DTYPE> Tensorholder<DTYPE>* GAN<DTYPE>::SetLabel(Tensorholder<DTYPE> *pLabel){
@@ -215,8 +215,8 @@ template<typename DTYPE> NeuralNetwork<DTYPE>* GAN<DTYPE>::GetDiscriminator(){
     return m_pDiscriminator;
 }
 
-template<typename DTYPE> SwitchInput<DTYPE>* GAN<DTYPE>::GetSwitchInput(){
-    return m_pSwitchInput;
+template<typename DTYPE> Switch<DTYPE>* GAN<DTYPE>::GetSwitch(){
+    return m_pSwitch;
 }
 
 template<typename DTYPE> Tensorholder<DTYPE>* GAN<DTYPE>::GetLabel(){
@@ -269,7 +269,7 @@ template<typename DTYPE> int GAN<DTYPE>::TrainGeneratorOnCPU(){
     this->ResetGeneratorLossFunctionResult();
     this->ResetGeneratorLossFunctionGradient();
 
-    m_pSwitchInput->SetSwitchNumber(FAKE);
+    m_pSwitch->SetSwitchNumber(FAKE);
     this->ForwardPropagate();
     m_pGeneratorLossFunction->ForwardPropagate();
     m_pGeneratorLossFunction->BackPropagate();
@@ -296,8 +296,8 @@ template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutReal
     this->ResetDiscriminatorLossFunctionGradient();
 
     this->AllocLabel(REAL);
-    m_pSwitchInput->SetSwitchNumber(REAL);
-    m_pSwitchInput->ForwardPropagate();
+    m_pSwitch->SetSwitchNumber(REAL);
+    m_pSwitch->ForwardPropagate();
     m_pDiscriminator->ForwardPropagate();
     m_pDiscriminatorLossFunction->ForwardPropagate();
     m_pDiscriminatorLossFunction->BackPropagate();
@@ -313,7 +313,7 @@ template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFake
     this->ResetDiscriminatorLossFunctionGradient();
 
     this->AllocLabel(FAKE);
-    m_pSwitchInput->SetSwitchNumber(FAKE);
+    m_pSwitch->SetSwitchNumber(FAKE);
     this->ForwardPropagate();
     m_pDiscriminatorLossFunction->ForwardPropagate();
     m_pDiscriminatorLossFunction->BackPropagate();
@@ -337,7 +337,7 @@ template<typename DTYPE> int GAN<DTYPE>::TrainGeneratorOnGPU(){
         this->ResetGeneratorLossFunctionResult();
         this->ResetGeneratorLossFunctionGradient();
 
-        m_pSwitchInput->SetSwitchNumber(FAKE);
+        m_pSwitch->SetSwitchNumber(FAKE);
         this->ForwardPropagateOnGPU();
         m_pGeneratorLossFunction->ForwardPropagateOnGPU();
         m_pGeneratorLossFunction->BackPropagateOnGPU();
@@ -375,8 +375,8 @@ template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutReal
     this->ResetDiscriminatorLossFunctionGradient();
 
     this->AllocLabel(REAL);
-    m_pSwitchInput->SetSwitchNumber(REAL);
-    m_pSwitchInput->ForwardPropagateOnGPU();
+    m_pSwitch->SetSwitchNumber(REAL);
+    m_pSwitch->ForwardPropagateOnGPU();
     m_pDiscriminator->ForwardPropagateOnGPU();
     m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
     m_pDiscriminatorLossFunction->BackPropagateOnGPU();
@@ -392,7 +392,7 @@ template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFake
     this->ResetDiscriminatorLossFunctionGradient();
 
     this->AllocLabel(FAKE);
-    m_pSwitchInput->SetSwitchNumber(FAKE);
+    m_pSwitch->SetSwitchNumber(FAKE);
     this->ForwardPropagateOnGPU();
     m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
     m_pDiscriminatorLossFunction->BackPropagateOnGPU();

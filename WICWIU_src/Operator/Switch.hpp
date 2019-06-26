@@ -1,16 +1,16 @@
-#ifndef SWITCHINPUT_H_
-#define SWITCHINPUT_H_    value
+#ifndef SWITCH_H_
+#define SWITCH_H_    value
 
 #include "../Operator.hpp"
 
-template<typename DTYPE> class SwitchInput : public Operator<DTYPE>{
+template<typename DTYPE> class Switch : public Operator<DTYPE>{
 private:
     int m_SwitchNumber;
 
 public:
-    SwitchInput(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, int pLoadflag = TRUE) : Operator<DTYPE>(pInput0, pInput1, "NO_NAME", pLoadflag) {
+    Switch(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, int pLoadflag = TRUE) : Operator<DTYPE>(pInput0, pInput1, "NO_NAME", pLoadflag) {
         #ifdef __DEBUG__
-        std::cout << "SwitchInput::SwitchInput(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        std::cout << "Switch::Switch(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
         m_SwitchNumber = -1;
@@ -18,9 +18,9 @@ public:
         this->Alloc(pInput0, pInput1);
     }
 
-    SwitchInput(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput0, pInput1, pName, pLoadflag) {
+    Switch(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput0, pInput1, pName, pLoadflag) {
         #ifdef __DEBUG__
-        std::cout << "SwitchInput::SwitchInput(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        std::cout << "Switch::Switch(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
         m_SwitchNumber = -1;
@@ -28,9 +28,9 @@ public:
         this->Alloc(pInput0, pInput1);
     }
 
-    ~SwitchInput() {
+    ~Switch() {
         #ifdef __DEBUG__
-        std::cout << "SwitchInput::~SwitchInput()" << '\n';
+        std::cout << "Switch::~Switch()" << '\n';
         #endif  // __DEBUG__
 
         Delete();
@@ -46,7 +46,7 @@ public:
 
     int Alloc(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1) {
         #ifdef __DEBUG__
-        std::cout << "SwitchInput::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
+        std::cout << "Switch::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
         int timesize    = pInput0->GetResult()->GetTimeSize();
@@ -93,7 +93,7 @@ public:
                               = (*input1)[Index5D(resultTenShape, ti, ba, ch, ro, co)];
                         }
                         else{
-                            std::cout << "SwitchInput::ForwardPropagate() | Error : Invalid Switch Number." << '\n';
+                            std::cout << "Switch::ForwardPropagate() | Error : Invalid Switch Number." << '\n';
                             exit(-1);
                         }
                     }
@@ -133,7 +133,7 @@ public:
                                 += (*this_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)];
                         }
                         else{
-                            std::cout << "SwitchInput::BackwardPropagate() | Error : Invalid Switch Number." << '\n';
+                            std::cout << "Switch::BackwardPropagate() | Error : Invalid Switch Number." << '\n';
                             exit(-1);
                         }
                     }
@@ -170,7 +170,7 @@ public:
                                       &beta, pDesc, pDevOutput));
         }
         else{
-            std::cout << "SwitchInput::ForwardPropagate() | Error : Invalid Switch Number." << '\n';
+            std::cout << "Switch::ForwardPropagate() | Error : Invalid Switch Number." << '\n';
             exit(-1);
         }
 
@@ -203,7 +203,7 @@ public:
                                       &beta, pDesc, pDevInput1Delta));
         }
         else{
-            std::cout << "SwitchInput::ForwardPropagate() | Error : Invalid Switch Number." << '\n';
+            std::cout << "Switch::ForwardPropagate() | Error : Invalid Switch Number." << '\n';
             exit(-1);
         }
 
