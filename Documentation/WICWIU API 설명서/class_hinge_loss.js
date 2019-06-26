@@ -1,0 +1,28 @@
+var class_hinge_loss =
+[
+    [ "HingeLoss", "class_hinge_loss.html#a1fd8f684e9fc55fa6f520cc6d9e95240", null ],
+    [ "HingeLoss", "class_hinge_loss.html#af5cf855a84b382ca3948dbd9218d1279", null ],
+    [ "HingeLoss", "class_hinge_loss.html#a332c2d14aa13dea8833d244f91bfa87c", null ],
+    [ "~HingeLoss", "class_hinge_loss.html#a27cb9c3fcce4bc2eee68cb5a921d1b87", null ],
+    [ "Alloc", "class_hinge_loss.html#ab391c591298aac6501a3ad2d69e4b2cd", null ],
+    [ "Alloc", "class_hinge_loss.html#ad279a4a7cf77d9d22029049f5227e936", null ],
+    [ "BackPropagate", "class_hinge_loss.html#abc6ab97e970a292e9611b9ec2739a9f3", null ],
+    [ "Delete", "class_hinge_loss.html#a38f635376808e0609ebb99daa09354f2", null ],
+    [ "ForwardPropagate", "class_hinge_loss.html#ad839f1997f80de41ca4da2282b85e0f9", null ],
+    [ "GetDevice", "class_hinge_loss.html#a4d86b502935a77de60b41e4988224ae3", null ],
+    [ "GetDeviceID", "class_hinge_loss.html#a1498adc80e7109b4f3c1e4c3c5a97e88", null ],
+    [ "GetGradient", "class_hinge_loss.html#a91617741dcdf4d23564fdc76c142c967", null ],
+    [ "GetLabel", "class_hinge_loss.html#abebca5aa479892712d16950432a50634", null ],
+    [ "GetName", "class_hinge_loss.html#a52036df919c793a38c67a86752e245ce", null ],
+    [ "GetOperator", "class_hinge_loss.html#aedc2dee597a08ae40d53450a49c60aa5", null ],
+    [ "GetResult", "class_hinge_loss.html#a157997c23d30330f3a1787c4e0494906", null ],
+    [ "GetTensor", "class_hinge_loss.html#a771cbf18cc9665a59ea3d85f05362f60", null ],
+    [ "operator[]", "class_hinge_loss.html#a7ab1c185e2a902f8d1baf05b4300d21f", null ],
+    [ "ResetGradient", "class_hinge_loss.html#a3c75534f1638c50c062ae129e322aee0", null ],
+    [ "ResetResult", "class_hinge_loss.html#a218be336d4c24afd3ca91ee58ea600e0", null ],
+    [ "SetDeviceCPU", "class_hinge_loss.html#aada7f95e69a5fd68aeeb0e92a5856032", null ],
+    [ "SetGradient", "class_hinge_loss.html#ab18d973fabc53cf0b7b7c611e491be39", null ],
+    [ "SetResult", "class_hinge_loss.html#a6360d14472a61345a94190e04fb5ca70", null ],
+    [ "m_aindexForBackProp", "class_hinge_loss.html#aad0ff205fc5932ba00a056f87ad7e26f", null ],
+    [ "m_theta", "class_hinge_loss.html#a461d4c1c65b30933c82d56a10c51145a", null ]
+];

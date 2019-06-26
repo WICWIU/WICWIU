@@ -1,0 +1,25 @@
+var class_shape =
+[
+    [ "Shape", "class_shape.html#a2a7cd5aaf62c49a15140e8fc042d68a2", null ],
+    [ "Shape", "class_shape.html#ab33a5234bbfa48f9fdd050f85602b093", null ],
+    [ "Shape", "class_shape.html#aa8720e80e9c9624a33a1a16ce9e559b6", null ],
+    [ "Shape", "class_shape.html#a4816b3286c1d5150aaafdacc56c2df33", null ],
+    [ "Shape", "class_shape.html#a66339a1e7618d1a27ad04bb216a1683b", null ],
+    [ "Shape", "class_shape.html#a482c2a9c1b71e8229dea5052b94fdcf8", null ],
+    [ "~Shape", "class_shape.html#a935afc9e576015f967d90de56977167d", null ],
+    [ "Alloc", "class_shape.html#aeb0cb0c2a2284fa00a926465772d239c", null ],
+    [ "Alloc", "class_shape.html#a2311b922a375737dbbb54cdc7a54b43d", null ],
+    [ "Delete", "class_shape.html#a52a6d10cdc8051ac211110432b103db8", null ],
+    [ "GetDevice", "class_shape.html#ad3bf16f5fdf16e37694e882dcd800da3", null ],
+    [ "GetDeviceID", "class_shape.html#a9dae5e077c70b9b4d89626a0cea57929", null ],
+    [ "GetDim", "class_shape.html#a5418dc21436c259b6d715a42f4455315", null ],
+    [ "GetRank", "class_shape.html#a93bc73b3237c0398c302b9014f5727aa", null ],
+    [ "operator[]", "class_shape.html#afb2f25c23fa4217c06bdc0ebc022d647", null ],
+    [ "ReShape", "class_shape.html#aa6aba3540be5482aeaebff24636727e0", null ],
+    [ "ReShape", "class_shape.html#ac33a6b0013bd8e66b86a61e03cc131ce", null ],
+    [ "SetDeviceCPU", "class_shape.html#a053362e2b59b2965bdcb765d9158003c", null ],
+    [ "m_aDim", "class_shape.html#a249358343694628dc1951e1a67c207a0", null ],
+    [ "m_Device", "class_shape.html#abbe5dec35b4f6fcaca3da32696ee2f99", null ],
+    [ "m_idOfDevice", "class_shape.html#a8aa0cc651b74a4407e5f89da4d569624", null ],
+    [ "m_Rank", "class_shape.html#ad88891202927df9eda4ca67d5bbda9d2", null ]
+];

@@ -1,0 +1,27 @@
+var class_optimizer =
+[
+    [ "Optimizer", "class_optimizer.html#aceb51b5bd9ed8a62dbc89c224402fe9a", null ],
+    [ "Optimizer", "class_optimizer.html#a0f3d0c627ba4e9abc56493542081ea8a", null ],
+    [ "Optimizer", "class_optimizer.html#ad8d7d4b9c4c6e6f2e9994479bb6b986d", null ],
+    [ "~Optimizer", "class_optimizer.html#a83af99102cb516cf496aafbfea9c09cb", null ],
+    [ "Alloc", "class_optimizer.html#a918d9f07649a39fcd99d57937a990624", null ],
+    [ "Alloc", "class_optimizer.html#a436e877e428dc007bf7f8a27a483cb39", null ],
+    [ "Delete", "class_optimizer.html#a9231bd83ca0e7d78c20dd93621aedd96", null ],
+    [ "GetLearningRate", "class_optimizer.html#ad9387dd121ed55a119e98242359aa2f8", null ],
+    [ "GetOptimizeDirection", "class_optimizer.html#a993c37ff4e3e3bd572c9cf2f41d7a562", null ],
+    [ "GetTrainableTensor", "class_optimizer.html#a8aaa2dcbe9a5897a4817f14a3583d7f8", null ],
+    [ "GetTrainableTensorDegree", "class_optimizer.html#a9ce341664492509a90ba11b335d4cebe", null ],
+    [ "GetWeightDecayRate", "class_optimizer.html#ac95806a3d3897f54cf1c3da8525db2e9", null ],
+    [ "ResetParameterGradient", "class_optimizer.html#a6afc4f5bf1b0da229aafeefe5ae2bb12", null ],
+    [ "SetLearningRate", "class_optimizer.html#a9d5d625eb42a27951b98757364e3f6b9", null ],
+    [ "SetTrainableTensorDegree", "class_optimizer.html#a63213e3d65db1a88782afa122cc9fba5", null ],
+    [ "SetWeightDecayRate", "class_optimizer.html#aae30446ea6b1c7367d213ac5b868f6ba", null ],
+    [ "UpdateParameter", "class_optimizer.html#a5a989eee4fa18a9b4ee81b1b9bac2814", null ],
+    [ "UpdateParameter", "class_optimizer.html#ad76af45ccec70ffc2668f477b3ecc42e", null ],
+    [ "m_idOfDevice", "class_optimizer.html#afa02f071529216a44311e074a882a8ea", null ],
+    [ "m_LearningRate", "class_optimizer.html#ac3ec81b501dd62f630d1ddae47e1db57", null ],
+    [ "m_numOfParameter", "class_optimizer.html#ab813fc84aa30a8a1c9d601464f93c328", null ],
+    [ "m_OptimizeDirection", "class_optimizer.html#a6af58533f434e1249e0e2997b8f40683", null ],
+    [ "m_ppParameters", "class_optimizer.html#a18fc83040476639b313b9999d6e78633", null ],
+    [ "m_weightDecayRate", "class_optimizer.html#a68b27016075c38263d7ed194a4dbd049", null ]
+];
