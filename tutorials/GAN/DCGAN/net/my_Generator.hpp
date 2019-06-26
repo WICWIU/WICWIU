@@ -6,7 +6,6 @@
 using namespace std;
 
 template<typename DTYPE> class my_Generator : public NeuralNetwork<DTYPE> {
-private:
 public:
     my_Generator(Operator<float> *z){
         Alloc(z);

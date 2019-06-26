@@ -5,7 +5,6 @@
 using namespace std;
 
 template<typename DTYPE> class my_Discriminator : public NeuralNetwork<DTYPE> {
-private:
 public:
     my_Discriminator(Operator<float> *x){
         Alloc(x);

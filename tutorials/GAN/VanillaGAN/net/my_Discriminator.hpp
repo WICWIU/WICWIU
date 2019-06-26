@@ -4,7 +4,6 @@
 #include "../../../../WICWIU_src/NeuralNetwork.hpp"
 
 template<typename DTYPE> class my_Discriminator : public NeuralNetwork<DTYPE> {
-private:
 public:
     my_Discriminator(Operator<float> *x){
         Alloc(x);

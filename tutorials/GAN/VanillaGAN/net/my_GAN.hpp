@@ -6,7 +6,6 @@
 #include "../../../../WICWIU_src/GAN.hpp"
 
 template<typename DTYPE> class my_GAN : public GAN<DTYPE> {
-private:
 public:
     my_GAN(Tensorholder<float> *z, Tensorholder<float> *x, Tensorholder<float> *label){
         Alloc(z, x, label);
