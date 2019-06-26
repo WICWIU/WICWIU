@@ -55,17 +55,17 @@ public:
     int                                 TrainGenerator();
     int                                 TrainDiscriminator();
 
-    int                                 Test();
+    int                                 Generate();
 
     int                                 TrainGeneratorOnCPU();
     int                                 TrainDiscriminatorOnCPU();
 
-    int                                 TestOnCPU();
+    int                                 GenerateOnCPU();
 
     int                                 TrainGeneratorOnGPU();
     int                                 TrainDiscriminatorOnGPU();
 
-    int                                 TestOnGPU();
+    int                                 GenerateOnGPU();
 
     int                                 ResetParameterGradient();
 
@@ -238,11 +238,11 @@ template<typename DTYPE> int GAN<DTYPE>::TrainDiscriminator(){
     } else return FALSE;
 }
 
-template<typename DTYPE> int GAN<DTYPE>::Test() {
+template<typename DTYPE> int GAN<DTYPE>::Generate() {
   if(this->GetDevice() == CPU) {
-      this->TestOnCPU();
+      this->GenerateOnCPU();
   } else if(this->GetDevice() == GPU) {
-      this->TestOnGPU();
+      this->GenerateOnGPU();
   } else return FALSE;
 }
 
@@ -297,7 +297,7 @@ template<typename DTYPE> int GAN<DTYPE>::TrainDiscriminatorOnCPU(){
     return TRUE;
 }
 
-template<typename DTYPE> int GAN<DTYPE>::TestOnCPU(){
+template<typename DTYPE> int GAN<DTYPE>::GenerateOnCPU(){
     m_pGenerator->ResetResult();
     m_pGenerator->ForwardPropagate();
 
@@ -368,7 +368,7 @@ template<typename DTYPE> int GAN<DTYPE>::TrainDiscriminatorOnGPU(){
     return TRUE;
 }
 
-template<typename DTYPE> int GAN<DTYPE>::TestOnGPU(){
+template<typename DTYPE> int GAN<DTYPE>::GenerateOnGPU(){
     #ifdef __CUDNN__
         this->ResetResult();
         this->ForwardPropagateOnGPU();

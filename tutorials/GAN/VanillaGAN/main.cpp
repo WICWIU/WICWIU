@@ -5,7 +5,7 @@
 #define BATCH                 64
 #define EPOCH                 200
 #define LOOP_FOR_TRAIN        (60000 / BATCH)
-#define LOOP_FOR_TEST         (10000 / BATCH)
+#define LOOP_FOR_GENERATE     (10000 / BATCH)
 #define GPUID                 1
 
 using namespace std;
@@ -95,7 +95,7 @@ int main(int argc, char const *argv[]) {
                    discLoss);
              fflush(stdout);
              if(j % 50 == 0){
-                 string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
+                 string filePath  = "trained/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
                  const char *cstr = filePath.c_str();
                  Tensor2Image<float>(net->GetGenerator()->GetResult()->GetResult(), cstr, 3, 20, 28, 28);
              }
@@ -105,13 +105,13 @@ int main(int argc, char const *argv[]) {
         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
 
-        // ======================= Test(Save Generated Image)======================
-        float testGenLoss  = 0.f;
-        float testDiscLoss = 0.f;
+        // ======================= Generate(Save Generated Image)======================
+        float generateGenLoss  = 0.f;
+        float generateDiscLoss = 0.f;
 
         net->SetModeInference();
 
-        for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
+        for (int j = 0; j < (int)LOOP_FOR_GENERATE; j++) {
             Tensor<float> *z_t = Gnoise->GetNoiseFromBuffer();
 
 #ifdef __CUDNN__
@@ -119,27 +119,27 @@ int main(int argc, char const *argv[]) {
 #endif  // __CUDNN__
 
             net->FeedInputTensor(1, z_t);
-            net->Test();
+            net->Generate();
 
-            testGenLoss  = (*net->GetGeneratorLossFunction()->GetResult())[Index5D(net->GetGeneratorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
-            testDiscLoss  = (*net->GetDiscriminatorLossFunction()->GetResult())[Index5D(net->GetDiscriminatorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
+            generateGenLoss  = (*net->GetGeneratorLossFunction()->GetResult())[Index5D(net->GetGeneratorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
+            generateDiscLoss  = (*net->GetDiscriminatorLossFunction()->GetResult())[Index5D(net->GetDiscriminatorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
 
-            string filePath  = "evaluated/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
+            string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
             const char *cstr = filePath.c_str();
             Tensor2Image<float>(net->GetGenerator()->GetResult()->GetResult(), cstr, 3, 20, 28, 28);
 
-            printf("\rTest complete percentage is %d / %d -> loss : %f, acc : %f",
+            printf("\rGenerate complete percentage is %d / %d -> loss : %f, acc : %f",
                    j + 1,
-                   LOOP_FOR_TEST,
-                   testGenLoss,
-                   testDiscLoss);
+                   LOOP_FOR_GENERATE,
+                   generateGenLoss,
+                   generateDiscLoss);
             fflush(stdout);
         }
         std::cout << "\n\n";
 
         net->Save(filename);
         // Global Optimal C(G) = -log4
-        // if ( abs(- 1.0 * log(4) - bestGenLoss) > abs(- 1.0 * log(4) - testGenLoss) ) {
+        // if ( abs(- 1.0 * log(4) - bestGenLoss) > abs(- 1.0 * log(4) - generateGenLoss) ) {
         //     net->Save(filename);
         // }
     }
