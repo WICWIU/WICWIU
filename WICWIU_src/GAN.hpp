@@ -153,7 +153,9 @@ template<typename DTYPE> int GAN<DTYPE>::AllocLabel(float plabelValue){
     if(this->GetDevice() == CPU) {
         this->AllocLabelOnCPU(plabelValue);
     } else if(this->GetDevice() == GPU) {
+        #ifdef __CUDNN__
         this->AllocLabelOnGPU(plabelValue);
+        #endif  // __CUDNN__
     } else return FALSE;
 }
 
@@ -369,35 +371,45 @@ template<typename DTYPE> int GAN<DTYPE>::TrainDiscriminatorOnGPU(){
 }
 
 template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRealOnGPU(){
-    this->ResetResult();
-    m_pDiscriminator->ResetGradient();
-    this->ResetDiscriminatorLossFunctionResult();
-    this->ResetDiscriminatorLossFunctionGradient();
+    #ifdef __CUDNN__
+        this->ResetResult();
+        m_pDiscriminator->ResetGradient();
+        this->ResetDiscriminatorLossFunctionResult();
+        this->ResetDiscriminatorLossFunctionGradient();
 
-    this->AllocLabel(REAL);
-    m_pSwitch->SetSwitchNumber(REAL);
-    m_pSwitch->ForwardPropagateOnGPU();
-    m_pDiscriminator->ForwardPropagateOnGPU();
-    m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
-    m_pDiscriminatorLossFunction->BackPropagateOnGPU();
-    m_pDiscriminator->BackPropagateOnGPU();
+        this->AllocLabel(REAL);
+        m_pSwitch->SetSwitchNumber(REAL);
+        m_pSwitch->ForwardPropagateOnGPU();
+        m_pDiscriminator->ForwardPropagateOnGPU();
+        m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
+        m_pDiscriminatorLossFunction->BackPropagateOnGPU();
+        m_pDiscriminator->BackPropagateOnGPU();
+    #else  // __CUDNN__
+        std::cout << "There is no GPU option!" << '\n';
+        exit(-1);
+    #endif  // __CUDNN__
 
     return TRUE;
 }
 
 template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFakeOnGPU(){
-    this->ResetResult();
-    m_pDiscriminator->ResetGradient();
-    // this->ResetDiscriminatorLossFunctionResult();
-    this->ResetDiscriminatorLossFunctionGradient();
+    #ifdef __CUDNN__
+        this->ResetResult();
+        m_pDiscriminator->ResetGradient();
+        // this->ResetDiscriminatorLossFunctionResult();
+        this->ResetDiscriminatorLossFunctionGradient();
 
-    this->AllocLabel(FAKE);
-    m_pSwitch->SetSwitchNumber(FAKE);
-    this->ForwardPropagateOnGPU();
-    m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
-    m_pDiscriminatorLossFunction->BackPropagateOnGPU();
-    m_pDiscriminator->BackPropagateOnGPU();
-
+        this->AllocLabel(FAKE);
+        m_pSwitch->SetSwitchNumber(FAKE);
+        this->ForwardPropagateOnGPU();
+        m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
+        m_pDiscriminatorLossFunction->BackPropagateOnGPU();
+        m_pDiscriminator->BackPropagateOnGPU();
+    #else  // __CUDNN__
+        std::cout << "There is no GPU option!" << '\n';
+        exit(-1);
+    #endif  // __CUDNN__
+    
     return TRUE;
 }
 
