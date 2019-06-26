@@ -1,0 +1,26 @@
+var class_nag_optimizer =
+[
+    [ "NagOptimizer", "class_nag_optimizer.html#a7749c9f8ec9e682617e769423272d5ab", null ],
+    [ "NagOptimizer", "class_nag_optimizer.html#aef69cfaf5691a41e7d7f41cc2dd86943", null ],
+    [ "~NagOptimizer", "class_nag_optimizer.html#afc95f34429bdd9679b1bfc13e291e5ed", null ],
+    [ "Alloc", "class_nag_optimizer.html#a918d9f07649a39fcd99d57937a990624", null ],
+    [ "Alloc", "class_nag_optimizer.html#a436e877e428dc007bf7f8a27a483cb39", null ],
+    [ "Alloc", "class_nag_optimizer.html#a1eb291e54867352b01ca57c3da27d14b", null ],
+    [ "Delete", "class_nag_optimizer.html#a42d3725f2f08127b154dcab46a9c970c", null ],
+    [ "GetLearningRate", "class_nag_optimizer.html#ad9387dd121ed55a119e98242359aa2f8", null ],
+    [ "GetOptimizeDirection", "class_nag_optimizer.html#a993c37ff4e3e3bd572c9cf2f41d7a562", null ],
+    [ "GetTrainableTensor", "class_nag_optimizer.html#a8aaa2dcbe9a5897a4817f14a3583d7f8", null ],
+    [ "GetTrainableTensorDegree", "class_nag_optimizer.html#a9ce341664492509a90ba11b335d4cebe", null ],
+    [ "GetWeightDecayRate", "class_nag_optimizer.html#ac95806a3d3897f54cf1c3da8525db2e9", null ],
+    [ "ResetParameterGradient", "class_nag_optimizer.html#a6afc4f5bf1b0da229aafeefe5ae2bb12", null ],
+    [ "SetLearningRate", "class_nag_optimizer.html#a9d5d625eb42a27951b98757364e3f6b9", null ],
+    [ "SetTrainableTensorDegree", "class_nag_optimizer.html#a63213e3d65db1a88782afa122cc9fba5", null ],
+    [ "SetWeightDecayRate", "class_nag_optimizer.html#aae30446ea6b1c7367d213ac5b868f6ba", null ],
+    [ "UpdateParameter", "class_nag_optimizer.html#aeb0295ed90b6752805136838910d2ce5", null ],
+    [ "UpdateParameter", "class_nag_optimizer.html#a58a02e3959b18c588ff7629766375c3d", null ],
+    [ "UpdateParameter", "class_nag_optimizer.html#a4ac96ef206ce18f94570dfb6373b259f", null ],
+    [ "m_aaVelocity", "class_nag_optimizer.html#a71054e686e1c897d993dfc186c7f8ed5", null ],
+    [ "m_momentum", "class_nag_optimizer.html#a114e63b4be922c3fd1f6057cad21c0b4", null ],
+    [ "m_numOfParameter", "class_nag_optimizer.html#a049e056892bf36b15dae006490eb4682", null ],
+    [ "m_ppParameter", "class_nag_optimizer.html#ae42d5aaf4be0b36d7414abf42b55d16a", null ]
+];

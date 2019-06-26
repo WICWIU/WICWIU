@@ -27,6 +27,6 @@
 
 #include "Operator/NoiseGenerator/GaussianNoiseGenerator.hpp"
 
-#include "Operator/SwitchInput.hpp"
+#include "Operator/Switch.hpp"
 
 #endif  // __OPERATER_UTIL_H__

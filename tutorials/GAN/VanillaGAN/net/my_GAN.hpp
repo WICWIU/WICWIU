@@ -6,7 +6,6 @@
 #include "../../../../WICWIU_src/GAN.hpp"
 
 template<typename DTYPE> class my_GAN : public GAN<DTYPE> {
-private:
 public:
     my_GAN(Tensorholder<float> *z, Tensorholder<float> *x, Tensorholder<float> *label){
         Alloc(z, x, label);
@@ -19,14 +18,14 @@ public:
         this->SetInput(3, z, x, label);
 
         this->SetGenerator(new my_Generator<float>(z));
-        this->SetSwitchInput(new SwitchInput<float>(this->GetGenerator(), x));
-        this->SetDiscriminator(new my_Discriminator<float>(this->GetSwitchInput()));
+        this->SetSwitch(new Switch<float>(this->GetGenerator(), x));
+        this->SetDiscriminator(new my_Discriminator<float>(this->GetSwitch()));
         this->AnalyzeGraph(this->GetDiscriminator());
 
         this->SetLabel(label);
 
         // ======================= Select LossFunction ===================
-        this->SetGANLossFunctions(new VanillaGeneratorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaGeneratorLoss"), new VanillaDiscriminatorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaDiscriminatorLoss"));
+        this->SetGANLossFunctions(new VanillaGANGeneratorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaGANGeneratorLoss"), new VanillaGANDiscriminatorLoss<float>(this->GetDiscriminator(), this->GetLabel(), "VanillaGANDiscriminatorLoss"));
 
         // ======================= Select Optimizer ===================
         // this->SetGANOptimizers(new GradientDescentOptimizer<float>(this->GetGenerator()->GetParameter(), 0.000001, MINIMIZE), new GradientDescentOptimizer<float>(this->GetDiscriminator()->GetParameter(), 0.000001, MAXIMIZE));

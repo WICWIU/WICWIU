@@ -1,0 +1,27 @@
+var class_long_array =
+[
+    [ "LongArray", "class_long_array.html#a0e448aa621a5a40584f4db3bee5f27b3", null ],
+    [ "LongArray", "class_long_array.html#a0ee04422fc600f9b2d577f6679e131f5", null ],
+    [ "LongArray", "class_long_array.html#a8ba08c4e2db06cf8077b543f4133c341", null ],
+    [ "~LongArray", "class_long_array.html#a99b9382548ea2c7eb2864b8fc6834fbf", null ],
+    [ "Alloc", "class_long_array.html#a23acf783a51aae4045829f1532ac45c0", null ],
+    [ "Alloc", "class_long_array.html#a66407c75e2d19c77262f8104c3095d11", null ],
+    [ "Delete", "class_long_array.html#aec7709f457402eb08174b00e8e4a2eab", null ],
+    [ "GetCapacity", "class_long_array.html#aac066a7a3124bd3faf5790cb1cd3a775", null ],
+    [ "GetCapacityPerTime", "class_long_array.html#a8a76e2170c3fd845c5d4a4264d818347", null ],
+    [ "GetCPULongArray", "class_long_array.html#a488167dabfb50194e2af76e31745d73a", null ],
+    [ "GetDevice", "class_long_array.html#a390aa49da495a88a8180bcc829790471", null ],
+    [ "GetDeviceID", "class_long_array.html#a7ea4aa2f04851aa209017b6401f2b35f", null ],
+    [ "GetElement", "class_long_array.html#a891727ff9e896eece172ca0f5f91c682", null ],
+    [ "GetTimeSize", "class_long_array.html#a2fdf38f3b567651e109e237a32354479", null ],
+    [ "Load", "class_long_array.html#a76e8e08d27340622fb9a82603da15bd4", null ],
+    [ "operator[]", "class_long_array.html#ac589b2d62373ff5b107869f4d6438773", null ],
+    [ "Save", "class_long_array.html#ac4039a1f176738fc44ef8f8c28aa0d50", null ],
+    [ "SetDeviceCPU", "class_long_array.html#a7a6546122e528c6f8934f08eefd1d9bf", null ],
+    [ "m_aaHostLongArray", "class_long_array.html#ae61b2c0e3d98d2cba2df9d8618cd2a0f", null ],
+    [ "m_CapacityOfLongArray", "class_long_array.html#a33c08b7b84e1ae425343fada8f918f40", null ],
+    [ "m_CapacityPerTime", "class_long_array.html#ab00c1cece3bf85b3e40db669917ecc0f", null ],
+    [ "m_Device", "class_long_array.html#a39aa94857262164c8bbb4e2555def8aa", null ],
+    [ "m_idOfDevice", "class_long_array.html#ac6f6d033535f73386ce5e8dec86d725e", null ],
+    [ "m_TimeSize", "class_long_array.html#a382dd3e2b860a99d2c14789289c3a219", null ]
+];
