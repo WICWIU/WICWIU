@@ -1,5 +1,6 @@
-#include "LossFunction/VanillaGANGeneratorLoss.hpp"
-#include "LossFunction/VanillaGANDiscriminatorLoss.hpp"
+#ifndef GAN_H_
+#define GAN_H_
+
 #include "NeuralNetwork.hpp"
 
 template<typename DTYPE> class GAN : public NeuralNetwork<DTYPE> {
@@ -59,13 +60,19 @@ public:
 
     int                                 Generate();
 
-    int                                 TrainGeneratorOnCPU();
-    int                                 TrainDiscriminatorOnCPU();
+    virtual int                         TrainGeneratorOnCPU();
+    virtual int                         TrainDiscriminatorOnCPU();
+
+    virtual int                         ComputeGradientOfDiscriminatorAboutRealOnCPU();
+    virtual int                         ComputeGradientOfDiscriminatorAboutFakeOnCPU();
 
     int                                 GenerateOnCPU();
 
-    int                                 TrainGeneratorOnGPU();
-    int                                 TrainDiscriminatorOnGPU();
+    virtual int                         TrainGeneratorOnGPU();
+    virtual int                         TrainDiscriminatorOnGPU();
+
+    virtual int                         ComputeGradientOfDiscriminatorAboutRealOnGPU();
+    virtual int                         ComputeGradientOfDiscriminatorAboutFakeOnGPU();
 
     int                                 GenerateOnGPU();
 
@@ -274,6 +281,15 @@ template<typename DTYPE> int GAN<DTYPE>::TrainGeneratorOnCPU(){
 }
 
 template<typename DTYPE> int GAN<DTYPE>::TrainDiscriminatorOnCPU(){
+    this->ComputeGradientOfDiscriminatorAboutRealOnCPU();
+    this->GetDiscriminatorOptimizer()->UpdateParameter();
+    this->ComputeGradientOfDiscriminatorAboutFakeOnCPU();
+    this->GetDiscriminatorOptimizer()->UpdateParameter();
+
+    return TRUE;
+}
+
+template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRealOnCPU(){
     this->ResetResult();
     m_pDiscriminator->ResetGradient();
     this->ResetDiscriminatorLossFunctionResult();
@@ -283,26 +299,25 @@ template<typename DTYPE> int GAN<DTYPE>::TrainDiscriminatorOnCPU(){
     m_pSwitchInput->SetSwitchNumber(REAL);
     m_pSwitchInput->ForwardPropagate();
     m_pDiscriminator->ForwardPropagate();
-    // std::cout << "Discriminator Real Data Forward : " << (*m_pDiscriminator->GetResult()->GetResult())[Index5D(m_pDiscriminator->GetResult()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
     m_pDiscriminatorLossFunction->ForwardPropagate();
     m_pDiscriminatorLossFunction->BackPropagate();
     m_pDiscriminator->BackPropagate();
 
+    return TRUE;
+}
+
+template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFakeOnCPU(){
     this->ResetResult();
     m_pDiscriminator->ResetGradient();
-    this->ResetDiscriminatorLossFunctionResult();
+    // this->ResetDiscriminatorLossFunctionResult();
     this->ResetDiscriminatorLossFunctionGradient();
 
     this->AllocLabel(FAKE);
     m_pSwitchInput->SetSwitchNumber(FAKE);
     this->ForwardPropagate();
-    // std::cout << "Discriminator Fake Data Forward : " << (*m_pDiscriminator->GetResult()->GetResult())[Index5D(m_pDiscriminator->GetResult()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
     m_pDiscriminatorLossFunction->ForwardPropagate();
     m_pDiscriminatorLossFunction->BackPropagate();
     m_pDiscriminator->BackPropagate();
-
-
-    this->GetDiscriminatorOptimizer()->UpdateParameter();
 
     return TRUE;
 }
@@ -324,7 +339,6 @@ template<typename DTYPE> int GAN<DTYPE>::TrainGeneratorOnGPU(){
 
         m_pSwitchInput->SetSwitchNumber(FAKE);
         this->ForwardPropagateOnGPU();
-        // std::cout << "Generator Fake Data Forward : " << (*m_pDiscriminator->GetResult()->GetResult())[Index5D(m_pDiscriminator->GetResult()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
         m_pGeneratorLossFunction->ForwardPropagateOnGPU();
         m_pGeneratorLossFunction->BackPropagateOnGPU();
         this->BackPropagateOnGPU();
@@ -341,39 +355,48 @@ template<typename DTYPE> int GAN<DTYPE>::TrainGeneratorOnGPU(){
 
 template<typename DTYPE> int GAN<DTYPE>::TrainDiscriminatorOnGPU(){
     #ifdef __CUDNN__
-        this->ResetResult();
-        m_pDiscriminator->ResetGradient();
-        this->ResetDiscriminatorLossFunctionResult();
-        this->ResetDiscriminatorLossFunctionGradient();
-
-        this->AllocLabelOnGPU(REAL);
-        m_pSwitchInput->SetSwitchNumber(REAL);
-        m_pSwitchInput->ForwardPropagateOnGPU();
-        m_pDiscriminator->ForwardPropagateOnGPU();
-        // std::cout << "Discriminator Real Data Forward : " << (*m_pDiscriminator->GetResult()->GetResult())[Index5D(m_pDiscriminator->GetResult()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
-        m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
-        m_pDiscriminatorLossFunction->BackPropagateOnGPU();
-        m_pDiscriminator->BackPropagateOnGPU();
-
-        this->ResetResult();
-        m_pDiscriminator->ResetGradient();
-        this->ResetDiscriminatorLossFunctionResult();
-        this->ResetDiscriminatorLossFunctionGradient();
-
-        this->AllocLabelOnGPU(FAKE);
-        m_pSwitchInput->SetSwitchNumber(FAKE);
-        this->ForwardPropagateOnGPU();
-        // std::cout << "Discriminator Fake Data Forward : " << (*m_pDiscriminator->GetResult()->GetResult())[Index5D(m_pDiscriminator->GetResult()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
-        m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
-        m_pDiscriminatorLossFunction->BackPropagateOnGPU();
-        m_pDiscriminator->BackPropagateOnGPU();
-
+        this->ComputeGradientOfDiscriminatorAboutRealOnGPU();
+        this->GetDiscriminatorOptimizer()->UpdateParameterOnGPU();
+        this->ComputeGradientOfDiscriminatorAboutFakeOnGPU();
         this->GetDiscriminatorOptimizer()->UpdateParameterOnGPU();
 
     #else  // __CUDNN__
         std::cout << "There is no GPU option!" << '\n';
         exit(-1);
     #endif  // __CUDNN__
+
+    return TRUE;
+}
+
+template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRealOnGPU(){
+    this->ResetResult();
+    m_pDiscriminator->ResetGradient();
+    this->ResetDiscriminatorLossFunctionResult();
+    this->ResetDiscriminatorLossFunctionGradient();
+
+    this->AllocLabel(REAL);
+    m_pSwitchInput->SetSwitchNumber(REAL);
+    m_pSwitchInput->ForwardPropagateOnGPU();
+    m_pDiscriminator->ForwardPropagateOnGPU();
+    m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
+    m_pDiscriminatorLossFunction->BackPropagateOnGPU();
+    m_pDiscriminator->BackPropagateOnGPU();
+
+    return TRUE;
+}
+
+template<typename DTYPE> int GAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFakeOnGPU(){
+    this->ResetResult();
+    m_pDiscriminator->ResetGradient();
+    // this->ResetDiscriminatorLossFunctionResult();
+    this->ResetDiscriminatorLossFunctionGradient();
+
+    this->AllocLabel(FAKE);
+    m_pSwitchInput->SetSwitchNumber(FAKE);
+    this->ForwardPropagateOnGPU();
+    m_pDiscriminatorLossFunction->ForwardPropagateOnGPU();
+    m_pDiscriminatorLossFunction->BackPropagateOnGPU();
+    m_pDiscriminator->BackPropagateOnGPU();
 
     return TRUE;
 }
@@ -430,3 +453,5 @@ template<typename DTYPE> void GAN<DTYPE>::SetDeviceGPUOnGAN(unsigned int idOfDev
 }
 
 #endif  // __CUDNN__
+
+#endif  // GAN_H_
