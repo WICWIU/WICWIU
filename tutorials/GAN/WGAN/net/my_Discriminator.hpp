@@ -33,7 +33,7 @@ public:
 
         out = new ReShape<float>(out, 1, 1, 64 * 7 * 7, "D_ReShape3");
         out = new Linear<float>(out, 64 * 7 * 7, 1);
-        out = new Sigmoid<float>(out, "D_Sigmoid3");
+        // out = new Sigmoid<float>(out, "D_Sigmoid3");
 
         this->AnalyzeGraph(out);
     }
