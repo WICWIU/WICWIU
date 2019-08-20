@@ -60,8 +60,8 @@ int knn(int k, Tensor<float> * labelOfRef, std::multimap< float, int >& dist_map
 }
 
 float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef/*, int mat[][10]*/){
-    std::ofstream file;
-    file.open("check1.txt", std::ios::out | std::ios::app);
+    // std::ofstream file;
+    // file.open("check1.txt", std::ios::out | std::ios::app);
     // std::ofstream file1;
     // file1.open("check1.txt", std::ios::out | std::ios::app);
     // int num;
@@ -71,7 +71,7 @@ float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, 
     Tensor<float> *labelOfRef_t = labelOfRef->GetResult();
     // std::cout << ref->GetResult() << '\n';
     // std::cin >> num;
-    Shape *shp = pred_t -> GetShape();
+    // Shape *shp = pred_t -> GetShape();
     // int cal[10][10] = {0};
 
     int numOfImg = pred_t->GetBatchSize();
@@ -99,19 +99,19 @@ float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, 
         // }
 
         // cal[realClass][predClass]++;
-        for(int k=0; k<64; k++)
-        {
-          file<< (*pred_t)[Index5D(shp,0,0,i,0,k)] << ' ';
-          count++;
-
-          if(count == 8)
-          {
-            count = 0;
-            file<<endl;
-          }
-        }
-
-        file << realClass << endl;
+        // for(int k=0; k<64; k++)
+        // {
+        //   file<< (*pred_t)[Index5D(shp,0,0,i,0,k)] << ' ';
+        //   count++;
+        //
+        //   if(count == 8)
+        //   {
+        //     count = 0;
+        //     file<<endl;
+        //   }
+        // }
+        //
+        // file << realClass << endl;
         //
         // file1<< (*ref_t)[Index5D(shp,0,0,i,0,0)] << ' ' << (*ref_t)[Index5D(shp,0,0,i,0,1)] << ' ';
         // file1<< realClass1 << endl;
