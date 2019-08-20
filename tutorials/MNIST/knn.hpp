@@ -3,6 +3,9 @@
 #include <vector>
 #include <utility>
 #include "../../WICWIU_src/NeuralNetwork.hpp"
+#include <iostream>
+#include <fstream>
+#include <math.h>
 // #include <thread>
 
 void calDist(int imgNum, Tensor<float> * pred, Tensor<float> * ref, std::multimap< float, int >& dist_map){
@@ -21,6 +24,7 @@ void calDist(int imgNum, Tensor<float> * pred, Tensor<float> * ref, std::multima
             // std::cin >> temp;
             // (*dist)[i * numOfRef + j] += temp * temp;
         }
+        distance = std::sqrt(distance);
         dist_map.insert(pair<float, int>(distance, j));
     }
 }
@@ -55,16 +59,28 @@ int knn(int k, Tensor<float> * labelOfRef, std::multimap< float, int >& dist_map
     return std::distance(v.begin(), std::max_element(v.begin(), v.end()));;
 }
 
-float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef){
+float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, Operator<float> * ref, Operator<float> * labelOfRef/*, int mat[][10]*/){
+    std::ofstream file;
+    file.open("check1.txt", std::ios::out | std::ios::app);
+    // std::ofstream file1;
+    // file1.open("check1.txt", std::ios::out | std::ios::app);
+    // int num;
     Tensor<float> *pred_t = pred->GetResult();
     Tensor<float> *ref_t =  ref->GetResult();
     Tensor<float> *labelOfPred_t = labelOfPred->GetResult();
     Tensor<float> *labelOfRef_t = labelOfRef->GetResult();
+    // std::cout << ref->GetResult() << '\n';
+    // std::cin >> num;
+    Shape *shp = pred_t -> GetShape();
+    // int cal[10][10] = {0};
 
     int numOfImg = pred_t->GetBatchSize();
+    int refOfImg = ref_t->GetBatchSize();
     int predClass = 0;
     int realClass = 0;
+    // int realClass1 = 0;
     int correct = 0;
+    int count = 0;
 
     // create strorage to save distance
     std::multimap< float, int > dist_map;
@@ -74,11 +90,43 @@ float GetAccuracy(int k, Operator<float> * pred, Operator<float> * labelOfPred, 
         calDist(i, pred_t, ref_t, dist_map);
         predClass = knn(k, labelOfRef_t, dist_map);
         realClass = onehot2label(i, labelOfPred_t);
+
         if(predClass == realClass) correct++;
+
+        // if(times == 0){
+        //   std::cout << onehot2label(i, labelOfRef_t) << ' ';
+        //   if(i == numOfImg / 3 - 1 || i == numOfImg / 3 * 2 - 1) std::cout << '\n';
+        // }
+
+        // cal[realClass][predClass]++;
+        for(int k=0; k<64; k++)
+        {
+          file<< (*pred_t)[Index5D(shp,0,0,i,0,k)] << ' ';
+          count++;
+
+          if(count == 8)
+          {
+            count = 0;
+            file<<endl;
+          }
+        }
+
+        file << realClass << endl;
+        //
+        // file1<< (*ref_t)[Index5D(shp,0,0,i,0,0)] << ' ' << (*ref_t)[Index5D(shp,0,0,i,0,1)] << ' ';
+        // file1<< realClass1 << endl;
         // std::cout << "predClass: " << predClass << " realClass: " << realClass << '\n';
         // std::cin >> predClass;
         dist_map.clear();
     }
 
+    // std::cout << '\n';
+    // cin >> num;
+    // for(int i=0; i<10; i++)
+    // {
+    //   for(int j=0; j<10; j++)
+    //     mat[i][j] = cal[i][j];
+    // }
+    // std::cout  << '\n';
     return (float)correct / numOfImg;
 }
