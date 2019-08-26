@@ -169,6 +169,12 @@ template<typename DTYPE> Module<DTYPE>::Module(std::string pName) : Operator<DTY
     m_pLastOperator          = NULL;
     m_idOfDevice             = -1;
 
+    // for Window
+    // m_InputDegree            = 0;
+    // m_ParameterDegree        = 0;
+    // m_numOfExcutableOperator = 0;
+    // for Window
+   
     Alloc();
 }
 
