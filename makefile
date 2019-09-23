@@ -1,7 +1,7 @@
 .SUFFIXES = .cpp .o
 
 WICWIU_LIB = lib/libwicwiu.a
-CFLAGS = -O2 -std=c++11
+CFLAGS = -O3 -std=c++11
 
 
 #	if CUDA device, cuda or cuDNN is not installed, disable the following line
