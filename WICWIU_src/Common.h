@@ -32,8 +32,8 @@
 #endif  // !TRUE
 
 #ifdef __CUDNN__
-    # include "cuda.h"
-    # include "cudnn.h"
+    # include "/usr/local/cuda-10.1/targets/x86_64-linux/include/cuda.h"
+    # include "/home/daniel/anaconda3/envs/gpu/include/cudnn.h"
     # include "error_util.h"
 #endif  // ifndef __CUDNN__
 
