@@ -46,7 +46,7 @@ enum Device {
     GPU,
 };
 
-enum SwitchNumber {
+enum SwitchEnum {
     FAKE, // 0
     REAL, // 1
 };

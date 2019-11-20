@@ -82,6 +82,7 @@ public:
     int                      Load(FILE *fp);
 
     void                     Clip(float min, float max);
+    void                     MultiplyScalar(unsigned int pTime, float pScalar);
 #ifdef __CUDNN__
     void                     SetDeviceGPU(unsigned int idOfDevice);
 
@@ -856,13 +857,26 @@ template<typename DTYPE> void Tensor<DTYPE>::Clip(float min, float max) {
                                 (*m_aLongArray)[index] = min;
                             else if( (*m_aLongArray)[index] > max )
                                 (*m_aLongArray)[index] = max;
-
                 }
             }
         }
     }
 
     return;
+}
+
+template<typename DTYPE> void Tensor<DTYPE>::MultiplyScalar(unsigned int pTime, float pScalar){
+    int batchsize   = this->GetBatchSize();
+    int channelsize = this->GetChannelSize();
+    int rowsize     = this->GetRowSize();
+    int colsize     = this->GetColSize();
+    int capacity    = batchsize * channelsize * rowsize * colsize;
+
+    int ti = pTime;
+
+    for (int index = ti * capacity; index < (ti + 1) * capacity; index++) {
+        (*m_aLongArray)[index] = (*m_aLongArray)[index] * pScalar;
+    }
 }
 
 #ifdef __CUDNN__

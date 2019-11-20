@@ -7,3 +7,5 @@
 #include "LossFunction/VanillaGANDiscriminatorLoss.hpp"
 #include "LossFunction/WGANGeneratorLoss.hpp"
 #include "LossFunction/WGANDiscriminatorLoss.hpp"
+#include "LossFunction/BEGANGeneratorLoss.hpp"
+#include "LossFunction/BEGANDiscriminatorLoss.hpp"
