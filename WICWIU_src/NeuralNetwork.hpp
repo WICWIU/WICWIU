@@ -1,6 +1,7 @@
 #ifndef NEURALNETWORK_H_
 #define NEURALNETWORK_H_
 
+#include "Utils.hpp"
 #include "Optimizer_utils.hpp"
 
 /*!
@@ -38,10 +39,10 @@ public:
     virtual ~NeuralNetwork();
 
     LossFunction<DTYPE>* SetLossFunction(LossFunction<DTYPE> *pLossFunction);
-    Optimizer<DTYPE>   * SetOptimizer(Optimizer<DTYPE> *pOptimizer);
+    Optimizer<DTYPE>*   SetOptimizer(Optimizer<DTYPE> *pOptimizer);
 
-    Operator<DTYPE>    * GetResultOperator();
-    Operator<DTYPE>    * GetResult();
+    Operator<DTYPE>*    GetResultOperator();
+    Tensor<DTYPE>*      GetResult();
 
     LossFunction<DTYPE>* GetLossFunction();
 
@@ -75,8 +76,9 @@ public:
 
     Operator<DTYPE>    * SearchOperator(std::string pName);
 
-#ifdef __CUDNN__
+    void                 InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize = 32);
 
+#ifdef __CUDNN__
     void SetDeviceGPU(unsigned int idOfDevice);
     void SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
     int  SetDeviceID(unsigned int idOfDevice);
@@ -207,12 +209,12 @@ template<typename DTYPE> Optimizer<DTYPE> *NeuralNetwork<DTYPE>::SetOptimizer(Op
 }
 
 template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::GetResultOperator() {
-    return this->GetResult();
+    return this->GetExcutableOperatorContainer()->GetLast();
 }
 
-template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::GetResult() {
+template<typename DTYPE> Tensor<DTYPE> *NeuralNetwork<DTYPE>::GetResult() {
     // return m_apExcutableOperator->GetLast();
-    return this->GetExcutableOperatorContainer()->GetLast();
+    return this->GetResultOperator()->GetResult();
 }
 
 template<typename DTYPE> LossFunction<DTYPE> *NeuralNetwork<DTYPE>::GetLossFunction() {
@@ -614,6 +616,86 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(s
     }
 
     return NULL;
+}
+
+template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize)
+{
+#ifdef  __DEBUG__    
+    for(int i = 0; i < MIN(1, noSample); i++){
+        printf("Sample[%d]:\n", i);
+        DisplayFeature(inDim, pSamples[i], 220*220);
+    }
+    // printf("Press Enter to continue (%s)...", __FUNCTION__);
+    // fflush(stdout);
+    // getchar();
+#endif//  __DEBUG__    
+
+    //printf("Starting %s, inDim = %d, outDim = %d, %lu samples\n", __FUNCTION__, inDim, outDim, vSample.size());
+    int noBatch = (noSample + batchSize - 1) / batchSize;
+
+//    vFeature.resize(noSample);
+    int remained = noSample;
+    for(int batchIdx  = 0; batchIdx < noBatch; batchIdx++){
+        int curBatch = MIN(remained, batchSize);
+
+        Tensor<float> *input = new Tensor<float> (1, curBatch, 1, 1, inDim);
+        if(input == NULL){
+            printf("Failed to allocate memory in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+            printf("Press Enter to continue...");
+            getchar();
+        }
+
+        for(int idx = 0; idx < curBatch; idx++)
+            memcpy(&(*input)[idx * inDim], pSamples[batchIdx * batchSize + idx], inDim * sizeof(float));
+
+#ifdef __CUDNN__
+        if(this->GetDevice() == GPU)
+            input->SetDeviceGPU(this->GetDeviceID());
+#endif  //  __CUDNN__
+
+        this->FeedInputTensor(1, input);
+
+        this->ResetResult();                    // necessary
+//        this->ResetLossFunctionResult();      // not necessary
+
+#ifdef __CUDNN__
+        this->ForwardPropagateOnGPU();
+#else   //  __CUDNN__
+        this->ForwardPropagateOn():
+#endif  //  __CUDNN__
+
+        Tensor<float> *result = this->GetResult();
+
+        for(int idx = 0; idx < curBatch; idx++){
+            // assume pFeatures[i] are already allocated
+            // pFeatures[batchIdx * batchSize + idx] = new float[outDim];
+            // if(pFeatures[batchIdx * batchSize + idx] == NULL){
+            //     printf("Failed to allocate memory in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+            //     MyPause(__FUNCTION__);
+            // }
+
+            memcpy(pFeatures[batchIdx * batchSize + idx], &(*result)[idx * outDim], outDim * sizeof(float));
+
+#ifdef  __DEBUG__
+            printf("=== %d-th Feature: ", idx);
+            DisplayFeature(outDim, pFeatures[batchIdx * batchSize + idx]);
+#endif  //  __DEBUG__
+        }
+
+#ifdef  __DEBUG__
+        for(int i = 0; i < MIN(2, curBatch); i++){
+            printf("Feature (idx = %d)\n", batchIdx * batchSize + i);
+            DisplayFeature(outDim, pFeatures[batchIdx * batchSize + i]);
+            fflush(stdout);
+        }
+
+        // printf("Press Enter to continue...(%s)", __FUNCTION__);
+        // getchar();
+#endif  //  __DEBUG__
+
+        remained -= curBatch;
+//        delete input;				// should not delete
+    }
 }
 
 #ifdef __CUDNN__
