@@ -26,7 +26,9 @@
 // #include "Operator/Dropout.h"
 
 #include "Operator/NoiseGenerator/GaussianNoiseGenerator.hpp"
+#include "Operator/NoiseGenerator/UniformNoiseGenerator.hpp"
 
 #include "Operator/Switch.hpp"
+#include "Operator/ReconstructionError.hpp"
 
 #endif  // __OPERATER_UTIL_H__

@@ -73,13 +73,14 @@ public:
         Operator<DTYPE> *out = pInput;
 
         // for He initialization
-        int n_i = pNumKernelRow * pNumKernelCol * pNumInputChannel;
-        int n_o = pNumKernelRow * pNumKernelCol * pNumOutputChannel;
-        float stddev = sqrt((float)4/(n_i + n_o));
+        // int n_i = pNumKernelRow * pNumKernelCol * pNumInputChannel;
+        // int n_o = pNumKernelRow * pNumKernelCol * pNumOutputChannel;
+        // float stddev = sqrt((float)4/(n_i + n_o));
         // std::cout << stddev << '\n';
         // float stddev = 0.1;
 
-        Tensorholder<DTYPE> *pWeight = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, pNumOutputChannel, pNumInputChannel, pNumKernelRow, pNumKernelCol, 0.0, stddev), "Convolution2D_Weight_" + pName);
+        // Tensorholder<DTYPE> *pWeight = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, pNumOutputChannel, pNumInputChannel, pNumKernelRow, pNumKernelCol, 0.0, stddev), "Convolution2D_Weight_" + pName);
+        Tensorholder<DTYPE> *pWeight = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, pNumOutputChannel, pNumInputChannel, pNumKernelRow, pNumKernelCol, 0.0, 0.02), "Convolution2D_Weight_" + pName);
         out = new Convolution2D<DTYPE>(out, pWeight, pStrideRow, pStrideCol, pPaddingRow, pPaddingCol, "Convolution2D_Convolution2D_" + pName);
 
         if(use_bias){

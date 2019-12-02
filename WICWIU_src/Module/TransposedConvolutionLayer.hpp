@@ -48,7 +48,7 @@ public:
 
         Operator<DTYPE> *out = pInput;
 
-        Tensorholder<DTYPE> *pWeight = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, pNumInputChannel, pNumOutputChannel, pNumKernelRow, pNumKernelCol, 0.0, 0.1), "TransposedConvolution2D_Weight_" + pName);
+        Tensorholder<DTYPE> *pWeight = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, pNumInputChannel, pNumOutputChannel, pNumKernelRow, pNumKernelCol, 0.0, 0.02), "TransposedConvolution2D_Weight_" + pName);
         out = new TransposedConvolution2D<DTYPE>(out, pWeight, pStrideRow, pStrideCol, pPaddingRow, pPaddingCol, "TransposedConvolution2D_Convolution2D_" + pName);
 
         if(use_bias){
