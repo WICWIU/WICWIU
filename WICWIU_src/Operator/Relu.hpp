@@ -179,7 +179,8 @@ public:
                 for (int ro = 0; ro < rowsize; ro++) {
                     for (int co = 0; co < colsize; co++) {
                         (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                            = this->MAX((*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)], 0.f);
+//                            = this->MAX((*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)], 0.f);
+                            = MAX((*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)], 0.f);
                     }
                 }
             }
@@ -235,10 +236,11 @@ public:
     @param data2 비교할 값
     @return data1, data2중 더 큰 값.
     */
-    inline DTYPE MAX(DTYPE data1, DTYPE data2) {
-        if (data1 >= data2) return data1;
-        else return data2;
-    }
+    
+    // inline DTYPE MAX(DTYPE data1, DTYPE data2) {
+    //     if (data1 >= data2) return data1;
+    //     else return data2;
+    // }
 
 #ifdef __CUDNN__
     /*!

@@ -450,7 +450,7 @@ template<typename DTYPE> int GAN<DTYPE>::ResetDiscriminatorLossFunctionGradient(
 }
 
 template<typename DTYPE> void GAN<DTYPE>::Clip(float min, float max){
-    this->GetDiscriminator()->GetResult()->GetResult()->Clip(min, max);
+    this->GetDiscriminator()->GetResult()->Clip(min, max);
 }
 
 #ifdef __CUDNN__

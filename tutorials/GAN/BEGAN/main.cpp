@@ -97,7 +97,7 @@ int main(int argc, char const *argv[]) {
 
             genLoss  = (*net->GetGeneratorLossFunction()->GetResult())[Index5D(net->GetGeneratorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
             discLoss  = (*net->GetDiscriminatorLossFunction()->GetResult())[Index5D(net->GetDiscriminatorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
-            
+
             printf("Train complete percentage is %d / %d -> Generator Loss : %f, Discriminator Loss : %f\n",
                    j + 1,
                    LOOP_FOR_TRAIN,
@@ -107,7 +107,7 @@ int main(int argc, char const *argv[]) {
              if(j % 50 == 0){
                  string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
                  const char *cstr = filePath.c_str();
-                 Tensor2Image<float>(net->GetGenerator()->GetResult()->GetResult(), cstr, 3, 64, 64);
+                 Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 64, 64);
             }
         }
 

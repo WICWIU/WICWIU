@@ -13,7 +13,7 @@
 #include "net/my_Facenet.hpp"
 #include "LFWDataset.hpp"
 #include "LFWSampler.hpp"
-#include "KNearestNeighbor.hpp"
+#include "../../WICWIU_src/KNearestNeighbor.hpp"
 
 
 #define NUMBER_OF_CLASS               5749          // for lfw_funneled
@@ -21,8 +21,8 @@
 #define BATCH                         45
 //#define EPOCH                         500
 #define EPOCH                         10000
-#define GPUID                         0
-//#define GPUID                         1
+//#define GPUID                         0
+#define GPUID                         1
 #define LOG_LENGTH                    1
 #define LEARNING_RATE_DECAY_RATE      0.1
 #define LEARNING_RATE_DECAY_TIMING    100
@@ -49,7 +49,7 @@ int main(int argc, char const *argv[])
     struct tm *curr_tm = NULL;
     double     nProcessExcuteTime = 0.;
 
-    char filename[] = "LFW_params2";
+    char filename[] = "another_params";
 
     // create input, label data placeholder -> Tensorholder
     Tensorholder<float> *x     = new Tensorholder<float>(1, BATCH, 1, 1, 145200, "x");
@@ -79,7 +79,7 @@ int main(int argc, char const *argv[])
     LogMessageF("lfw_funneled_label.txt", TRUE, "%d samples\n", train_dataset->GetLength());
     for(int i = 0; i < train_dataset->GetLength(); i++)
         LogMessageF("lfw_funneled_label.txt", FALSE, "%d\t%d\n", i, train_dataset->GetLabel(i));
-    
+
     for(int i = 0; i < NUMBER_OF_CLASS; i++){
         printf("count[%d] = %d\n", i, train_dataset->GetSampleCount(i));
         LogMessageF("lfw_funneled_count.txt", FALSE, "count[%d] = %d\n", i, train_dataset->GetSampleCount(i));
@@ -88,6 +88,7 @@ int main(int argc, char const *argv[])
 #endif  //  __DEBUG__
 
     DataLoader<float> *train_dataloader = new LFWSampler<float>(NUMBER_OF_CLASS, train_dataset, BATCH, TRUE, 1, FALSE);
+    std::cout << "test" << '\n';
 
 #ifdef ENABLE_TEST
     // get referece idxs for k-NN
@@ -95,20 +96,20 @@ int main(int argc, char const *argv[])
     std::vector<int> vRefLabels;
     std::vector<int> vPosIndex;
     std::vector<int> vNegIndex;
-
+    std::cout << "test1" << '\n';
     GetReferenceSamples(train_dataset, INPUT_DIM, NUMBER_OF_CLASS, SAMPLE_PER_CLASS, vRefSamples, vRefLabels);
 #endif  // ENABLE_TEST
-
+    std::cout << "test2" << '\n';
 //    LFWDataset<float> *test_dataset = new LFWDataset<float>("./data", "lfw_Test", 60, transform);
 
     float best_acc = 0.f;
-//    int   startEpoch = -1;            // epoch starts from startEpoch + 1
-    int   startEpoch = 2614;
+    int   startEpoch = -1;            // epoch starts from startEpoch + 1
+//    int   startEpoch = 2614;
 
     int   loop_for_train = (train_dataset->GetLength() - train_dataset->GetNoMinorClass(2))/ BATCH;
     float min_lr = 0.000001F;
     int   pos_neg_cycle = 3;
-	
+
     std::cout << "filename : " << filename << '\n';
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "start epoch : " << startEpoch << '\n';
@@ -140,7 +141,7 @@ int main(int argc, char const *argv[])
 
             FindPostiveNegativeSamples(net, INPUT_DIM, *train_dataset, FEATURE_DIM, BLOCK_SIZE, BATCH,
                                      &train_dataset->GetPositiveIndices()[0], &train_dataset->GetNegativeIndices()[0]);
-            
+
             printf("Searching for positive and negative samples... Done.\n");     fflush(stdout);
 
 #ifdef  __DEBUG__
@@ -157,8 +158,8 @@ int main(int argc, char const *argv[])
 
         float lr = net->GetOptimizer()->GetLearningRate();
         if (epoch % LEARNING_RATE_DECAY_TIMING == 0 && lr > min_lr) {
-            // adjust learning rate            
-            std::cout << "Change learning rate!" << '\n';            
+            // adjust learning rate
+            std::cout << "Change learning rate!" << '\n';
             float new_lr = lr * LEARNING_RATE_DECAY_RATE;
             if(new_lr < min_lr)
                 new_lr = min_lr;
@@ -236,20 +237,20 @@ printf("Recognizing using knn...\n");  fflush(stdout);
             AllocFeatureVector(INPUT_DIM, curBatch, vTestSample);
             AllocFeatureVector(FEATURE_DIM, curBatch, vTestFeature);
 
-//printf("\rReading test images (batchIdx = %d)... (%s %d)\n", batchIdx, __FILE__, __LINE__);  fflush(stdout);            
+//printf("\rReading test images (batchIdx = %d)... (%s %d)\n", batchIdx, __FILE__, __LINE__);  fflush(stdout);
             for(int i = 0; i < curBatch; i++){
 //                printf("Reading test image (i = %d)... (%s %d)\n", i, __FILE__, __LINE__);  fflush(stdout);
                 dataset.CopyData(batchIdx * BATCH + i, vTestSample[i]);
             }
 
 // printf("Extracting feature ... (%s %d)\n", __FILE__, __LINE__);  fflush(stdout);
-            
+
 			net->InputToFeature(INPUT_DIM, vTestSample.size(), &vTestSample[0], FEATURE_DIM, &vTestFeature[0], BATCH);
 
-// printf("Recognizing test images ... (%s %d)\n", __FILE__, __LINE__);  fflush(stdout);                        
+// printf("Recognizing test images ... (%s %d)\n", __FILE__, __LINE__);  fflush(stdout);
             // recognize using k-NN classifier
             for(int i = 0; i < curBatch; i++){
-                int result = knn.Recognize(vTestFeature[i], KNN_K);                
+                int result = knn.Recognize(vTestFeature[i], KNN_K);
                 if(result == dataset.GetLabel(batchIdx * BATCH + i))
                     correct++;
             }
@@ -267,7 +268,7 @@ printf("Recognizing using knn...\n");  fflush(stdout);
 
         test_accuracy = correct / (float)noTestSample;
         printf("\repoch = %d, test accuracy = %f (%d / %d)\n", epoch, correct / (float)noTestSample, correct, noTestSample);    fflush(stdout);
-        LogMessageF("log.txt", FALSE, "epoch = %d, lr = %f,  training loss = %f, test accuracy = %f (%d / %d)\n", epoch, net->GetOptimizer()->GetLearningRate(), train_avg_loss / (float)loop_for_train,  correct / (float)noTestSample, correct, noTestSample); 
+        LogMessageF("log.txt", FALSE, "epoch = %d, lr = %f,  training loss = %f, test accuracy = %f (%d / %d)\n", epoch, net->GetOptimizer()->GetLearningRate(), train_avg_loss / (float)loop_for_train,  correct / (float)noTestSample, correct, noTestSample);
 
         if(test_accuracy > best_acc){
             best_acc = test_accuracy;
@@ -307,7 +308,7 @@ void GetReferenceSamples(LFWDataset<float> *dataset, int dim, int noClass, int s
 	vLabels.resize(0);
 	if(pvRefIndex != NULL)
 		pvRefIndex->resize(0);
-	
+
 	if(startIdx = -1)
 		startIdx = rand() % dataset->GetLength();
 
@@ -365,7 +366,7 @@ void FindPostiveNegativeSamples(NeuralNetwork<float> *pNN, int inDim, Dataset<fl
     std::vector<float> vMaxPositive;
     try {
 		shuffle.resize(noSample);
-        vMinNegative.resize(blockSize);            
+        vMinNegative.resize(blockSize);
         vMaxPositive.resize(blockSize);
     } catch(...){
         printf("Failed to allocate memory in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
@@ -452,13 +453,13 @@ void FindPostiveNegativeSamples(NeuralNetwork<float> *pNN, int inDim, Dataset<fl
             int anchorIdx = shuffle[from + i];
             int posIdx = pPosIndex[anchorIdx];
             int negIdx = pNegIndex[anchorIdx];
-            
-       
+
+
             int posLabel = (posIdx >= 0 ? dataset.GetLabel(posIdx) : -1);
             int negLabel = (negIdx >= 0 ? dataset.GetLabel(negIdx) : -1);
             printf("%d: anchor: %d (%d),\tpos = %d (%d),\tneg = %d (%d)\n", i, anchorIdx, dataset.GetLabel(anchorIdx), posIdx, posLabel, negIdx, negLabel);
 
-            // if(dataset.GetLabel(anchorIdx) != dataset.GetLabel(posIdx) || dataset.GetLabel(anchorIdx) == dataset.GetLabel(negIdx)){                
+            // if(dataset.GetLabel(anchorIdx) != dataset.GetLabel(posIdx) || dataset.GetLabel(anchorIdx) == dataset.GetLabel(negIdx)){
             //     printf("Error! Wrong positive or negative sample! (%s %d)\n", __FILE__, __LINE__);
             //     MyPause(__FUNCTION__);
             // }
@@ -467,12 +468,12 @@ void FindPostiveNegativeSamples(NeuralNetwork<float> *pNN, int inDim, Dataset<fl
 #endif//  __DEBUG__
 
         remained -= blockSize;
-//printf("Done\n");       fflush(stdout);            
+//printf("Done\n");       fflush(stdout);
     }
 
     DeleteFeatureVector(vBlockFeature);
 
-printf("Done\n");       fflush(stdout);        
+printf("Done\n");       fflush(stdout);
 }
 
 void ExtractFeature(NeuralNetwork<float> *pNN, int inDim, Dataset<float> &dataset, std::vector<int> &shuffle, int from, int to, int outDim, float *pFeature[], int batchSize)
@@ -485,8 +486,8 @@ void ExtractFeature(NeuralNetwork<float> *pNN, int inDim, Dataset<float> &datase
     }
 
     int noSample = to - from;
-    batchSize = MIN(batchSize, noSample);    
-    int noBatch = (noSample + batchSize - 1) / batchSize;    
+    batchSize = MIN(batchSize, noSample);
+    int noBatch = (noSample + batchSize - 1) / batchSize;
     int remained = noSample;
 
     // allocate temporary buffers

@@ -1,15 +1,16 @@
 .SUFFIXES = .cpp .o
 
+#CFLAGS = -O2 -std=c++11
+CFLAGS = -std=c++11 -g
+
 WICWIU_LIB = lib/libwicwiu.a
-CFLAGS = -O3 -std=c++11
 
 
 #	if CUDA device, cuda or cuDNN is not installed, disable the following line
 ENABLE_CUDNN = -D__CUDNN__
 
 #	uncomment the following to debug
-#DFLAGS = -g -D__DEBUG__
-
+#DFLAGS = -D__DEBUG__
 
 INCLUDE_PATH = -I/usr/local/cuda/include
 LIB_PATH = -L. -L/usr/local/cuda/lib64
@@ -30,7 +31,9 @@ AR = ar
 
 WICWIU_SRCS = \
 	WICWIU_src/Utils.cpp	\
-	WICWIU_src/Shape.cpp
+	WICWIU_src/Shape.cpp	\
+	WICWIU_src/KNearestNeighbor.cpp	\
+	WICWIU_src/FewShotClassifier.cpp
 
 WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}
 

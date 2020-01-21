@@ -97,7 +97,7 @@ int main(int argc, char const *argv[]) {
              if(j % 50 == 0){
                  string filePath  = "trained/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
                  const char *cstr = filePath.c_str();
-                 Tensor2Image<float>(net->GetGenerator()->GetResult()->GetResult(), cstr, 3, 20, 28, 28);
+                 Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 20, 28, 28);
              }
         }
 
@@ -126,7 +126,7 @@ int main(int argc, char const *argv[]) {
 
             string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
             const char *cstr = filePath.c_str();
-            Tensor2Image<float>(net->GetGenerator()->GetResult()->GetResult(), cstr, 3, 20, 28, 28);
+            Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 20, 28, 28);
 
             printf("\rGenerate complete percentage is %d / %d -> loss : %f, acc : %f",
                    j + 1,
