@@ -47,8 +47,8 @@ clean:
 	rm -rf *.o main
 
 clean_img:
+	rm trained/*
 	rm generated/*
-	rm evaluated/*
 
 clean_all:
 	rm -rf *.o main
