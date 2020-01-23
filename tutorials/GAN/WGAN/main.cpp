@@ -38,16 +38,10 @@ int main(int argc, char const *argv[]) {
 
     net->PrintGraphInformation();
 
-    float bestGenLoss  = 0.f;
-    float bestDiscLoss = 0.f;
     int   epoch        = 0;
 
     // @ When load parameters
     // net->Load(filename);
-
-    std::cout << "bestGenLoss : " << bestGenLoss << '\n';
-    std::cout << "bestDiscLoss : " << bestDiscLoss << '\n';
-    std::cout << "epoch : " << epoch << '\n';
 
     //Start make Noise
     Gnoise->StartProduce();
@@ -95,12 +89,13 @@ int main(int argc, char const *argv[]) {
                    LOOP_FOR_TRAIN,
                    genLoss,
                    discLoss);
-             fflush(stdout);
-             if(j % 50 == 0){
-                 string filePath  = "trained/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
-                 const char *cstr = filePath.c_str();
-                 Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 20, 28, 28);
-             }
+            fflush(stdout);
+
+            if(j % 50 == 0){
+                string filePath  = "trained/epoch" + std::to_string(i) + "_" + std::to_string(j + 1) + ".jpg";
+                const char *cstr = filePath.c_str();
+                Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 20, 28, 28);
+            }
         }
 
         endTime            = clock();
@@ -123,18 +118,13 @@ int main(int argc, char const *argv[]) {
             net->FeedInputTensor(1, z_t);
             net->Generate();
 
-            generateGenLoss  = (*net->GetGeneratorLossFunction()->GetResult())[Index5D(net->GetGeneratorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
-            generateDiscLoss  = (*net->GetDiscriminatorLossFunction()->GetResult())[Index5D(net->GetDiscriminatorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
-
-            string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
+            string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j + 1) + ".jpg";
             const char *cstr = filePath.c_str();
             Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 20, 28, 28);
 
-            printf("\rGenerate complete percentage is %d / %d -> loss : %f, acc : %f",
+            printf("\rGenerate complete percentage is %d / %d",
                    j + 1,
-                   LOOP_FOR_GENERATE,
-                   generateGenLoss,
-                   generateDiscLoss);
+                   LOOP_FOR_GENERATE);
             fflush(stdout);
         }
         std::cout << "\n\n";

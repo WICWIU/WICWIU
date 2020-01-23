@@ -5,7 +5,7 @@
 #define BATCH                 64
 #define EPOCH                 10000
 #define LOOP_FOR_TRAIN        (202599 / BATCH)
-#define LOOP_FOR_TEST         10//(10000 / BATCH)
+#define LOOP_FOR_GENERATE     (10000 / BATCH)
 #define LOOP_FOR_TRAIN_DISC   1
 #define GPUID                 2
 
@@ -47,16 +47,10 @@ int main(int argc, char const *argv[]) {
 
     net->PrintGraphInformation();
 
-    float bestGenLoss  = 0.f;
-    float bestDiscLoss = 0.f;
     int   epoch        = 0;
 
     // @ When load parameters
     // net->Load(filename);
-
-    std::cout << "bestGenLoss : " << bestGenLoss << '\n';
-    std::cout << "bestDiscLoss : " << bestDiscLoss << '\n';
-    std::cout << "epoch : " << epoch << '\n';
 
     //Start make Noise
     Gnoise->StartProduce();
@@ -95,25 +89,55 @@ int main(int argc, char const *argv[]) {
             net->UpdateK();
             net->ComputeConvergenceMeasure();
 
-            genLoss  = (*net->GetGeneratorLossFunction()->GetResult())[Index5D(net->GetGeneratorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
-            discLoss  = (*net->GetDiscriminatorLossFunction()->GetResult())[Index5D(net->GetDiscriminatorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
+            if((j + 1) % 50 == 0){
+                genLoss  = (*net->GetGeneratorLossFunction()->GetResult())[Index5D(net->GetGeneratorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
+                discLoss  = (*net->GetDiscriminatorLossFunction()->GetResult())[Index5D(net->GetDiscriminatorLossFunction()->GetResult()->GetShape(), 0, 0, 0, 0, 0)];
 
-            printf("Train complete percentage is %d / %d -> Generator Loss : %f, Discriminator Loss : %f\n",
-                   j + 1,
-                   LOOP_FOR_TRAIN,
-                   genLoss,
-                   discLoss);
-            //  fflush(stdout);
-             if(j % 50 == 0){
-                 string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j) + ".jpg";
-                 const char *cstr = filePath.c_str();
-                 Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 64, 64);
+                printf("\rTrain complete percentage is %d / %d -> Generator Loss: %f, Discriminator Loss: %f, K: %f, Convergence measure: %f",
+                        j + 1,
+                       	LOOP_FOR_TRAIN,
+                       	genLoss,
+                       	discLoss,
+                        net->GetK(),
+                        net->GetConvergenceMeasure());
+                fflush(stdout);
+
+                string filePath  = "trained/epoch" + std::to_string(i) + "_" + std::to_string(j + 1) + ".jpg";
+                const char *cstr = filePath.c_str();
+                Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 64, 64);
             }
         }
 
         endTime            = clock();
         nProcessExcuteTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
         printf("\n(excution time per epoch : %f)\n\n", nProcessExcuteTime);
+
+        // ======================= Generate(Save Generated Image)======================
+        float generateGenLoss  = 0.f;
+        float generateDiscLoss = 0.f;
+
+        net->SetModeInference();
+
+        for (int j = 0; j < (int)LOOP_FOR_GENERATE; j++) {
+            Tensor<float> *z_t = Gnoise->GetNoiseFromBuffer();
+
+#ifdef __CUDNN__
+            z_t->SetDeviceGPU(GPUID);
+#endif  // __CUDNN__
+
+            net->FeedInputTensor(1, z_t);
+            net->Generate();
+
+            string filePath  = "generated/epoch" + std::to_string(i) + "_" + std::to_string(j + 1) + ".jpg";
+            const char *cstr = filePath.c_str();
+            Tensor2Image<float>(net->GetGenerator()->GetResult(), cstr, 3, 64, 64);
+
+            printf("\rGenerate complete percentage is %d / %d",
+                   j + 1,
+                   LOOP_FOR_GENERATE);
+            fflush(stdout);
+        }
+        std::cout << "\n\n";
 
         net->Save(filename);
     }
