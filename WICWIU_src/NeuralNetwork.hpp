@@ -618,9 +618,10 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(s
     return NULL;
 }
 
+/*
 template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize)
 {
-#ifdef  __DEBUG__    
+#ifdef  __DEBUG__
     for(int i = 0; i < MIN(1, noSample); i++){
         printf("Sample[%d]:\n", i);
         DisplayFeature(inDim, pSamples[i], 220*220);
@@ -628,7 +629,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, in
     // printf("Press Enter to continue (%s)...", __FUNCTION__);
     // fflush(stdout);
     // getchar();
-#endif//  __DEBUG__    
+#endif//  __DEBUG__
 
     //printf("Starting %s, inDim = %d, outDim = %d, %lu samples\n", __FUNCTION__, inDim, outDim, vSample.size());
     int noBatch = (noSample + batchSize - 1) / batchSize;
@@ -661,7 +662,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, in
 #ifdef __CUDNN__
         this->ForwardPropagateOnGPU();
 #else   //  __CUDNN__
-        this->ForwardPropagateOn():
+        this->ForwardPropagateOn();
 #endif  //  __CUDNN__
 
         Tensor<float> *result = this->GetResult();
@@ -697,6 +698,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, in
 //        delete input;				// should not delete
     }
 }
+*/
 
 #ifdef __CUDNN__
 

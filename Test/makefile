@@ -1,14 +1,14 @@
 .SUFFIXES = .cpp .o
 
 CFLAGS = -O2 -std=c++11
-ENABLE_CUDNN = -D__CUDNN__
+#ENABLE_CUDNN = -D__CUDNN__
 DFLAGS = -g -D__DEBUG___
 
 LFLAGS = -lcudart -lcudnn -lpthread -ljpeg -lturbojpeg
 
-INCLUDE_PATH = -I/usr/local/cuda/include -I/opt/libjpeg-turbo/include -I/opt/libjpeg-turbo/lib64
+INCLUDE_PATH = -I/usr/local/cuda-10.1/include -I/opt/libjpeg-turbo/include -I/opt/libjpeg-turbo/lib64
 # LIB_PATH = -L. -L/usr/local/cuda/lib64 -I/opt/libjpeg-turbo/lib64 # for deep05
-LIB_PATH = -L. -L/usr/local/cuda/lib64 -L/opt/libjpeg-turbo/lib64 # for deep300
+LIB_PATH = -L. -L/usr/local/cuda-10.1/lib64 -L/opt/libjpeg-turbo/lib64 # for deep300
 
 CC = g++
 NVCC = nvcc
@@ -39,8 +39,14 @@ all: main
 .cpp.o:
 	$(CC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) $(LIB_PATH) -c $< -o $@
 
-main: DataLoaderTest.o $(WICWIU_LIB)
-	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) DataLoaderTest.o
+main: RecurrentOperatorTest.o $(WICWIU_LIB)
+	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) RecurrentOperatorTest.o
+
+#main: ConcatenateOperatorTest.o $(WICWIU_LIB)
+#	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) ConcatenateOperatorTest.o
+
+#main: MatMulOperatorTest.o $(WICWIU_LIB)
+#	$(NVCC) $(CFLAGS) $(ENABLE_CUDNN) $(DFLAGS) $(LFLAGS) $(INCLUDE_PATH) $(LIB_PATH) -o $@ $(WICWIU_LIB) MatMulOperatorTest.o
 
 $(WICWIU_LIB): $(WICWIU_SRC)
 	make -C ../..
