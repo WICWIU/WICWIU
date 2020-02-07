@@ -38,7 +38,6 @@ int main(int argc, char const *argv[]) {
     std::cout << pWeight_x2h->GetResult()->GetShape() << '\n';
     std::cout << pWeight_x2h->GetResult() << '\n';
 
-    Operator<float> *matmul = new MatMul<float>(pWeight_x2h, input0, "matmultest");
     Operator<float> *rnn = new Recurrent<float>(input0, pWeight_x2h, pWeight_h2h, pWeight_h2o, "RNN");
 
     std::cout << '\n';
