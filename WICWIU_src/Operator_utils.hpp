@@ -31,4 +31,6 @@
 #include "Operator/Switch.hpp"
 #include "Operator/ReconstructionError.hpp"
 
+#include "Operator/Recurrent.hpp"
+
 #endif  // __OPERATER_UTIL_H__

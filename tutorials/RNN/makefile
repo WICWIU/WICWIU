@@ -8,8 +8,8 @@ ENABLE_CUDNN = -D__CUDNN__
 #DFLAGS = -D__DEBUG__
 
 ifdef ENABLE_CUDNN
-	INCLUDE_PATH = -I/usr/local/cuda/include
-	LIB_PATH = -L. -L/usr/local/cuda/lib64
+	INCLUDE_PATH = -I/usr/local/cuda-10.1/include
+	LIB_PATH = -L. -L/usr/local/cuda-10.1/lib64
 else
 	INCLUDE_PATH = -I.
 	LIB_PATH = -L.

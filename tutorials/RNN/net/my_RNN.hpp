@@ -8,7 +8,7 @@ class my_RNN : public NeuralNetwork<float>{
 private:
 public:
     my_RNN(Tensorholder<float> *x, Tensorholder<float> *label) {
-        SetInput(2, x label);
+        SetInput(2, x, label);
 
         Operator<float> *out = NULL;
 
@@ -16,7 +16,7 @@ public:
         //out = new OnehotVector<float>(x(입력 배열), 아웃풋크기, "OnehotVector");
 
         // ======================= layer 1=======================
-        out = new RecurrentLayer<float>(x, 4, 10, 4, "Recur_1");                  //????????????? 공부할 것
+        out = new RecurrentLayer<float>(x, 4, 10, 4, TRUE, "Recur_1");                  //????????????? 공부할 것
 
         // // ======================= layer 2=======================
         // out = new Linear<float>(out, 5 * 5 * 20, 1024, TRUE, "Fully-Connected_1");

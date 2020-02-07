@@ -6,5 +6,6 @@
 #include "Module/BatchNormalizeLayer.hpp"
 // #include "Module/CUDNNBatchNormalizeLayer.h"
 #include "Module/TransposedConvolutionLayer.hpp"
+#include "Module/RecurrentLayer.hpp"
 
 #endif // ifndef __MODULE_UTIL_H__
