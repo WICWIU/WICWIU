@@ -21,10 +21,10 @@ int main(int argc, char const *argv[]) {
     int inputSeq[] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0 };
 	int desiredSeq[] = { 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 
-    Tensor<float> *x_tensor = new Tensor<DTYPE>(4, BATCH, 1, 1, 4);
+    Tensor<float> *x_tensor = new Tensor<float>(4, BATCH, 1, 1, 4);
     Tensorholder<float> *x_holder = new Tensorholder<float>(x_tensor, "x");
 
-    Tensor<float> *label_tensor = new Tensor<DTYPE>(4, BATCH, 1, 1, 4);
+    Tensor<float> *label_tensor = new Tensor<float>(4, BATCH, 1, 1, 4);
     Tensorholder<float> *label_holder = new Tensorholder<float>(label_tensor, "label");
 
     // Tensorholder<float> *x = new Tensorholder<float>(4, BATCH, 1, 1, 4, "x");
@@ -32,7 +32,7 @@ int main(int argc, char const *argv[]) {
     // Tensor<float> *x_t = new Tensor<DTYPE>(1, BATCH, 1, 1, 4);
     // Tensor<float> *l_t = new Tensor<DTYPE>(1, BATCH, 1, 1, 4);
 
-    RNN<float> *net = new my_RNN<float>(x_holder,label_holder);
+    NeuralNetwork<float> *net = new my_RNN(x_holder,label_holder);
 
     for(int t = 0; t < seqLen; t++){
         for (int ba = 0; ba < 1; ba++) {
@@ -42,6 +42,14 @@ int main(int argc, char const *argv[]) {
             }
         }
     }
+
+
+    // ========================= Train =====================
+
+    std::cout << "Start Train" <<'\n';
+
+    float best_acc = 0;
+    int   epoch    = 0;
 
     for (int i = epoch + 1; i < EPOCH; i++) {
 
@@ -61,7 +69,7 @@ int main(int argc, char const *argv[]) {
             // std::cin >> temp;
             net->FeedInputTensor(2, x_tensor, label_tensor);
             net->ResetParameterGradient();
-            net->TimeTrain();
+            net->TimeTrain(4);
             // std::cin >> temp;
             train_accuracy += net->GetAccuracy();
             train_avg_loss += net->GetLoss();
@@ -91,7 +99,7 @@ int main(int argc, char const *argv[]) {
             // #endif  // __CUDNN__
 
             net->FeedInputTensor(2, x_tensor, label_tensor);
-            net->TimeTest();
+            net->TimeTest(4);
 
             test_accuracy += net->GetAccuracy();
             test_avg_loss += net->GetLoss();
@@ -105,9 +113,9 @@ int main(int argc, char const *argv[]) {
 
         std::cout << "\n\n";
 
-        if ((best_acc < (test_accuracy / MAX_TEST_ITERATION))) {
-            net->Save(filename);
-        }
+        //if ((best_acc < (test_accuracy / MAX_TEST_ITERATION))) {
+        //    net->Save(filename);
+        //}
     }
 
     delete net;

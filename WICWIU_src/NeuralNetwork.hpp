@@ -78,6 +78,13 @@ public:
 
     void                 InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize = 32);
 
+    //RNN을 위한 time train과 time test 추가
+    int                  TimeTrain(int timesize);
+    int                  TimeTrainOnCPU(int timesize);
+    int                  TimeTest(int timesize);
+    int                  TimeTestOnCPU(int timesize);
+
+
 #ifdef __CUDNN__
     void SetDeviceGPU(unsigned int idOfDevice);
     void SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
@@ -255,6 +262,19 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Train() {
     return TRUE;
 }
 
+//RNN에서 time을 사용하기 위해 추가함!!!
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTrain(int timesize) {
+    if (m_Device == CPU) {
+        this->TimeTrainOnCPU(timesize);
+    } else if (m_Device == GPU) {
+        //this->TimeTrainOnGPU(timesize);
+    } else return FALSE;
+
+    return TRUE;
+}
+
+
+
 /*!
  * @brief 신경망의 테스트를 진행하는 메소드
  * @details NeuralNetwork의 Device 멤버 변수를 확인하여 CPU 시 NeuralNetwork<DTYPE>::TestingOnCPU()을 호출하고, GPU 시 NeuralNetwork<DTYPE>::TestingOnGPU()을 호출한다.
@@ -265,6 +285,16 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Test() {
         this->TestOnCPU();
     } else if (m_Device == GPU) {
         this->TestOnGPU();
+    } else return FALSE;
+
+    return TRUE;
+}
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTest(int timesize) {
+    if (m_Device == CPU) {
+        this->TimeTestOnCPU(timesize);
+    } else if (m_Device == GPU) {
+        //this->TimeTestOnGPU(timesize);
     } else return FALSE;
 
     return TRUE;
@@ -295,6 +325,44 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
 
     return TRUE;
 }
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTrainOnCPU(int timesize) {
+    // this->ResetOperatorResult();
+    // this->ResetOperatorGradient();
+    this->ResetResult();
+    this->ResetGradient();
+    this->ResetLossFunctionResult();
+    this->ResetLossFunctionGradient();
+
+    for(int i=0; i<timesize; i++){
+      this->ForwardPropagate(i);
+      m_aLossFunction->ForwardPropagate(i);
+    }
+    for(int j=timesize-1; j>=0; j++){
+      m_aLossFunction->BackPropagate(j);
+      this->BackPropagate(j);
+    }
+
+    //time_size를 안 넣어주는 이유는 time별 gradient 처리를 해주었다고 가정
+    m_aOptimizer->UpdateParameter();
+
+    return TRUE;
+}
+
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTestOnCPU(int timesize) {
+    // this->ResetOperatorResult();
+    this->ResetResult();
+    this->ResetLossFunctionResult();
+
+    for(int i=0; i<timesize; i++){
+      this->ForwardPropagate(i);
+      m_aLossFunction->ForwardPropagate(i);
+    }
+    return TRUE;
+}
+
+
 
 /*!
  * @brief CPU를 활용해 신경망을 테스트하는 메소드

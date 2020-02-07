@@ -109,7 +109,7 @@ public:
     //int  ForwardPropagate(int pTime = 0, int pThreadNum = 0)
     int  ForwardPropagate(int pTime = 0) {
 
-        std::cout <<"ddddd"<<'\n';
+        //std::cout <<"Recurrent Operator의 Forwardpropate 시작 time = "<<pTime<<'\n';
         m_aInput2Hidden->ForwardPropagate(pTime);
 
         if (pTime != 0) {
@@ -125,7 +125,6 @@ public:
 
             m_aHidden2Hidden->ForwardPropagate(pTime);
         }
-
         m_aPrevActivate->ForwardPropagate(pTime);
 
         m_aPostActivate->ForwardPropagate(pTime);

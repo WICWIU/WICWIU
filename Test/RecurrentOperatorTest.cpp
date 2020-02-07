@@ -15,6 +15,7 @@ int main(int argc, char const *argv[]) {
     Tensorholder<float> *pWeight_h2h = new Tensorholder<float>(Tensor<float>::Random_normal(time_size, 1, 1, hidden_size, hidden_size, 0.0, 0.1), "RecurrentLayer_pWeight_h2h_");
     Tensorholder<float> *pWeight_h2o = new Tensorholder<float>(Tensor<float>::Random_normal(time_size, 1, 1, output_size, hidden_size, 0.0, 0.1), "RecurrentLayer_pWeight_h2o_");
 
+
     //input값 설정
     for(int i = 0; i < time_size*input_size; i++){
       (*(input0->GetResult()))[i] = 1;                                    // 연산자 오버로딩은 Tensor에 있느듯
