@@ -65,6 +65,7 @@ public:
     Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, Operator<DTYPE> *pinput3, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(int numInput, ...);
     virtual ~Operator();
 
@@ -397,6 +398,25 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_Loadflag    = TRUE;
     Alloc();
     AddEdgebetweenOperators(3, pInput0, pInput1, pInput2, pLoadflag);
+}
+
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, Operator<DTYPE> *pInput3, std::string pName, int pLoadflag) {
+    #ifdef __DEBUG__
+    std::cout << "Operator<DTYPE>::Operator()" << '\n';
+    #endif  // __DEBUG__
+    m_apOutput    = NULL;
+    m_apInput     = NULL;
+    m_aaResult    = NULL;
+    m_aaGradient  = NULL;
+    m_name        = pName;
+    m_Device      = CPU;
+    m_Mode        = TRAIN;
+    m_isParameter = FALSE;
+    m_isTrainable = FALSE;
+    m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
+    Alloc();
+    AddEdgebetweenOperators(4, pInput0, pInput1, pInput2, pInput3, pLoadflag);
 }
 
 template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {

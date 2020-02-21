@@ -34,22 +34,28 @@ public:
         Operator<DTYPE> *out = pInput;
 
         //--------------------------------------------초기화 방법. 추후 필히 수정!!!!!!!!!!!
-        float xavier_i = 0.1;  //1/sqrt(inputsize);
-        float xavier_h = 0.1; //1/sqrt(hiddensize);
+        float xavier_i = 1/sqrt(inputsize);
+        float xavier_h = 1/sqrt(hiddensize);
 
 
         // float stddev = 0.1;
-        Tensorholder<DTYPE> *pWeight_x2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, inputsize, 0.0, xavier_i), "RecurrentLayer_pWeight_x2h_" + pName);
-        Tensorholder<DTYPE> *pWeight_h2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, hiddensize, 0.0, xavier_h), "RecurrentLayer_pWeight_h2h_" + pName);
-        Tensorholder<DTYPE> *pWeight_h2o = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, outputsize, hiddensize, 0.0, xavier_h), "RecurrentLayer_pWeight_h2o_" + pName);
+        Tensorholder<DTYPE> *pWeight_x2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, inputsize, 0, 0.01), pName + "pWeight_x2h_");
+        Tensorholder<DTYPE> *pWeight_h2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, hiddensize, 0, 0.01), pName + "pWeight_h2h_");
+        Tensorholder<DTYPE> *pWeight_h2o = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, outputsize, hiddensize, 0, 0.01), pName + "pWeight_h2o_");
 
-        out = new Recurrent<DTYPE>(out, pWeight_x2h, pWeight_h2h, pWeight_h2o, "Recurrent" + pName);
+        std::cout << "\n================ pWeight_x2h ================\n" << pWeight_x2h->GetResult() << "\n";
+        std::cout << "\n================ pWeight_h2h ================\n" << pWeight_h2h->GetResult() << "\n";
+        std::cout << "\n================ pWeight_h2o ================\n" << pWeight_h2o->GetResult() << "\n";
+
+
+        out = new Recurrent<DTYPE>(out, pWeight_x2h, pWeight_h2h, pWeight_h2o, pName + "Recurrent");
 
         if (use_bias) {
-            Tensorholder<DTYPE> *pBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, outputsize, 0.f), "Add_Bias_" + pName);
-            out = new AddColWise<DTYPE>(out, pBias, "Layer_Add_" + pName);
+            Tensorholder<DTYPE> *pBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, outputsize, 0.f), pName + "Add_Bias");
+            out = new AddColWise<DTYPE>(out, pBias, pName + "Layer_Add");
         }
 
+        std::cout << "=========Module AnalyzeGraph===========" << "\n";
         this->AnalyzeGraph(out);
 
         return TRUE;

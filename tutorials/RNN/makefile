@@ -6,6 +6,7 @@ CFLAGS = -O2 -std=c++11 -g
 #ENABLE_CUDNN = -D__CUDNN__
 
 #DFLAGS = -D__DEBUG__
+#DFLAGS = -D__RNN_DEBUG
 
 ifdef ENABLE_CUDNN
 	INCLUDE_PATH = -I/usr/local/cuda-10.1/include

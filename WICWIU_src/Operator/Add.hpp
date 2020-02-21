@@ -220,6 +220,11 @@ public:
             }
         }
 
+        #if __RNN_DEBUG__
+        std::cout << "\nADD left grad : \n" << left_grad << "\n";
+        std::cout << "\nADD right grad : \n" << right_grad << "\n";
+        #endif
+
         return TRUE;
     }
 

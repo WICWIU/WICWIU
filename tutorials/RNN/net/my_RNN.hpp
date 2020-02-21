@@ -16,11 +16,13 @@ public:
         //out = new OnehotVector<float>(x(입력 배열), 아웃풋크기, "OnehotVector");
 
         // ======================= layer 1=======================
-        out = new RecurrentLayer<float>(x, 4, 10, 4, TRUE, "Recur_1");                  //????????????? 공부할 것
+        //out = new RecurrentLayer<float>(x, 2, 2, 2, FALSE, "RecurrentLayer1_");
+        out = new RecurrentLayer<float>(x, 6, 10, 6, FALSE, "RecurrentLayer1_");
 
         // // ======================= layer 2=======================
         // out = new Linear<float>(out, 5 * 5 * 20, 1024, TRUE, "Fully-Connected_1");
 
+        std::cout << "=========NeuralNetwork AnalyzeGraph===========" << "\n";
         AnalyzeGraph(out);
 
         // ======================= Select LossFunction Function ===================

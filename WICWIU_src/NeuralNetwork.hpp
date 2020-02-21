@@ -338,7 +338,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTrainOnCPU(int timesize) 
       this->ForwardPropagate(i);
       m_aLossFunction->ForwardPropagate(i);
     }
-    for(int j=timesize-1; j>=0; j++){
+    for(int j=timesize-1; j>=0; j--){
       m_aLossFunction->BackPropagate(j);
       this->BackPropagate(j);
     }
@@ -463,8 +463,12 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass)
             ans_index  = GetMaxIndex(ans, ba, ti, numOfClass);
             // printf("%d, ", ans_index);
 
+            //std::cout << "\n pred_index " << pred_index << "\n";
+            //std::cout << "\n ans_index " << ans_index << "\n";
+
             if (pred_index == ans_index) {
                 accuracy += 1.f;
+                //std::cout << "\n=============== accuracy ================\n" << accuracy << "\n";
             }
         }
     }
@@ -612,9 +616,17 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetLoss() {
     int batchsize = m_aLossFunction->GetResult()->GetBatchSize();
     int timesize  = m_aLossFunction->GetResult()->GetTimeSize();
 
-    for (int ba = 0; ba < batchsize; ba++) {
-        for (int ti = 0; ti < timesize; ti++) {
-            avg_loss += (*m_aLossFunction)[ba] / batchsize / timesize;
+    // for (int ba = 0; ba < batchsize; ba++) {
+    //     for (int ti = 0; ti < timesize; ti++) {
+    //         avg_loss += (*m_aLossFunction)[ba*batchsize + ti] / batchsize / timesize;
+    //         //std::cout << "\n (*m_aLossFunction)[ba*batchsize + ti] : " << (*m_aLossFunction)[ba*batchsize + ti] << "\n";
+    //     }
+    // }
+
+    for (int ti = 0; ti < timesize; ti++) {
+        for (int ba = 0; ba < batchsize; ba++) {
+            avg_loss += (*m_aLossFunction)[ba*batchsize + ti] / batchsize / timesize;
+            //std::cout << "\n(*m_aLossFunction)[" << ba*batchsize + ti << "] : " << (*m_aLossFunction)[ba*batchsize + ti]<< "\n";
         }
     }
 

@@ -92,6 +92,8 @@ public:
 
         m_timesize = timesize;
 
+        std::cout << "m_timesize : " << m_timesize << '\n';
+
         sum = new DTYPE *[timesize];
         max = new DTYPE *[timesize];
 
@@ -211,6 +213,10 @@ public:
             }
         }
 
+        #if __RNN_DEBUG__
+        std::cout << "\n" << "=======Softmax Cross Entropy : result=========\n" << result<< "\n";
+        #endif
+
         return result;
     }
 
@@ -244,6 +250,12 @@ public:
                 (*input_delta)[i] = ((*softmaxresult)[i] - (*label)[i]);
             }
         }
+
+        //std::cout << "\n" << "======= Softmax Cross Entropy : result ========\n" << softmaxresult << "\n";
+
+        #if __RNN_DEBUG__
+        std::cout << "\n" << "======= Softmax Cross Entropy : input_delta=========\n" << input_delta << "\n";
+        #endif
 
         return NULL;
     }

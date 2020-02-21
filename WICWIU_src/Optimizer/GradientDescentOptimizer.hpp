@@ -197,6 +197,10 @@ public:
             (*trainable_data)[i] += (learning_rate * (*gradient)[i] + weightDecayRate * (*trainable_data)[i]);
         }
 
+        #if __RNN_DEBUG__
+        std::cout << "\n======== Update Parameter =========\n" << trainable_data << "\n";
+        #endif
+
         return TRUE;
     }
 
@@ -221,6 +225,10 @@ public:
             (*pVelocity)[i]      = m_momentum * (*pVelocity)[i] + learning_rate * (*gradient)[i];
             (*trainable_data)[i] += ((*pVelocity)[i] + weightDecayRate * (*trainable_data)[i]);
         }
+
+        #if __RNN_DEBUG__
+        std::cout << "\n======== Update Parameter(using velocity) =========\n" << trainable_data << "\n";
+        #endif
 
         return TRUE;
     }

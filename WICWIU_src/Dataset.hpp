@@ -71,7 +71,7 @@ public:
         printf("This functions should be overriden by derived class");
         printf("Press Enter to continue... (%s)", __FUNCTION__);
         getchar();
-    }   
+    }
 
 	virtual void 						 SetPosNegIndices(std::vector<int> *pvPosIndex, std::vector<int> *pvNegIndex){	// registers indices fo positive and negative samples for each sample
 		if(pvPosIndex && pvPosIndex->size() > 0){
@@ -97,7 +97,7 @@ public:
         if(rand() % 2 != 0)         // for stochasticity
             return -1;
 		return (idx < m_vNegIndex.size() ? m_vNegIndex[idx] : -1);
-	}    
+	}
 };
 
 template<typename DTYPE> Dataset<DTYPE>::Dataset() {
@@ -236,7 +236,7 @@ template<typename DTYPE> std::vector<Tensor<DTYPE>*> *Dataset<DTYPE>::GetDataOfP
    		for(int i = 0; i < noSamples; i++){
    	  	 	if(this->GetLabel(posIdx) == anchorLabel && posIdx != anchorIdx)
 				break;
-	
+
    	     posIdx++;
    	     if(posIdx >= noSamples)
    	         posIdx = 0;

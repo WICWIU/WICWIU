@@ -25,11 +25,11 @@ public:
         this->Alloc(pInput, pWeightXH, pWeightHH, pWeightHY);
     }
 
-    Recurrent(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightXH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pWeightHY, std::string pName) : Operator<DTYPE>(4, pInput, pWeightXH, pWeightHH, pWeightHY, pName) {
+    Recurrent(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightXH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pWeightHY, std::string pName) : Operator<DTYPE>(pInput, pWeightXH, pWeightHH, pWeightHY, pName) {
         #if __DEBUG__
         std::cout << "Recurrent::Recurrent(Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
-        this->Alloc(pInput, pWeightXH, pWeightHH, pWeightHY);
+        this->Alloc(pInput, pWeightXH, pWeightHH, pWeightHY, pName);
     }
 
     ~Recurrent() {
@@ -40,13 +40,21 @@ public:
         Delete();
     }
 
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightXH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pWeightHY) {
+    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightXH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pWeightHY, std::string pName) {
         #if __DEBUG__
         std::cout << "Recurrent::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
         #endif  // __DEBUG__
 
         Shape *InputShape    = pInput->GetResult()->GetShape();
         Shape *WeightXHShape = pWeightXH->GetResult()->GetShape();
+
+        // Operator<DTYPE> *ptempWeight_x2h = new Tensorholder<float>(1, 1, 1, 10, 4, "ptempWeight_x2h");
+        // Operator<DTYPE> *ptempWeight_h2h = new Tensorholder<float>(1, 1, 1, 10, 10, "ptempWeight_h2h");
+        // Operator<DTYPE> *ptempWeight_h2o = new Tensorholder<float>(1, 1, 1, 4, 10, "ptempWeight_h2o");
+        //
+        // *ptempWeight_x2h = *pWeightXH;
+        // *ptempWeight_h2h = *pWeightHH;
+        // *ptempWeight_h2o = *pWeightHY;
 
         int hidTimeSize  = (*InputShape)[0];
         int hidBatchSize = (*InputShape)[1];
@@ -57,7 +65,7 @@ public:
         m_aHidden2Hidden = new MatMul<DTYPE>(pWeightHH, m_aTempHidden, "rnn_matmul_hh");
         m_aPrevActivate  = new Addall<DTYPE>(m_aInput2Hidden, m_aHidden2Hidden, "rnn_addall");
         m_aPostActivate  = new Tanh<DTYPE>(m_aPrevActivate, "rnn_tanh");
-        m_aHidden2Output = new MatMul<DTYPE>(pWeightHY, m_aPostActivate, "rnn_matmul_hh");
+        m_aHidden2Output= new MatMul<DTYPE>(pWeightHY, m_aPostActivate, "rnn_matmul_hh");
 
         std::cout << "m_aInput2Hidden : " << m_aInput2Hidden->GetResult()->GetShape() << '\n';
         std::cout << "m_aTempHidden : " << m_aTempHidden->GetResult()->GetShape() << '\n';
@@ -65,6 +73,10 @@ public:
         std::cout << "m_aPrevActivate : " << m_aPrevActivate->GetResult()->GetShape() << '\n';
         std::cout << "m_aPostActivate : " << m_aPostActivate->GetResult()->GetShape() << '\n';
         std::cout << "m_aHidden2Output : " << m_aHidden2Output->GetResult()->GetShape() << '\n';
+
+        pWeightXH->GetOutputContainer()->Pop(m_aInput2Hidden);
+        pWeightHH->GetOutputContainer()->Pop(m_aHidden2Hidden);
+        pWeightHY->GetOutputContainer()->Pop(m_aHidden2Output);
 
         Shape *ResultShape = m_aHidden2Output->GetResult()->GetShape();
 
@@ -103,17 +115,16 @@ public:
 
     void Delete() {}
 
-
-    //이거 왜 안되는걸까.........????? 이해가 안된다...
-    //왜 인자 2개 주고 호출해도 안되는걸까.... virtual로 되어있는데... 왜
     //int  ForwardPropagate(int pTime = 0, int pThreadNum = 0)
     int  ForwardPropagate(int pTime = 0) {
 
-        //std::cout <<"Recurrent Operator의 Forwardpropate 시작 time = "<<pTime<<'\n';
         m_aInput2Hidden->ForwardPropagate(pTime);
+        #if __RNN_DEBUG__
+        std::cout << "\n============= m_aInput2Hidden : MatMul<DTYPE>(pWeightXH, pInput) =================\n" << m_aInput2Hidden->GetResult() << "\n";
+        #endif
 
         if (pTime != 0) {
-            Tensor<DTYPE> *prevHidden = m_aHidden2Hidden->GetResult();
+            Tensor<DTYPE> *prevHidden = m_aPostActivate->GetResult();
             Tensor<DTYPE> *tempHidden = m_aTempHidden->GetResult();
 
             int colSize        = prevHidden->GetColSize();
@@ -124,15 +135,24 @@ public:
             }
 
             m_aHidden2Hidden->ForwardPropagate(pTime);
+            #if __RNN_DEBUG__
+            std::cout << "\n============= m_aHidden2Hidden : MatMul<DTYPE>(pWeightHH, m_aTempHidden) =================\n" << m_aHidden2Hidden->GetResult( )<< "\n";
+            #endif
         }
         m_aPrevActivate->ForwardPropagate(pTime);
+        #if __RNN_DEBUG__
+        std::cout << "\n============= m_aPrevActivate : Addall<DTYPE>(m_aInput2Hidden, m_aHidden2Hidden) =================\n" << m_aPrevActivate->GetResult() << "\n";
+        #endif
 
         m_aPostActivate->ForwardPropagate(pTime);
+        #if __RNN_DEBUG__
+        std::cout << "\n============= m_aPostActivate : Tanh<DTYPE>(m_aPrevActivate) =================\n" << m_aPostActivate->GetResult() << "\n";
+        #endif
 
         m_aHidden2Output->ForwardPropagate(pTime);
-
-        std::cout << m_aHidden2Output->GetResult()->GetShape() << '\n';
-        std::cout << m_aHidden2Output->GetResult() << '\n';
+        #if __RNN_DEBUG__
+        std::cout << "\n============= m_aHidden2Output : MatMul<DTYPE>(pWeightHY, m_aPostActivate) =================\n" << m_aHidden2Output->GetResult() << "\n";
+        #endif
 
         Tensor<DTYPE> *_result = m_aHidden2Output->GetResult();
         Tensor<DTYPE> *result  = this->GetResult();
@@ -142,43 +162,66 @@ public:
 
         for (int i = 0; i < colSize; i++) {
             (*result)[Index5D(ResultShape, pTime, 0, 0, 0, i)] = (*_result)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
+            #if __RNN_DEBUG__
+            std::cout << "\n ============= Forward result ==============" << result << '\n';
+            #endif
         }
 
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
+    int BackPropagate(int pTime = 0) {
         Tensor<DTYPE> *_grad = m_aHidden2Output->GetGradient();
         Tensor<DTYPE> *grad  = this->GetGradient();
 
         int colSize        = grad->GetColSize();
+        int timeSize       = grad->GetTimeSize();
         Shape *ResultShape = grad->GetShape();
 
         for (int i = 0; i < colSize; i++) {
             (*_grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)] = (*grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
+            #if __RNN_DEBUG__
+            std::cout << "\n ============= Backward result ==============" << _grad << '\n';
+            #endif
         }
 
-        m_aHidden2Output->BackPropagate(pTime);
-
-        m_aPostActivate->BackPropagate(pTime);
-
-        m_aPrevActivate->BackPropagate(pTime);
-
-        if (pTime != 0) {
-            m_aHidden2Hidden->BackPropagate(pTime);
+        if (pTime != timeSize-1) {
+            m_aHidden2Hidden->BackPropagate(pTime+1);
+            #if __RNN_DEBUG__
+            std::cout << "\n============= B m_aHidden2Hidden =================\n" << m_aHidden2Hidden->GetResult() << "\n";
+            #endif
 
             Tensor<DTYPE> *tempHiddenGrad = m_aTempHidden->GetGradient();
-            Tensor<DTYPE> *prevHiddenGrad = m_aHidden2Hidden->GetGradient();
+            Tensor<DTYPE> *prevHiddenGrad = m_aPostActivate->GetGradient();
 
             int colSize        = tempHiddenGrad->GetColSize();
             Shape *HiddenShape = tempHiddenGrad->GetShape();
 
             for (int i = 0; i < colSize; i++) {
-                (*prevHiddenGrad)[Index5D(HiddenShape, pTime-1, 0, 0, 0, i)] = (*tempHiddenGrad)[Index5D(HiddenShape, pTime, 0, 0, 0, i)];
+                (*prevHiddenGrad)[Index5D(HiddenShape, pTime, 0, 0, 0, i)] = (*tempHiddenGrad)[Index5D(HiddenShape, pTime+1, 0, 0, 0, i)];
             }
         }
 
+        m_aHidden2Output->BackPropagate(pTime);
+        #if __RNN_DEBUG__
+        std::cout << "\n============= B m_aHidden2Output =================\n" << m_aHidden2Output->GetResult() << "\n";
+        #endif
+
+        m_aPostActivate->BackPropagate(pTime);
+        #if __RNN_DEBUG__
+        std::cout << "\n=============  B m_aPostActivate =================\n" << m_aPostActivate->GetResult() << "\n";
+        #endif
+
+        m_aPrevActivate->BackPropagate(pTime);
+        #if __RNN_DEBUG__
+        std::cout << "\n============= B m_aPrevActivate =================\n" << m_aPrevActivate->GetResult() << "\n";
+        #endif
+
         m_aInput2Hidden->BackPropagate(pTime);
+        #if __RNN_DEBUG__
+        std::cout << "\n============= B m_aInput2Hidden =================\n" << m_aInput2Hidden->GetResult() << "\n";
+        #endif
+        
         return TRUE;
     }
 
@@ -292,6 +335,8 @@ public:
         return TRUE;
     }
 
+#endif
+
     int ResetResult() {
         m_aInput2Hidden->ResetResult();
         m_aHidden2Hidden->ResetResult();
@@ -310,7 +355,7 @@ public:
         m_aHidden2Output->ResetGradient();
     }
 
-#endif  // if __CUDNN__
+ // if __CUDNN__
 };
 
 
