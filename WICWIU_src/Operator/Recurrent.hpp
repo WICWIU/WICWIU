@@ -74,10 +74,6 @@ public:
         std::cout << "m_aPostActivate : " << m_aPostActivate->GetResult()->GetShape() << '\n';
         std::cout << "m_aHidden2Output : " << m_aHidden2Output->GetResult()->GetShape() << '\n';
 
-        pWeightXH->GetOutputContainer()->Pop(m_aInput2Hidden);
-        pWeightHH->GetOutputContainer()->Pop(m_aHidden2Hidden);
-        pWeightHY->GetOutputContainer()->Pop(m_aHidden2Output);
-
         Shape *ResultShape = m_aHidden2Output->GetResult()->GetShape();
 
         int timeSize  = (*ResultShape)[0];
@@ -124,7 +120,6 @@ public:
         #endif
 
         if (pTime != 0) {
-            Tensor<DTYPE> *prevHidden = m_aPostActivate->GetResult();
             Tensor<DTYPE> *tempHidden = m_aTempHidden->GetResult();
 
             int colSize        = prevHidden->GetColSize();
@@ -192,7 +187,6 @@ public:
             #endif
 
             Tensor<DTYPE> *tempHiddenGrad = m_aTempHidden->GetGradient();
-            Tensor<DTYPE> *prevHiddenGrad = m_aPostActivate->GetGradient();
 
             int colSize        = tempHiddenGrad->GetColSize();
             Shape *HiddenShape = tempHiddenGrad->GetShape();
@@ -335,7 +329,6 @@ public:
         return TRUE;
     }
 
-#endif
 
     int ResetResult() {
         m_aInput2Hidden->ResetResult();
