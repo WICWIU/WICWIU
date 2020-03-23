@@ -1,5 +1,5 @@
 #ifndef __RECURRENT_LAYER__
-#define __RECURRENT_LAYER__    value            //여기 부분 VLAUE하고 저렇게 하는게 맞는지 확인 할 것!!!!
+#define __RECURRENT_LAYER__    value
 
 #include "../Module.hpp"
 
@@ -19,15 +19,7 @@ public:
     @details 단, 동적 할당 받은 Operator들은 NeuralNetwork에서 할당 해제한다.  */
     virtual ~RecurrentLayer() {}
 
-    /*!
-    @brief RecurrentLayer 그래프를 동적으로 할당 및 구성하는 메소드
-    @details Input Operator의 Element에 대해 2D Convolution을 수행한다.
-    @param pInput
-    @param use_bias Bias 사용 유무, 0일 시 사용 안 함, 0이 아닐 시 사용
-    @param pName Module의 이름
-    @return TRUE
-    @see
-    */
+
     int Alloc(Operator<DTYPE> *pInput, int inputsize, int hiddensize, int outputsize, int use_bias, std::string pName) {
         this->SetInput(pInput);
 
@@ -38,24 +30,24 @@ public:
         float xavier_h = 1/sqrt(hiddensize);
 
 
-        // float stddev = 0.1;
-        Tensorholder<DTYPE> *pWeight_x2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, inputsize, 0, 0.01), pName + "pWeight_x2h_");
-        Tensorholder<DTYPE> *pWeight_h2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, hiddensize, 0, 0.01), pName + "pWeight_h2h_");
-        Tensorholder<DTYPE> *pWeight_h2o = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, outputsize, hiddensize, 0, 0.01), pName + "pWeight_h2o_");
 
-        std::cout << "\n================ pWeight_x2h ================\n" << pWeight_x2h->GetResult() << "\n";
-        std::cout << "\n================ pWeight_h2h ================\n" << pWeight_h2h->GetResult() << "\n";
-        std::cout << "\n================ pWeight_h2o ================\n" << pWeight_h2o->GetResult() << "\n";
+        Tensorholder<DTYPE> *pWeight_x2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, inputsize, 0.0, 0.01), "RecurrentLayer_pWeight_x2h_" + pName);
+        Tensorholder<DTYPE> *pWeight_h2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, hiddensize, 0.0, 0.01), "RecurrentLayer_pWeight_h2h_" + pName);
+        Tensorholder<DTYPE> *pWeight_h2o = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, outputsize, hiddensize, 0.0, 0.01), "RecurrentLayer_pWeight_h2o_" + pName);
+
+        Tensorholder<DTYPE> *rBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, hiddensize, 0.f), "RNN_Bias_" + pName);
+
+        out = new Recurrent<DTYPE>(out, pWeight_x2h, pWeight_h2h, rBias);
+
+        out = new MatMul<DTYPE>(pWeight_h2o, out, "rnn_matmul_ho");
 
 
-        out = new Recurrent<DTYPE>(out, pWeight_x2h, pWeight_h2h, pWeight_h2o, pName + "Recurrent");
 
         if (use_bias) {
-            Tensorholder<DTYPE> *pBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, outputsize, 0.f), pName + "Add_Bias");
-            out = new AddColWise<DTYPE>(out, pBias, pName + "Layer_Add");
+            Tensorholder<DTYPE> *pBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, outputsize, 0.f), "Add_Bias_" + pName);
+            out = new AddColWise<DTYPE>(out, pBias, "Layer_Add_" + pName);
         }
 
-        std::cout << "=========Module AnalyzeGraph===========" << "\n";
         this->AnalyzeGraph(out);
 
         return TRUE;

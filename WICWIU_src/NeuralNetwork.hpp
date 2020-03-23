@@ -79,10 +79,12 @@ public:
     void                 InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize = 32);
 
     //RNN을 위한 time train과 time test 추가
-    int                  TimeTrain(int timesize);
-    int                  TimeTrainOnCPU(int timesize);
-    int                  TimeTest(int timesize);
-    int                  TimeTestOnCPU(int timesize);
+    int                  BPTT(int timesize, int truncated_size);
+    int                  BPTT(int timesize);
+    int                  BPTTOnCPU(int timesize, int truncated_size);
+    int                  BPTTOnCPU(int timesize);
+    int                  BPTT_Test(int timesize);
+    int                  BPTT_TestOnCPU(int timesize);
 
 
 #ifdef __CUDNN__
@@ -263,9 +265,10 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Train() {
 }
 
 //RNN에서 time을 사용하기 위해 추가함!!!
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTrain(int timesize) {
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT(int timesize) {
     if (m_Device == CPU) {
-        this->TimeTrainOnCPU(timesize);
+        this->BPTTOnCPU(timesize);
     } else if (m_Device == GPU) {
         //this->TimeTrainOnGPU(timesize);
     } else return FALSE;
@@ -273,6 +276,15 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTrain(int timesize) {
     return TRUE;
 }
 
+template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT(int timesize, int truncated_size) {
+    if (m_Device == CPU) {
+        this->BPTTOnCPU(timesize, truncated_size);
+    } else if (m_Device == GPU) {
+        //this->TimeTrainOnGPU(timesize);
+    } else return FALSE;
+
+    return TRUE;
+}
 
 
 /*!
@@ -290,9 +302,9 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::Test() {
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTest(int timesize) {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT_Test(int timesize) {
     if (m_Device == CPU) {
-        this->TimeTestOnCPU(timesize);
+        this->BPTT_TestOnCPU(timesize);
     } else if (m_Device == GPU) {
         //this->TimeTestOnGPU(timesize);
     } else return FALSE;
@@ -326,9 +338,11 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTrainOnCPU(int timesize) {
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize) {
     // this->ResetOperatorResult();
     // this->ResetOperatorGradient();
+    //std::cout<<"TimeTrainOnCPU함수 호출"<<'\n';
     this->ResetResult();
     this->ResetGradient();
     this->ResetLossFunctionResult();
@@ -339,18 +353,56 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTrainOnCPU(int timesize) 
       m_aLossFunction->ForwardPropagate(i);
     }
     for(int j=timesize-1; j>=0; j--){
+      //std::cout<<"TimeTrain time :"<< j<< '\n';
       m_aLossFunction->BackPropagate(j);
       this->BackPropagate(j);
     }
 
     //time_size를 안 넣어주는 이유는 time별 gradient 처리를 해주었다고 가정
+    //std::cout<<"UpdateParameter함수 호출 전"<<'\n';
+    //현재는 parameter 개수가 0개여서 안되는듯
     m_aOptimizer->UpdateParameter();
 
     return TRUE;
 }
 
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::TimeTestOnCPU(int timesize) {
+template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize, int truncated_size) {
+
+    int cnt = 0;
+
+    this->ResetResult();
+    this->ResetGradient();
+    this->ResetLossFunctionResult();
+    this->ResetLossFunctionGradient();
+
+    for(int i=0; i<timesize; i++){
+      this->ForwardPropagate(i);
+      m_aLossFunction->ForwardPropagate(i);
+    }
+    for(int j=timesize-1; j>=0; j--){
+        //std::cout<<"BPTT time :"<< j<< '\n';
+        m_aLossFunction->BackPropagate(j);
+        this->BackPropagate(j);
+
+        cnt++;
+
+        if( cnt == truncated_size){
+            //std::cout<<"truncated update parameter time : "<<j<<'\n';
+            m_aOptimizer->UpdateParameter();
+            this->ResetGradient();
+            this->ResetLossFunctionGradient();
+            cnt = 0;
+        }
+    }
+
+    //나머지 처리
+    m_aOptimizer->UpdateParameter();
+
+    return TRUE;
+}
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT_TestOnCPU(int timesize) {
     // this->ResetOperatorResult();
     this->ResetResult();
     this->ResetLossFunctionResult();
@@ -442,6 +494,8 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnGPU() {
  * @return 신경망의 Top 1 Accuracy : 0. ~ 1.
  */
 template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass) {
+
+    //GetResultOperator Loss전에 값을 갖고옴
     Operator<DTYPE> *result = GetResultOperator();
     Operator<DTYPE> *label  = m_aLossFunction->GetLabel();
 
@@ -451,24 +505,27 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass)
     Tensor<DTYPE> *pred = result->GetResult();
     Tensor<DTYPE> *ans  = label->GetResult();
 
+    //GetMaxIndex를 해서 Loss전에 값을 값고와도 상관없음
+    //std::cout<<"GetAccuracy함수 호출"<<'\n';
+    //std::cout<<"model 계산값 : "<<pred<<'\n';
+    //std::cout<<"label : "<<ans<<'\n';
+
+
     float accuracy = 0.f;
 
     int pred_index = 0;
     int ans_index  = 0;
     // printf("\n\n");
 
+    //
     for (int ba = 0; ba < batchsize; ba++) {
         for (int ti = 0; ti < timesize; ti++) {
             pred_index = GetMaxIndex(pred, ba, ti, numOfClass);
             ans_index  = GetMaxIndex(ans, ba, ti, numOfClass);
             // printf("%d, ", ans_index);
 
-            //std::cout << "\n pred_index " << pred_index << "\n";
-            //std::cout << "\n ans_index " << ans_index << "\n";
-
             if (pred_index == ans_index) {
                 accuracy += 1.f;
-                //std::cout << "\n=============== accuracy ================\n" << accuracy << "\n";
             }
         }
     }
@@ -616,19 +673,28 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetLoss() {
     int batchsize = m_aLossFunction->GetResult()->GetBatchSize();
     int timesize  = m_aLossFunction->GetResult()->GetTimeSize();
 
-    // for (int ba = 0; ba < batchsize; ba++) {
-    //     for (int ti = 0; ti < timesize; ti++) {
-    //         avg_loss += (*m_aLossFunction)[ba*batchsize + ti] / batchsize / timesize;
-    //         //std::cout << "\n (*m_aLossFunction)[ba*batchsize + ti] : " << (*m_aLossFunction)[ba*batchsize + ti] << "\n";
-    //     }
-    // }
+    //batch, timesize는 맞게 잘 들어감
+    //std::cout<<"GetLoss에서 batch, time size : "<<batchsize<<"  "<<timesize<<'\n';
+
+    //(*m_aLossFunction)[ba] []이 연산 그냥 tensor인 m_aResult에서 갖고오는거임
+    //loss값 출력
+    //loss값 잘 갖고옴!!!
+    #if __LOSS__
+    std::cout<<"GetLoss함수에서 갖고오는 loss값 "<<'\n'<<m_aLossFunction->GetResult()<<'\n';
+    #endif
+
 
     for (int ti = 0; ti < timesize; ti++) {
         for (int ba = 0; ba < batchsize; ba++) {
-            avg_loss += (*m_aLossFunction)[ba*batchsize + ti] / batchsize / timesize;
-            //std::cout << "\n(*m_aLossFunction)[" << ba*batchsize + ti << "] : " << (*m_aLossFunction)[ba*batchsize + ti]<< "\n";
+            //std::cout<<"m_aLossFunction "<<ba<<" : "<<(*m_aLossFunction)[ba]<<'\n';
+            //avg_loss += (*m_aLossFunction)[ba] / batchsize / timesize;                                         //기존에 있던거!
+            avg_loss += (*m_aLossFunction)[batchsize*ba + ti] / batchsize / timesize;
+            //avg_loss += (*m_aLossFunction)[batchsize*ti + ba] / batchsize / timesize;                   //뭐가 맞는걸까...
+            //avg_loss += (*m_aLossFunction)[batchsize*ba + ti] ;/// batchsize / timesize;
         }
     }
+    //avg_loss = avg_loss / batchsize;
+    //avg_loss = avg_loss / timesize;
 
     return avg_loss;
 }
