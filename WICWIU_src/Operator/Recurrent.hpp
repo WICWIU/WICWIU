@@ -77,10 +77,6 @@ public:
 
     int  ForwardPropagate(int pTime = 0) {
 
-        #if __RNNDEBUG__
-        std::cout <<pTime<<"번쨰 Recurrent forward 호출" << '\n';
-        #endif  // __RNNDEBUG__
-
         m_aInput2Hidden->ForwardPropagate(pTime);
 
         if (pTime != 0) {

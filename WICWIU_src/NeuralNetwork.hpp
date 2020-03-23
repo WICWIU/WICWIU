@@ -321,8 +321,6 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT_Test(int timesize) {
  * @see NeuralNetwork<DTYPE>::ForwardPropagate() NeuralNetwork<DTYPE>::BackPropagate() Optimizer<DTYPE>::UpdateParameter()
  */
 template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
-    // this->ResetOperatorResult();
-    // this->ResetOperatorGradient();
     this->ResetResult();
     this->ResetGradient();
     this->ResetLossFunctionResult();
@@ -340,9 +338,6 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TrainOnCPU() {
 
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize) {
-    // this->ResetOperatorResult();
-    // this->ResetOperatorGradient();
-    //std::cout<<"TimeTrainOnCPU함수 호출"<<'\n';
     this->ResetResult();
     this->ResetGradient();
     this->ResetLossFunctionResult();
@@ -353,14 +348,10 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize) {
       m_aLossFunction->ForwardPropagate(i);
     }
     for(int j=timesize-1; j>=0; j--){
-      //std::cout<<"TimeTrain time :"<< j<< '\n';
       m_aLossFunction->BackPropagate(j);
       this->BackPropagate(j);
     }
 
-    //time_size를 안 넣어주는 이유는 time별 gradient 처리를 해주었다고 가정
-    //std::cout<<"UpdateParameter함수 호출 전"<<'\n';
-    //현재는 parameter 개수가 0개여서 안되는듯
     m_aOptimizer->UpdateParameter();
 
     return TRUE;
@@ -381,14 +372,12 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize, int t
       m_aLossFunction->ForwardPropagate(i);
     }
     for(int j=timesize-1; j>=0; j--){
-        //std::cout<<"BPTT time :"<< j<< '\n';
         m_aLossFunction->BackPropagate(j);
         this->BackPropagate(j);
 
         cnt++;
 
         if( cnt == truncated_size){
-            //std::cout<<"truncated update parameter time : "<<j<<'\n';
             m_aOptimizer->UpdateParameter();
             this->ResetGradient();
             this->ResetLossFunctionGradient();
@@ -396,7 +385,6 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize, int t
         }
     }
 
-    //나머지 처리
     m_aOptimizer->UpdateParameter();
 
     return TRUE;

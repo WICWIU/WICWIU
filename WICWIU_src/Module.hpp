@@ -293,26 +293,19 @@ template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::AnalyzeGraph(Operator<D
     int numOfInputEdge                   = 0;
 
     Operator<DTYPE> *out = NULL;
-    //std::cout << "out : " << out->GetName() << "\n";
+
     while (queue.GetSize() > 0) {
         out = queue.Pop();
-	    std::cout << "Pop_out : " << out->GetName() << '\n';
 
         if (!(this->IsInput(out))) {
-            std::cout << "============1============" << '\n';
-	        std::cout << "out : " << out->GetName() << '\n';
             if (this->IsValid(out)) {
-                std::cout << "============2============" << '\n';
-                std::cout << "out : " << out->GetName() << '\n';
-        		if (out->GetIsTensorholder()) {
-                    std::cout << "============3============" << '\n';
-        		    std::cout << "out : " << out->GetName() << "\n\n";
-        		    this->SetParameter(out);
+                // std::cout << out->GetName() << '\n';
+
+                if (out->GetIsTensorholder()) {
+                    this->SetParameter(out);
                 } else {
-                        std::cout << "============4============" << '\n';
-    		            std::cout << "out : " << out->GetName() << "\n\n";
-                        this->SetExecutableOperater(out);
-                    }
+                    this->SetExecutableOperater(out);
+                }
 
                 nextOp         = out->GetInputContainer();
                 numOfInputEdge = nextOp->GetSize();

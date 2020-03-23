@@ -5,9 +5,6 @@ CFLAGS = -O2 -std=c++11 -g
 # if cuda device, cuda lib, or cuDNN is not installed, disable the following line
 #ENABLE_CUDNN = -D__CUDNN__
 
-#DFLAGS = -D__DEBUG__
-#DFLAGS = -D__RNN_DEBUG
-
 ifdef ENABLE_CUDNN
 	INCLUDE_PATH = -I/usr/local/cuda-10.1/include
 	LIB_PATH = -L. -L/usr/local/cuda-10.1/lib64
