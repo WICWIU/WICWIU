@@ -1,6 +1,7 @@
 #ifndef GRADIENTDESCENTOPTIMIZER_H_
 #define GRADIENTDESCENTOPTIMIZER_H_    value
 
+#include <cmath>
 #include "../Optimizer.hpp"
 
 template<typename DTYPE> class GradientDescentOptimizer : public Optimizer<DTYPE>{
@@ -14,6 +15,8 @@ private:
     ///< 업데이트 할 Tensor의 degree
     float m_momentum;
     ///< Optimizer의 momentum 값
+    float m_clipValue;
+    ///Gradient Clipping의 threshold 값
 
 public:
     /*!
@@ -33,6 +36,7 @@ public:
         m_aaVelocity     = NULL;
         m_numOfParameter = 0;
         m_momentum       = 0.f;
+        m_clipValue      = 0.f;
 
         Alloc();
     }
@@ -55,8 +59,23 @@ public:
         m_aaVelocity     = NULL;
         m_numOfParameter = 0;
         m_momentum       = 0.f;
+        m_clipValue      = 0.f;
 
         Alloc(momentum);
+    }
+
+    //Gradient clipping을 위해 내가 추가함
+    GradientDescentOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float momentum, float clipValue, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
+        #ifdef __DEBUG__
+        std::cout << "GradientDescentOptimizer::GradientDescentOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
+        #endif  // __DEBUG__
+        m_ppParameter    = NULL;
+        m_aaVelocity     = NULL;
+        m_numOfParameter = 0;
+        m_momentum       = 0.f;
+        m_clipValue      = 0.f;
+
+        Alloc(momentum, clipValue);
     }
 
     /*!
@@ -70,7 +89,7 @@ public:
     @return 없음
     @see int Alloc(float momentum)
     */
-    GradientDescentOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float momentum, float weightDecayRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, weightDecayRate, pOptimizeDirection) {
+    GradientDescentOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float momentum, float clipValue, float weightDecayRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, weightDecayRate, pOptimizeDirection) {
         #ifdef __DEBUG__
         std::cout << "GradientDescentOptimizer::GradientDescentOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
         #endif  // __DEBUG__
@@ -79,7 +98,7 @@ public:
         m_numOfParameter = 0;
         m_momentum       = 0.f;
 
-        Alloc(momentum);
+        Alloc(momentum, clipValue);
     }
 
     /*!
@@ -136,6 +155,28 @@ public:
         return TRUE;
     }
 
+    int Alloc(float momentum, float clipValue) {
+        Alloc();
+        m_aaVelocity = new Container<Tensor<DTYPE> *>();
+
+        Shape *pParameterGradShape = NULL;
+
+        for (int i = 0; i < m_numOfParameter; i++) {
+            pParameterGradShape = (*m_ppParameter)[i]->GetGradient()->GetShape();
+
+            // std::cout << (*m_ppParameter)[i]->GetName() << '\n';
+            // std::cout << pParameterGradShape << '\n';
+
+            m_aaVelocity->Push(new Tensor<DTYPE>(new Shape(pParameterGradShape)));
+            pParameterGradShape = NULL;
+        }
+
+        m_momentum = momentum;
+        m_clipValue = clipValue;
+
+        return TRUE;
+    }
+
     int Delete(){
         if (m_aaVelocity) {
             delete m_aaVelocity;
@@ -165,6 +206,7 @@ public:
     @see int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity)
     */
     virtual int UpdateParameter() {
+
         if (m_momentum == 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
                 if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i]);
@@ -174,7 +216,6 @@ public:
                 if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i], (*m_aaVelocity)[i]);
             }
         }
-
         return TRUE;
     }
 
@@ -185,6 +226,8 @@ public:
     @return 성공 시 TRUE
     */
     int UpdateParameter(Operator<DTYPE> *pParameter) {
+
+
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -193,13 +236,18 @@ public:
 
         int capacity = trainable_data->GetCapacity();
 
+        //Gradient Clipping
+        if(m_clipValue != 0.f){
+            for(int i=0; i < capacity; i++){
+                if(abs((*gradient)[i]) > m_clipValue){
+                    (*gradient)[i] = (m_clipValue/abs((*gradient)[i])) * (*gradient)[i];
+                }
+            }
+        }
+
         for (int i = 0; i < capacity; i++) {
             (*trainable_data)[i] += (learning_rate * (*gradient)[i] + weightDecayRate * (*trainable_data)[i]);
         }
-
-        #if __RNN_DEBUG__
-        std::cout << "\n======== Update Parameter =========\n" << trainable_data << "\n";
-        #endif
 
         return TRUE;
     }
@@ -213,6 +261,7 @@ public:
     @return 성공 시 TURE
     */
     int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pVelocity) {
+
         Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         Tensor<DTYPE> *gradient       = pParameter->GetGradient();
 
@@ -221,17 +270,24 @@ public:
 
         int capacity = trainable_data->GetCapacity();
 
+        //Gradient Clipping
+        if(m_clipValue != 0.f){
+            for(int i=0; i < capacity; i++){
+                if(abs((*gradient)[i]) > m_clipValue){
+                    (*gradient)[i] = (m_clipValue/abs((*gradient)[i])) * (*gradient)[i];
+                }
+            }
+        }
+
+
         for (int i = 0; i < capacity; i++) {
             (*pVelocity)[i]      = m_momentum * (*pVelocity)[i] + learning_rate * (*gradient)[i];
             (*trainable_data)[i] += ((*pVelocity)[i] + weightDecayRate * (*trainable_data)[i]);
         }
 
-        #if __RNN_DEBUG__
-        std::cout << "\n======== Update Parameter(using velocity) =========\n" << trainable_data << "\n";
-        #endif
-
         return TRUE;
     }
+
 
 #ifdef __CUDNN__
 

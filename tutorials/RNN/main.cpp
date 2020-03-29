@@ -21,7 +21,7 @@ int main(int argc, char const *argv[]) {
     clock_t startTime = 0, endTime = 0;
     double  nProcessExcuteTime = 0;
 
-    TextDataset<float> *dataset = new TextDataset<float>("Data/test1.txt");
+    TextDataset<float> *dataset = new TextDataset<float>("Data/test1.txt", 100, ONEHOT);
 
     int Text_length = dataset->GetTextLength();
     int vocab_length = dataset->GetVocabLength();
