@@ -1,32 +1,20 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <cstring>    //strlen 때문에 추가한 해더
+#include <cstring>
+#include <string.h>
 
 #include "../../WICWIU_src/Tensor.hpp"
-#include "../../WICWIU_src/DataLoader.hpp"        // 왜 추가한거지?   Dataset때문에 추가한거 같음... 추측임
-
 
 using namespace std;
 
+enum OPTION {
+    ONEHOT,
+    CBOW
+};
 
-/*
-int char2index(char* vocab, char c){
 
-    for(int index=0; index<strlen(vocab); index++){
-        if(vocab[index]==c)
-          return index;
-    }
-    std::cout<<"해당 문자는 vocab에 없습니다."<<'\n';
-    exit(0);
-}
-
-char index2char(char* vocab, int index){
-
-    return vocab[index];
-}
-*/
-void makeonehotvector(int* onehotvector, int vocab_size, int index){
+void MakeOneHotVector(int* onehotvector, int vocab_size, int index){
 
     for(int i=0; i<vocab_size; i++){
         if(i==index)
@@ -38,28 +26,36 @@ void makeonehotvector(int* onehotvector, int vocab_size, int index){
 
 
 template<typename DTYPE>
-class TextDataset : public Dataset<DTYPE>{
+class TextDataset {
 private:
 
     char* vocab ;
     char* TextData;
 
-    int vocab_length;
+    int vocab_size;
     int text_length;
 
     Tensor<DTYPE>* input;
     Tensor<DTYPE>* label;
 
+    OPTION option;
+
+    int VOCAB_LENGTH;
+
 public:
-    TextDataset(string File_Path) {
-        vocab = new char[100];
+    TextDataset(string File_Path, int vocab_length, OPTION pOption) {
+        vocab = NULL;
         TextData = NULL;
 
-        vocab_length = 0;
+        vocab_size = 0;
         text_length = 0;
 
-        input = NULL;               // NULL 맞는지 모르겠음
+        input = NULL;
         label = NULL;
+
+        option = pOption;
+
+        VOCAB_LENGTH = vocab_length;
 
         Alloc(File_Path);
     }
@@ -68,15 +64,15 @@ public:
         Delete();
     }
 
-    virtual void                          Alloc(string File_Path);
+    void                                  Alloc(string File_Path);
 
-    virtual void                          Delete();
+    void                                  Delete();
 
-    void                                  File_Reader(string pFile_Path);
-    void                                  make_vocab();
+    void                                  FileReader(string pFile_Path);
+    void                                  MakeVocab();
 
-    void                                  make_Input_data();
-    void                                  make_Label_data();
+    void                                  MakeInputData();
+    void                                  MakeLabelData();
 
     int                                   char2index(char c);
 
@@ -90,115 +86,127 @@ public:
 
     int                                   GetVocabLength();
 
-    //virtual std::vector<Tensor<DTYPE> *>* GetData(int idx);
-
-    //virtual int                           GetLength();
 
 };
 
 template<typename DTYPE> void TextDataset<DTYPE>::Alloc(string File_Path) {
 
+    vocab = new char[VOCAB_LENGTH];
     //File_Reader
-    File_Reader(File_Path);
+    FileReader(File_Path);
 
     //make_vocab
-    make_vocab();
+    MakeVocab();
+
     //make_Input_data
-    make_Input_data();
+    MakeInputData();
+
     //make_label_data
-    make_Label_data();
+    MakeLabelData();
 }
+
 
 template<typename DTYPE> void TextDataset<DTYPE>::Delete() {
-
+    delete []vocab;
+    delete []TextData;
 }
 
-template<typename DTYPE> void TextDataset<DTYPE>::File_Reader(string pFile_Path) {
+template<typename DTYPE> void TextDataset<DTYPE>::FileReader(string pFile_Path) {
     ifstream fin;
     fin.open(pFile_Path);
 
     if(fin.is_open()){
 
-      //파일 사이즈 구하기
+
       fin.seekg(0, ios::end);
       text_length = fin.tellg();
-      fin.seekg(0, ios::beg);        //포인터를 다시 시작위치로 바꿈
+      fin.seekg(0, ios::beg);
 
-      //파일 길이만큼 할당
       TextData = new char[text_length];
 
-      //파일 읽기
       fin.read(TextData, text_length);
+
+        for(int i=0; i<text_length; i++)
+            TextData[i] = tolower(TextData[i]);
+
+
     }
     fin.close();
 }
 
-template<typename DTYPE> void TextDataset<DTYPE>::make_vocab(){
+template<typename DTYPE> void TextDataset<DTYPE>::MakeVocab(){
 
     int flag = 0;
     for(int i=0; i<text_length; i++){
 
         flag = 0;
-        vocab_length = (int)strlen(vocab);
+        vocab_size = (int)strlen(vocab);
 
-        for(int j=0; j<vocab_length; j++){
+        for(int j=0; j<vocab_size; j++){
             if(vocab[j]==TextData[i])
               flag = 1;
             }
 
         if(flag==0){
-          vocab[vocab_length] = TextData[i];
-        }
-    }
-    sort(vocab, vocab+vocab_length);
-}
-
-template<typename DTYPE> void TextDataset<DTYPE>::make_Input_data(){
-
-    int* onehotvector = new int[vocab_length];
-
-    input = new Tensor<DTYPE>(text_length, 1, 1, 1, vocab_length);
-
-    for(int i=0; i<text_length; i++){
-        for(int j=0; j<vocab_length; j++){
-            makeonehotvector(onehotvector, vocab_length, char2index(TextData[i]));
-            (*input)[Index5D(input->GetShape(), i, 0, 0, 0, j)] = onehotvector[j];
+          vocab[vocab_size] = TextData[i];
         }
     }
 
+    vocab_size = (int)strlen(vocab)+1;
+    sort(vocab, vocab+vocab_size-1);
+
+
 }
 
-template<typename DTYPE> void TextDataset<DTYPE>::make_Label_data(){
+template<typename DTYPE> void TextDataset<DTYPE>::MakeInputData(){
 
-    int* onehotvector = new int[vocab_length];
+    if(option == ONEHOT){
+        int* onehotvector = new int[vocab_size];
 
-    label = new Tensor<float>(text_length, 1, 1, 1, vocab_length);
+        input = new Tensor<DTYPE>(text_length, 1, 1, 1, vocab_size);
 
-    for(int i=0; i<text_length; i++){
-
-        //맨 마지막 label 처리
-        if(i==text_length-1){
-          for(int j=0; j<vocab_length; j++){
-              (*label)[Index5D(label->GetShape(), i, 0, 0, 0, j)] = 0;
-          }
-          continue;
+        for(int i=0; i<text_length; i++){
+            MakeOneHotVector(onehotvector, vocab_size, char2index(TextData[i]));
+            for(int j=0; j<vocab_size; j++){
+                (*input)[Index5D(input->GetShape(), i, 0, 0, 0, j)] = onehotvector[j];
+            }
         }
+    }
 
-        for(int j=0; j<vocab_length; j++){
-            makeonehotvector(onehotvector, vocab_length, char2index(TextData[i+1]));
-            (*label)[Index5D(label->GetShape(), i, 0, 0, 0, j)] = onehotvector[j];
+}
+
+template<typename DTYPE> void TextDataset<DTYPE>::MakeLabelData(){
+
+    if(option == ONEHOT){
+        int* onehotvector = new int[vocab_size];
+
+        label = new Tensor<float>(text_length, 1, 1, 1, vocab_size);
+
+        for(int i=0; i<text_length; i++){
+
+            if(i==text_length-1){
+                MakeOneHotVector(onehotvector, vocab_size, vocab_size-1);
+                for(int j=0; j<vocab_size; j++){
+                    (*label)[Index5D(label->GetShape(), i, 0, 0, 0, j)] = onehotvector[j];
+              }
+              continue;
+            }
+
+            MakeOneHotVector(onehotvector, vocab_size, char2index(TextData[i+1]));
+            for(int j=0; j<vocab_size; j++){
+                (*label)[Index5D(label->GetShape(), i, 0, 0, 0, j)] = onehotvector[j];
+            }
         }
     }
 }
 
 template<typename DTYPE> int TextDataset<DTYPE>::char2index(char c){
 
-    for(int index=0; index<strlen(vocab); index++){
+    for(int index=0; index<vocab_size; index++){
         if(vocab[index]==c)
           return index;
     }
-    std::cout<<"해당 문자는 vocab에 없습니다."<<'\n';
-    exit(0);
+    return -1;
 }
 
 template<typename DTYPE> char TextDataset<DTYPE>::index2char(int index){
@@ -220,5 +228,5 @@ template<typename DTYPE> int TextDataset<DTYPE>::GetTextLength(){
 }
 
 template<typename DTYPE> int TextDataset<DTYPE>::GetVocabLength(){
-    return vocab_length;
+    return vocab_size;
 }

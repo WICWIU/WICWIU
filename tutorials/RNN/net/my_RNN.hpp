@@ -14,7 +14,7 @@ public:
 
 
         // ======================= layer 1=======================
-        out = new RecurrentLayer<float>(x, vocab_length, 128, vocab_length, TRUE, "Recur_1");       // vocab사이즈에 따라 바꿔줘야됨!
+        out = new RecurrentLayer<float>(x, vocab_length, 128, vocab_length, TRUE, "Recur_1");    
         //out = new DeepRecurrentLayer<float>(x, vocab_length, 256, vocab_length, TRUE, "Recur_1");
 
         // // ======================= layer 2=======================
@@ -29,8 +29,8 @@ public:
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
 
         // ======================= Select Optimizer ===================
-        SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
-        //SetOptimizer(new RMSPropOptimizer<float>(GetParameter(), 0.01, 0.9, 1e-08, FALSE, MINIMIZE));
+        //SetOptimizer(new GradientDescentOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
+        SetOptimizer(new RMSPropOptimizer<float>(GetParameter(), 0.01, 0.9, 1e-08, FALSE, MINIMIZE));
         //SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.001, 0.9, 0.999, 1e-08, MINIMIZE));
         // SetOptimizer(new NagOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));
         //SetOptimizer(new AdagradOptimizer<float>(GetParameter(), 0.001, 0.9, MINIMIZE));      //MAXIMIZE
