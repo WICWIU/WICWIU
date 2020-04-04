@@ -7,7 +7,7 @@ WICWIU_LIB = lib/libwicwiu.a
 
 
 #	if CUDA device, cuda or cuDNN is not installed, disable the following line
-#ENABLE_CUDNN = -D__CUDNN__
+ENABLE_CUDNN = -D__CUDNN__
 
 #	uncomment the following to debug
 #DFLAGS = -D__DEBUG__
