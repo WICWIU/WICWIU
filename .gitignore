@@ -1,6 +1,7 @@
 *.ftpconfig
 *.ftpignore
 *.o
+*.a
 *.gch
 *.backup
 main
@@ -9,3 +10,4 @@ tutorials/CIFAR10/cifar-10-batches-bin/
 tutorials/LFW/data/
 *.backup
 NoPublic/
+tutorials/MNIST/MNIST_parmas
