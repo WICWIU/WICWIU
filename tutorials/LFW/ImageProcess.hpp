@@ -23,6 +23,11 @@ public:
     unsigned char *imgBuf;
     Shape *imgShape;
 
+    ImageWrapper() {
+        imgBuf = NULL;
+        imgShape = NULL;
+    }
+
     ~ImageWrapper() {
         if (imgBuf) {
             delete[] imgBuf;
