@@ -3,19 +3,19 @@
 
 #include "../../../../WICWIU_src/NeuralNetwork.hpp"
 
-template<typename DTYPE> class my_Generator : public NeuralNetwork<DTYPE> {
+template <typename DTYPE>
+class my_Generator : public NeuralNetwork<DTYPE>
+{
 public:
-    my_Generator(Operator<float> *z){
-        Alloc(z);
-    }
+    my_Generator(Operator<float>* z) { Alloc(z); }
 
-    virtual ~my_Generator() {
-    }
+    virtual ~my_Generator() {}
 
-    int Alloc(Operator<float> *z){
+    int Alloc(Operator<float>* z)
+    {
         this->SetInput(z);
 
-        Operator<float> *out = z;
+        Operator<float>* out = z;
 
         // ======================= layer 1 ======================
         out = new Linear<float>(out, 100, 128, TRUE, "G_L1");

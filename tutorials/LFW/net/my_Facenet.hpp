@@ -5,13 +5,16 @@
 
 #include "../../../WICWIU_src/NeuralNetwork.hpp"
 
-template<typename DTYPE> class my_FaceNet : public NeuralNetwork<float>{
+template <typename DTYPE>
+class my_FaceNet : public NeuralNetwork<float>
+{
 private:
 public:
-    my_FaceNet(Tensorholder<float> *x, Tensorholder<float> *label, int pNumOfClass) {
+    my_FaceNet(Tensorholder<float>* x, Tensorholder<float>* label, int pNumOfClass)
+    {
         SetInput(2, x, label);
 
-        Operator<float> *out = NULL;
+        Operator<float>* out = NULL;
 
         out = new ReShape<float>(x, 3, 220, 220, "Flat2Image");
 
@@ -70,9 +73,11 @@ public:
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
 
         // ======================= Select Optimizer ===================
-//        SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.001, 0.9, 0.999, 1e-08, MINIMIZE));
-//        SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.0001, 0.9, 0.999, 1e-08, MINIMIZE));
-        SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.00001, 0.9, 0.999, 1e-08, MINIMIZE));
+        //        SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.001, 0.9, 0.999, 1e-08,
+        //        MINIMIZE)); SetOptimizer(new AdamOptimizer<float>(GetParameter(), 0.0001, 0.9,
+        //        0.999, 1e-08, MINIMIZE));
+        SetOptimizer(
+            new AdamOptimizer<float>(GetParameter(), 0.00001, 0.9, 0.999, 1e-08, MINIMIZE));
     }
 
     virtual ~my_FaceNet() {}

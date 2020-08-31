@@ -1,46 +1,57 @@
 #ifndef __TENSOR_UTIL_H__
-#define __TENSOR_UTIL_H__    value
+#define __TENSOR_UTIL_H__ value
 
 #include "Tensor.hpp"
 
-template<typename DTYPE> std::ostream & operator<<(std::ostream& pOS, Tensor<DTYPE> *pTensor) {
-    int timesize    = pTensor->GetTimeSize();
-    int batchsize   = pTensor->GetBatchSize();
+template <typename DTYPE>
+std::ostream& operator<<(std::ostream& pOS, Tensor<DTYPE>* pTensor)
+{
+    int timesize = pTensor->GetTimeSize();
+    int batchsize = pTensor->GetBatchSize();
     int channelsize = pTensor->GetChannelSize();
-    int rowsize     = pTensor->GetRowSize();
-    int colsize     = pTensor->GetColSize();
+    int rowsize = pTensor->GetRowSize();
+    int colsize = pTensor->GetColSize();
 
-    Shape *shape = pTensor->GetShape();
+    Shape* shape = pTensor->GetShape();
 
     pOS.precision(4);
 
     pOS << "[ \n";
 
-    for (int ti = 0; ti < timesize; ti++) {
+    for (int ti = 0; ti < timesize; ti++)
+    {
         pOS << "[ \n";
 
-        for (int ba = 0; ba < batchsize; ba++) {
+        for (int ba = 0; ba < batchsize; ba++)
+        {
             pOS << "[ \n";
 
-            for (int ch = 0; ch < channelsize; ch++) {
+            for (int ch = 0; ch < channelsize; ch++)
+            {
                 pOS << "[ ";
 
-                for (int ro = 0; ro < rowsize; ro++) {
+                for (int ro = 0; ro < rowsize; ro++)
+                {
                     pOS << "\t[ ";
 
-                    for (int co = 0; co < colsize; co++) {
-                        if (co != colsize - 1) {
+                    for (int co = 0; co < colsize; co++)
+                    {
+                        if (co != colsize - 1)
+                        {
                             pOS << "\t\t" << (*pTensor)[Index5D(shape, ti, ba, ch, ro, co)] << ", ";
                         }
-                        else {
+                        else
+                        {
                             pOS << "\t\t" << (*pTensor)[Index5D(shape, ti, ba, ch, ro, co)];
                         }
                     }
 
-                    if (ro != rowsize - 1) {
+                    if (ro != rowsize - 1)
+                    {
                         pOS << " \t\t]\n";
                     }
-                    else {
+                    else
+                    {
                         pOS << " \t\t]";
                     }
                 }
@@ -55,4 +66,4 @@ template<typename DTYPE> std::ostream & operator<<(std::ostream& pOS, Tensor<DTY
     return pOS;
 }
 
-#endif  // __TENSOR_UTIL_H__
+#endif // __TENSOR_UTIL_H__

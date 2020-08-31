@@ -20,15 +20,21 @@ template class RMSPropOptimizer<float>;
 @param epsilon 분모가 0이 되는 것을 방지
 @param weightDecayRate 가중치 매개변수가 클 때 패널티를 부과하는 값
 @param pMeanSquared 업데이트 할 pMeanSquared
-@see int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pMeanSquared)
+@see int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE>
+*pMeanSquared)
 */
-__global__ void RMSPropUpdate_kernel(float *pDevWeight, float *pDevAccGradient, int weightDim, float signed_learning_rate, float decay, float epsilon, float weightDecayRate, float *pMeanSquared) {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < weightDim; idx += blockDim.x * gridDim.x) {
+__global__ void RMSPropUpdate_kernel(float* pDevWeight, float* pDevAccGradient, int weightDim,
+                                     float signed_learning_rate, float decay, float epsilon,
+                                     float weightDecayRate, float* pMeanSquared)
+{
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < weightDim;
+         idx += blockDim.x * gridDim.x)
+    {
         float g = pDevAccGradient[idx];
-        pMeanSquared[idx] = (decay * pMeanSquared[idx]) + ((1.F - decay) * (g * g)); //meansquared
+        pMeanSquared[idx] = (decay * pMeanSquared[idx]) + ((1.F - decay) * (g * g)); // meansquared
 
-        pDevWeight[idx]     += signed_learning_rate * weightDecayRate * pDevWeight[idx];
-        pDevWeight[idx]     += signed_learning_rate / sqrt(pMeanSquared[idx] + epsilon) * g;
+        pDevWeight[idx] += signed_learning_rate * weightDecayRate * pDevWeight[idx];
+        pDevWeight[idx] += signed_learning_rate / sqrt(pMeanSquared[idx] + epsilon) * g;
         pDevAccGradient[idx] = 0.F;
     }
 }
@@ -46,16 +52,25 @@ __global__ void RMSPropUpdate_kernel(float *pDevWeight, float *pDevAccGradient, 
 @param weightDecayRate 가중치 매개변수가 클 때 패널티를 부과하는 값
 @param pMeanSquared 업데이트 할 pMeanSquared
 @param pMeanGrad 업데이트 할 pMeanGrad
-@see int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pMeanSquared)
+@see int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE>
+*pMeanSquared)
 */
-__global__ void RMSPropUpdate_kernelForCentered(float *pDevWeight, float *pDevAccGradient, int weightDim, float signed_learning_rate, float decay, float epsilon, float weightDecayRate, float *pMeanSquared, float *pMeanGrad) {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < weightDim; idx += blockDim.x * gridDim.x) {
+__global__ void RMSPropUpdate_kernelForCentered(float* pDevWeight, float* pDevAccGradient,
+                                                int weightDim, float signed_learning_rate,
+                                                float decay, float epsilon, float weightDecayRate,
+                                                float* pMeanSquared, float* pMeanGrad)
+{
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < weightDim;
+         idx += blockDim.x * gridDim.x)
+    {
         float g = pDevAccGradient[idx];
-        pMeanGrad[idx] = (decay * pMeanGrad[idx]) + ((1.f - decay) * g); //meangrad
-        pMeanSquared[idx] = (decay * pMeanSquared[idx]) + ((1.F - decay) * (g * g)); //meansquared
+        pMeanGrad[idx] = (decay * pMeanGrad[idx]) + ((1.f - decay) * g);             // meangrad
+        pMeanSquared[idx] = (decay * pMeanSquared[idx]) + ((1.F - decay) * (g * g)); // meansquared
 
-        pDevWeight[idx]     += signed_learning_rate * weightDecayRate * pDevWeight[idx];
-        pDevWeight[idx]     += signed_learning_rate / sqrt((pMeanSquared[idx] - (pMeanGrad[idx] * pMeanGrad[idx])) + epsilon) * g;
+        pDevWeight[idx] += signed_learning_rate * weightDecayRate * pDevWeight[idx];
+        pDevWeight[idx] += signed_learning_rate /
+                           sqrt((pMeanSquared[idx] - (pMeanGrad[idx] * pMeanGrad[idx])) + epsilon) *
+                           g;
 
         pDevAccGradient[idx] = 0.F;
     }
@@ -67,15 +82,21 @@ __global__ void RMSPropUpdate_kernelForCentered(float *pDevWeight, float *pDevAc
 @details noBlock는 GPU 연산시 사용되는 block의 수
 @details threadsPerBlock는 한 block당 생성되는 thread 갯수
 @details m_parameterDim는 업데이트 할 파라미터의 dimension
-@details m_pDevData, m_pDevGrad, m_pDevGradientSquared는 GPU함수 연산에 수행되는 GPU data. 각 CPU data를 GetGPUData() 호출로 GPU data 생성
+@details m_pDevData, m_pDevGrad, m_pDevGradientSquared는 GPU함수 연산에 수행되는 GPU data. 각 CPU
+data를 GetGPUData() 호출로 GPU data 생성
 @see template<typename DTYPE> DTYPE *LongArray<DTYPE>::GetGPUData(unsigned int pTime)
-@details RMSPropUpdate_kernel 커널 함수를 호출. 커널함수이름, 블록 수, 블록당 thread 수와 GPU데이터를 다음과 같은 형식으로 호출.
-@see __global__ void RMSPropUpdate_kernel(float *pDevWeight, float *pDevAccGradient, int weightDim, float signed_learning_rate, float decay, float epsilon, float weightDecayRate, float *pMeanSquared)
+@details RMSPropUpdate_kernel 커널 함수를 호출. 커널함수이름, 블록 수, 블록당 thread 수와
+GPU데이터를 다음과 같은 형식으로 호출.
+@see __global__ void RMSPropUpdate_kernel(float *pDevWeight, float *pDevAccGradient, int weightDim,
+float signed_learning_rate, float decay, float epsilon, float weightDecayRate, float *pMeanSquared)
 @param *pParameter 업데이트 할 Tensor를 가지고 있는 Operator포인터
 @param pMeanSquared 업데이트 할 pMeanSquared 변수
 @return 성공 시 TRUE
 */
-template<typename DTYPE> int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pMeanSquared) {
+template <typename DTYPE>
+int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE>* pParameter,
+                                                  Tensor<DTYPE>* pMeanSquared)
+{
     int noBlock = 3, threadsPerBlock = 128;
 
     int m_parameterDim = pParameter->GetResult()->GetCapacity();
@@ -85,14 +106,16 @@ template<typename DTYPE> int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Opera
     float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
     float weightDecayRate = this->GetWeightDecayRate();
 
-    Tensor<DTYPE> *trainable_data = pParameter->GetResult();
-    Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+    Tensor<DTYPE>* trainable_data = pParameter->GetResult();
+    Tensor<DTYPE>* gradient = pParameter->GetGradient();
 
-    DTYPE *m_pDevData          = trainable_data->GetGPUData();
-    DTYPE *m_pDevGrad          = gradient->GetGPUData();
-    DTYPE *m_pDevMeanSquared   = pMeanSquared->GetGPUData();
+    DTYPE* m_pDevData = trainable_data->GetGPUData();
+    DTYPE* m_pDevGrad = gradient->GetGPUData();
+    DTYPE* m_pDevMeanSquared = pMeanSquared->GetGPUData();
 
-    RMSPropUpdate_kernel << < noBlock, threadsPerBlock >> > (m_pDevData, m_pDevGrad, m_parameterDim, signed_learning_rate, m_decay, m_epsilon, weightDecayRate, m_pDevMeanSquared);
+    RMSPropUpdate_kernel<<<noBlock, threadsPerBlock>>>(m_pDevData, m_pDevGrad, m_parameterDim,
+                                                       signed_learning_rate, m_decay, m_epsilon,
+                                                       weightDecayRate, m_pDevMeanSquared);
 
     return TRUE;
 }
@@ -103,15 +126,23 @@ template<typename DTYPE> int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Opera
 @details noBlock는 GPU 연산시 사용되는 block의 수
 @details threadsPerBlock는 한 block당 생성되는 thread 갯수
 @details m_parameterDim는 업데이트 할 파라미터의 dimension
-@details m_pDevData, m_pDevGrad, m_pDevGradientSquared는 GPU함수 연산에 수행되는 GPU data. 각 CPU data를 GetGPUData() 호출로 GPU data 생성
+@details m_pDevData, m_pDevGrad, m_pDevGradientSquared는 GPU함수 연산에 수행되는 GPU data. 각 CPU
+data를 GetGPUData() 호출로 GPU data 생성
 @see template<typename DTYPE> DTYPE *LongArray<DTYPE>::GetGPUData(unsigned int pTime)
-@details RMSPropUpdate_kernel 커널 함수를 호출. 커널함수이름, 블록 수, 블록당 thread 수와 GPU데이터를 다음과 같은 형식으로 호출.
-@see __global__ void RMSPropUpdate_kernelForCentered(float *pDevWeight, float *pDevAccGradient, int weightDim, float signed_learning_rate, float decay, float epsilon, float weightDecayRate, float *pMeanSquared, float *pMeanGrad)
+@details RMSPropUpdate_kernel 커널 함수를 호출. 커널함수이름, 블록 수, 블록당 thread 수와
+GPU데이터를 다음과 같은 형식으로 호출.
+@see __global__ void RMSPropUpdate_kernelForCentered(float *pDevWeight, float *pDevAccGradient, int
+weightDim, float signed_learning_rate, float decay, float epsilon, float weightDecayRate, float
+*pMeanSquared, float *pMeanGrad)
 @param pMeanSquared 업데이트 할 pMeanSquared 변수
 @param pMeanGrad 업데이트 할 pMeanGrad 변수
 @return 성공 시 TRUE
 */
-template<typename DTYPE> int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pMeanSquared, Tensor<DTYPE> *pMeanGrad) {
+template <typename DTYPE>
+int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Operator<DTYPE>* pParameter,
+                                                  Tensor<DTYPE>* pMeanSquared,
+                                                  Tensor<DTYPE>* pMeanGrad)
+{
     int noBlock = 3, threadsPerBlock = 128;
 
     int m_parameterDim = pParameter->GetResult()->GetCapacity();
@@ -121,17 +152,19 @@ template<typename DTYPE> int RMSPropOptimizer<DTYPE>::UpdateParameterOnGPU(Opera
     float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
     float weightDecayRate = this->GetWeightDecayRate();
 
-    Tensor<DTYPE> *trainable_data = pParameter->GetResult();
-    Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+    Tensor<DTYPE>* trainable_data = pParameter->GetResult();
+    Tensor<DTYPE>* gradient = pParameter->GetGradient();
 
-    DTYPE *m_pDevData          = trainable_data->GetGPUData();
-    DTYPE *m_pDevGrad          = gradient->GetGPUData();
-    DTYPE *m_pDevMeanSquared   = pMeanSquared->GetGPUData();
-    DTYPE *m_pDevMeanGrad      = pMeanGrad->GetGPUData();
+    DTYPE* m_pDevData = trainable_data->GetGPUData();
+    DTYPE* m_pDevGrad = gradient->GetGPUData();
+    DTYPE* m_pDevMeanSquared = pMeanSquared->GetGPUData();
+    DTYPE* m_pDevMeanGrad = pMeanGrad->GetGPUData();
 
-    RMSPropUpdate_kernelForCentered << < noBlock, threadsPerBlock >> > (m_pDevData, m_pDevGrad, m_parameterDim, signed_learning_rate, m_decay, m_epsilon, weightDecayRate, m_pDevMeanSquared, m_pDevMeanGrad);
+    RMSPropUpdate_kernelForCentered<<<noBlock, threadsPerBlock>>>(
+        m_pDevData, m_pDevGrad, m_parameterDim, signed_learning_rate, m_decay, m_epsilon,
+        weightDecayRate, m_pDevMeanSquared, m_pDevMeanGrad);
 
     return TRUE;
 }
 
-#endif  // ifdef __CUDNN__
+#endif // ifdef __CUDNN__

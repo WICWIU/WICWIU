@@ -1,10 +1,11 @@
 #ifndef RESHAPE_H_
-#define RESHAPE_H_    value
+#define RESHAPE_H_ value
 
 #include "../Operator.hpp"
 
-template<typename DTYPE>
-class ReShape : public Operator<DTYPE>{
+template <typename DTYPE>
+class ReShape : public Operator<DTYPE>
+{
 public:
     /*!
     @brief ReShape의 생성자
@@ -13,12 +14,16 @@ public:
     @param pRowSize ReShape으로 새로 만들어질 Tensor의 rowsize.
     @param pColSize ReShape으로 새로 만들어질 Tensor의 colsize.
     @paramp pName 사용자가 부여한 Operator의 이름.
-    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
+    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int
+    pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
-        #ifdef __DEBUG__
+    ReShape(Operator<DTYPE>* pInput, int pRowSize, int pColSize, std::string pName,
+            int pLoadflag = TRUE)
+        : Operator<DTYPE>(pInput, pName, pLoadflag)
+    {
+#ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput, 0, 0, 0, pRowSize, pColSize);
     }
 
@@ -30,12 +35,16 @@ public:
     @param pRowSize ReShape으로 새로 만들어질 Tensor의 rowsize.
     @param pColSize ReShape으로 새로 만들어질 Tensor의 colsize.
     @paramp pName 사용자가 부여한 Operator의 이름.
-    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
+    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int
+    pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
-        #ifdef __DEBUG__
+    ReShape(Operator<DTYPE>* pInput, int pChannelSize, int pRowSize, int pColSize,
+            std::string pName, int pLoadflag = TRUE)
+        : Operator<DTYPE>(pInput, pName, pLoadflag)
+    {
+#ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput, 0, 0, pChannelSize, pRowSize, pColSize);
     }
 
@@ -48,12 +57,16 @@ public:
     @param pRowSize ReShape으로 새로 만들어질 Tensor의 rowsize.
     @param pColSize ReShape으로 새로 만들어질 Tensor의 colsize.
     @paramp pName 사용자가 부여한 Operator의 이름.
-    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
+    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int
+    pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
-        #ifdef __DEBUG__
+    ReShape(Operator<DTYPE>* pInput, int pBatchSize, int pChannelSize, int pRowSize, int pColSize,
+            std::string pName, int pLoadflag = TRUE)
+        : Operator<DTYPE>(pInput, pName, pLoadflag)
+    {
+#ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput, 0, pBatchSize, pChannelSize, pRowSize, pColSize);
     }
 
@@ -67,12 +80,16 @@ public:
     @param pRowSize ReShape으로 새로 만들어질 Tensor의 rowsize.
     @param pColSize ReShape으로 새로 만들어질 Tensor의 colsize.
     @paramp pName 사용자가 부여한 Operator의 이름.
-    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize)
+    @ref int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int
+    pRowSize, int pColSize)
     */
-    ReShape(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
-        #ifdef __DEBUG__
+    ReShape(Operator<DTYPE>* pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize,
+            int pColSize, std::string pName, int pLoadflag = TRUE)
+        : Operator<DTYPE>(pInput, pName, pLoadflag)
+    {
+#ifdef __DEBUG__
         std::cout << "ReShape::ReShape(Operator *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput, pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize);
     }
 
@@ -81,10 +98,11 @@ public:
     @details Delete 매소드를 사용한다.
     @ref void Delete()
     */
-    ~ReShape() {
-        #ifdef __DEBUG__
+    ~ReShape()
+    {
+#ifdef __DEBUG__
         std::cout << "ReShape::~ReShape()" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
 
         Delete();
     }
@@ -101,27 +119,30 @@ public:
     @param pColSize ReShape으로 새로 만들어질 Tensor의 colsize.
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput, int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize) {
-        #ifdef __DEBUG__
+    int Alloc(Operator<DTYPE>* pInput, int pTimeSize, int pBatchSize, int pChannelSize,
+              int pRowSize, int pColSize)
+    {
+#ifdef __DEBUG__
         std::cout << "ReShape::Alloc(Operator *, Operator *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
 
-        Shape *pInputShape = pInput->GetResult()->GetShape();
+        Shape* pInputShape = pInput->GetResult()->GetShape();
 
-        if (pTimeSize == 0) pTimeSize = (*pInputShape)[0];
+        if (pTimeSize == 0)
+            pTimeSize = (*pInputShape)[0];
 
-        if (pBatchSize == 0) pBatchSize = (*pInputShape)[1];
+        if (pBatchSize == 0)
+            pBatchSize = (*pInputShape)[1];
 
-        if (pChannelSize == 0) pChannelSize = (*pInputShape)[2];
+        if (pChannelSize == 0)
+            pChannelSize = (*pInputShape)[2];
 
-
-        Tensor<DTYPE> *result = new Tensor<DTYPE>(pInput->GetResult());
+        Tensor<DTYPE>* result = new Tensor<DTYPE>(pInput->GetResult());
         result->ReShape(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize);
 
-        this->SetResult(result);  // copy data
+        this->SetResult(result); // copy data
 
         this->SetDelta(new Tensor<DTYPE>(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize));
-
 
         return TRUE;
     }
@@ -138,26 +159,31 @@ public:
     @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
     @return 성공 시 TRUE.
     */
-    int  ForwardPropagate(int pTime = 0) {
-        Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
+    int ForwardPropagate(int pTime = 0)
+    {
+        Tensor<DTYPE>* input = this->GetInput()[0]->GetResult();
+        Tensor<DTYPE>* result = this->GetResult();
 
-        int timesize    = result->GetTimeSize();
-        int batchsize   = result->GetBatchSize();
+        int timesize = result->GetTimeSize();
+        int batchsize = result->GetBatchSize();
         int channelsize = result->GetChannelSize();
-        int rowsize     = result->GetRowSize();
-        int colsize     = result->GetColSize();
+        int rowsize = result->GetRowSize();
+        int colsize = result->GetColSize();
 
-        Shape *resultTenShape = result->GetShape();
+        Shape* resultTenShape = result->GetShape();
 
         int ti = pTime;
 
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
-                        (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                            = (*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)];
+        for (int ba = 0; ba < batchsize; ba++)
+        {
+            for (int ch = 0; ch < channelsize; ch++)
+            {
+                for (int ro = 0; ro < rowsize; ro++)
+                {
+                    for (int co = 0; co < colsize; co++)
+                    {
+                        (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)] =
+                            (*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)];
                     }
                 }
             }
@@ -172,26 +198,31 @@ public:
     @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
     @return 성공 시 TRUE.
     */
-    int BackPropagate(int pTime = 0) {
-        Tensor<DTYPE> *this_delta  = this->GetDelta();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
+    int BackPropagate(int pTime = 0)
+    {
+        Tensor<DTYPE>* this_delta = this->GetDelta();
+        Tensor<DTYPE>* input_delta = this->GetInput()[0]->GetDelta();
 
-        int timesize    = this_delta->GetTimeSize();
-        int batchsize   = this_delta->GetBatchSize();
+        int timesize = this_delta->GetTimeSize();
+        int batchsize = this_delta->GetBatchSize();
         int channelsize = this_delta->GetChannelSize();
-        int rowsize     = this_delta->GetRowSize();
-        int colsize     = this_delta->GetColSize();
+        int rowsize = this_delta->GetRowSize();
+        int colsize = this_delta->GetColSize();
 
-        Shape *deltaTenShape = this_delta->GetShape();
+        Shape* deltaTenShape = this_delta->GetShape();
 
         int ti = pTime;
 
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
-                        (*input_delta)[Index5D(deltaTenShape, ti, ba, ch, ro, co)]
-                            += (*this_delta)[Index5D(deltaTenShape, ti, ba, ch, ro, co)];
+        for (int ba = 0; ba < batchsize; ba++)
+        {
+            for (int ch = 0; ch < channelsize; ch++)
+            {
+                for (int ro = 0; ro < rowsize; ro++)
+                {
+                    for (int co = 0; co < colsize; co++)
+                    {
+                        (*input_delta)[Index5D(deltaTenShape, ti, ba, ch, ro, co)] +=
+                            (*this_delta)[Index5D(deltaTenShape, ti, ba, ch, ro, co)];
                     }
                 }
             }
@@ -207,21 +238,21 @@ public:
     @param pTime 연산 할 Tensor가 위치한 Time값.
     @return 성공 시 TRUE.
     */
-    int ForwardPropagateOnGPU(int pTime) {
-        Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
+    int ForwardPropagateOnGPU(int pTime)
+    {
+        Tensor<DTYPE>* input = this->GetInput()[0]->GetResult();
+        Tensor<DTYPE>* result = this->GetResult();
 
-        DTYPE *pDevInput  = input->GetGPUData();
-        DTYPE *pDevResult = result->GetGPUData();
+        DTYPE* pDevInput = input->GetGPUData();
+        DTYPE* pDevResult = result->GetGPUData();
 
         cudnnTensorDescriptor_t pDesc = input->GetDescriptor();
 
         float alpha = 1.f;
-        float beta  = 0.f;
+        float beta = 0.f;
 
-        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
-                                  &alpha, pDesc, pDevInput,
-                                  &alpha, pDesc, pDevResult));
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(), &alpha, pDesc, pDevInput, &alpha, pDesc,
+                                  pDevResult));
 
         // this->ForwardPropagate(pTime);
         return TRUE;
@@ -233,28 +264,28 @@ public:
     @param pTime 연산 할 Tensor가 위치한 Time값.
     @return 성공 시 TRUE.
     */
-    int BackPropagateOnGPU(int pTime) {
-        Tensor<DTYPE> *this_delta  = this->GetDelta();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
+    int BackPropagateOnGPU(int pTime)
+    {
+        Tensor<DTYPE>* this_delta = this->GetDelta();
+        Tensor<DTYPE>* input_delta = this->GetInput()[0]->GetDelta();
 
-        DTYPE *pDevDelta      = this_delta->GetGPUData();
-        DTYPE *pDevInputDelta = input_delta->GetGPUData();
+        DTYPE* pDevDelta = this_delta->GetGPUData();
+        DTYPE* pDevInputDelta = input_delta->GetGPUData();
 
         cudnnTensorDescriptor_t pDesc = this_delta->GetDescriptor();
 
         float alpha = 1.f;
-        float beta  = 0.f;
+        float beta = 0.f;
 
-        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
-                                  &alpha, pDesc, pDevDelta,
-                                  &alpha, pDesc, pDevInputDelta));
+        checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(), &alpha, pDesc, pDevDelta, &alpha, pDesc,
+                                  pDevInputDelta));
 
         // this->BackPropagate(pTime);
 
         return TRUE;
     }
 
-#endif  // __CUDNN__
+#endif // __CUDNN__
 };
 
-#endif  // RESHAPE_H_
+#endif // RESHAPE_H_

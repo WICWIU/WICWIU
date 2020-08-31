@@ -1,61 +1,73 @@
 #ifndef RECURRENT_H_
-#define RECURRENT_H_    value
+#define RECURRENT_H_ value
 
 #include "..//Operator.hpp"
-#include "MatMul.h"
 #include "Add.h"
+#include "MatMul.h"
 #include "Tanh.h"
 #include "Tensorholder.h"
 
-template<typename DTYPE> class Recurrent : public Operator<DTYPE>{
+template <typename DTYPE>
+class Recurrent : public Operator<DTYPE>
+{
 private:
-    Operator<DTYPE> *m_aInput2Hidden;
-    Operator<DTYPE> *m_aHidden2Hidden;
-    Operator<DTYPE> *m_aTempHidden;
-    Operator<DTYPE> *m_aPrevActivate;
-    Operator<DTYPE> *m_aPostActivate;
-    Operator<DTYPE> *m_aHidden2Output;
+    Operator<DTYPE>* m_aInput2Hidden;
+    Operator<DTYPE>* m_aHidden2Hidden;
+    Operator<DTYPE>* m_aTempHidden;
+    Operator<DTYPE>* m_aPrevActivate;
+    Operator<DTYPE>* m_aPostActivate;
+    Operator<DTYPE>* m_aHidden2Output;
 
 public:
-    Recurrent(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightXH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pWeightHY) : Operator<DTYPE>(pInput, pWeightXH, pWeightHH, pWeightHY) {
-        #if __DEBUG__
+    Recurrent(Operator<DTYPE>* pInput, Operator<DTYPE>* pWeightXH, Operator<DTYPE>* pWeightHH,
+              Operator<DTYPE>* pWeightHY)
+        : Operator<DTYPE>(pInput, pWeightXH, pWeightHH, pWeightHY)
+    {
+#if __DEBUG__
         std::cout << "Recurrent::Recurrent(Operator<DTYPE> *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput, pWeightXH, pWeightHH, pWeightHY);
     }
 
-    Recurrent(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightXH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pWeightHY, std::string pName) : Operator<DTYPE>(pInput, pWeightXH, pWeightHH, pWeightHY, pName) {
-        #if __DEBUG__
+    Recurrent(Operator<DTYPE>* pInput, Operator<DTYPE>* pWeightXH, Operator<DTYPE>* pWeightHH,
+              Operator<DTYPE>* pWeightHY, std::string pName)
+        : Operator<DTYPE>(pInput, pWeightXH, pWeightHH, pWeightHY, pName)
+    {
+#if __DEBUG__
         std::cout << "Recurrent::Recurrent(Operator<DTYPE> *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput, pWeightXH, pWeightHH, pWeightHY);
     }
 
-    ~Recurrent() {
-        #if __DEBUG__
+    ~Recurrent()
+    {
+#if __DEBUG__
         std::cout << "Recurrent::~Recurrent()" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
 
         Delete();
     }
 
-    int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightXH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pWeightHY) {
-        #if __DEBUG__
+    int Alloc(Operator<DTYPE>* pInput, Operator<DTYPE>* pWeightXH, Operator<DTYPE>* pWeightHH,
+              Operator<DTYPE>* pWeightHY)
+    {
+#if __DEBUG__
         std::cout << "Recurrent::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
 
-        Shape *InputShape    = pInput->GetResult()->GetShape();
-        Shape *WeightXHShape = pWeightXH->GetResult()->GetShape();
+        Shape* InputShape = pInput->GetResult()->GetShape();
+        Shape* WeightXHShape = pWeightXH->GetResult()->GetShape();
 
-        int hidTimeSize  = (*InputShape)[0];
+        int hidTimeSize = (*InputShape)[0];
         int hidBatchSize = (*InputShape)[1];
-        int hidColSize   = (*WeightXHShape)[3];
+        int hidColSize = (*WeightXHShape)[3];
 
-        m_aInput2Hidden  = new MatMul<DTYPE>(pWeightXH, pInput, "rnn_matmul_xh");
-        m_aTempHidden    = new Tensorholder<DTYPE>(Tensor<DTYPE>::Zeros(hidTimeSize, hidBatchSize, 1, 1, hidColSize), "tempHidden");
+        m_aInput2Hidden = new MatMul<DTYPE>(pWeightXH, pInput, "rnn_matmul_xh");
+        m_aTempHidden = new Tensorholder<DTYPE>(
+            Tensor<DTYPE>::Zeros(hidTimeSize, hidBatchSize, 1, 1, hidColSize), "tempHidden");
         m_aHidden2Hidden = new MatMul<DTYPE>(pWeightHH, m_aTempHidden, "rnn_matmul_hh");
-        m_aPrevActivate  = new Addall<DTYPE>(m_aInput2Hidden, m_aHidden2Hidden, "rnn_addall");
-        m_aPostActivate  = new Tanh<DTYPE>(m_aPrevActivate, "rnn_tanh");
+        m_aPrevActivate = new Addall<DTYPE>(m_aInput2Hidden, m_aHidden2Hidden, "rnn_addall");
+        m_aPostActivate = new Tanh<DTYPE>(m_aPrevActivate, "rnn_tanh");
         m_aHidden2Output = new MatMul<DTYPE>(pWeightHY, m_aPostActivate, "rnn_matmul_hh");
 
         std::cout << "m_aInput2Hidden : " << m_aInput2Hidden->GetResult()->GetShape() << '\n';
@@ -65,11 +77,11 @@ public:
         std::cout << "m_aPostActivate : " << m_aPostActivate->GetResult()->GetShape() << '\n';
         std::cout << "m_aHidden2Output : " << m_aHidden2Output->GetResult()->GetShape() << '\n';
 
-        Shape *ResultShape = m_aHidden2Output->GetResult()->GetShape();
+        Shape* ResultShape = m_aHidden2Output->GetResult()->GetShape();
 
-        int timeSize  = (*ResultShape)[0];
+        int timeSize = (*ResultShape)[0];
         int batchSize = (*ResultShape)[1];
-        int colSize   = (*ResultShape)[4];
+        int colSize = (*ResultShape)[4];
 
         this->SetResult(Tensor<DTYPE>::Zeros(timeSize, batchSize, 1, 1, colSize));
         this->SetGradient(Tensor<DTYPE>::Zeros(timeSize, batchSize, 1, 1, colSize));
@@ -78,7 +90,8 @@ public:
     }
 
 #if __CUDNN__
-    void InitializeAttributeForGPU() {
+    void InitializeAttributeForGPU()
+    {
         m_aInput2Hidden->SetDeviceGPU();
         m_aInput2Hidden->SetCudnnHandle(this->GetCudnnHandle());
 
@@ -98,22 +111,26 @@ public:
         m_aHidden2Output->SetCudnnHandle(this->GetCudnnHandle());
     }
 
-#endif  // if __CUDNN__
+#endif // if __CUDNN__
 
     void Delete() {}
 
-    int  ForwardPropagate(int pTime = 0, int pThreadNum = 0) {
+    int ForwardPropagate(int pTime = 0, int pThreadNum = 0)
+    {
         m_aInput2Hidden->ForwardPropagate(pTime);
 
-        if (pTime != 0) {
-            Tensor<DTYPE> *prevHidden = m_aHidden2Hidden->GetResult();
-            Tensor<DTYPE> *tempHidden = m_aTempHidden->GetResult();
+        if (pTime != 0)
+        {
+            Tensor<DTYPE>* prevHidden = m_aHidden2Hidden->GetResult();
+            Tensor<DTYPE>* tempHidden = m_aTempHidden->GetResult();
 
-            int colSize        = prevHidden->GetColSize();
-            Shape *HiddenShape = prevHidden->GetShape();
+            int colSize = prevHidden->GetColSize();
+            Shape* HiddenShape = prevHidden->GetShape();
 
-            for (int i = 0; i < colSize; i++) {
-                (*tempHidden)[Index5D(HiddenShape, pTime, 0, 0, 0, i)] = (*prevHidden)[Index5D(HiddenShape, pTime - 1, 0, 0, 0, i)];
+            for (int i = 0; i < colSize; i++)
+            {
+                (*tempHidden)[Index5D(HiddenShape, pTime, 0, 0, 0, i)] =
+                    (*prevHidden)[Index5D(HiddenShape, pTime - 1, 0, 0, 0, i)];
             }
 
             m_aHidden2Hidden->ForwardPropagate(pTime);
@@ -125,28 +142,33 @@ public:
 
         m_aHidden2Output->ForwardPropagate(pTime);
 
-        Tensor<DTYPE> *_result = m_aHidden2Output->GetResult();
-        Tensor<DTYPE> *result  = this->GetResult();
+        Tensor<DTYPE>* _result = m_aHidden2Output->GetResult();
+        Tensor<DTYPE>* result = this->GetResult();
 
-        int colSize        = result->GetColSize();
-        Shape *ResultShape = result->GetShape();
+        int colSize = result->GetColSize();
+        Shape* ResultShape = result->GetShape();
 
-        for (int i = 0; i < colSize; i++) {
-            (*result)[Index5D(ResultShape, pTime, 0, 0, 0, i)] = (*_result)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
+        for (int i = 0; i < colSize; i++)
+        {
+            (*result)[Index5D(ResultShape, pTime, 0, 0, 0, i)] =
+                (*_result)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
         }
 
         return TRUE;
     }
 
-    int BackPropagate(int pTime = 0, int pThreadNum = 0) {
-        Tensor<DTYPE> *_grad = m_aHidden2Output->GetGradient();
-        Tensor<DTYPE> *grad  = this->GetGradient();
+    int BackPropagate(int pTime = 0, int pThreadNum = 0)
+    {
+        Tensor<DTYPE>* _grad = m_aHidden2Output->GetGradient();
+        Tensor<DTYPE>* grad = this->GetGradient();
 
-        int colSize        = grad->GetColSize();
-        Shape *ResultShape = grad->GetShape();
+        int colSize = grad->GetColSize();
+        Shape* ResultShape = grad->GetShape();
 
-        for (int i = 0; i < colSize; i++) {
-            (*_grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)] = (*grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
+        for (int i = 0; i < colSize; i++)
+        {
+            (*_grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)] =
+                (*grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
         }
 
         m_aHidden2Output->BackPropagate(pTime);
@@ -155,17 +177,20 @@ public:
 
         m_aPrevActivate->BackPropagate(pTime);
 
-        if (pTime != 0) {
+        if (pTime != 0)
+        {
             m_aHidden2Hidden->BackPropagate(pTime);
 
-            Tensor<DTYPE> *tempHiddenGrad = m_aTempHidden->GetGradient();
-            Tensor<DTYPE> *prevHiddenGrad = m_aHidden2Hidden->GetGradient();
+            Tensor<DTYPE>* tempHiddenGrad = m_aTempHidden->GetGradient();
+            Tensor<DTYPE>* prevHiddenGrad = m_aHidden2Hidden->GetGradient();
 
-            int colSize        = tempHiddenGrad->GetColSize();
-            Shape *HiddenShape = tempHiddenGrad->GetShape();
+            int colSize = tempHiddenGrad->GetColSize();
+            Shape* HiddenShape = tempHiddenGrad->GetShape();
 
-            for (int i = 0; i < colSize; i++) {
-                (*prevHiddenGrad)[Index5D(HiddenShape, pTime-1, 0, 0, 0, i)] = (*tempHiddenGrad)[Index5D(HiddenShape, pTime, 0, 0, 0, i)];
+            for (int i = 0; i < colSize; i++)
+            {
+                (*prevHiddenGrad)[Index5D(HiddenShape, pTime - 1, 0, 0, 0, i)] =
+                    (*tempHiddenGrad)[Index5D(HiddenShape, pTime, 0, 0, 0, i)];
             }
         }
 
@@ -174,26 +199,27 @@ public:
     }
 
 #if __CUDNN__
-    int ForwardPropagateOnGPU(int pTime = 0) {
+    int ForwardPropagateOnGPU(int pTime = 0)
+    {
         int alpha = 1.f;
-        int beta  = 0.f;
+        int beta = 0.f;
 
         cudnnTensorDescriptor_t desc = NULL;
 
         m_aInput2Hidden->ForwardPropagateOnGPU(pTime);
 
-        if (pTime != 0) {
-            Tensor<DTYPE> *prevHidden = m_aHidden2Hidden->GetResult();
-            Tensor<DTYPE> *tempHidden = m_aTempHidden->GetResult();
+        if (pTime != 0)
+        {
+            Tensor<DTYPE>* prevHidden = m_aHidden2Hidden->GetResult();
+            Tensor<DTYPE>* tempHidden = m_aTempHidden->GetResult();
 
-            DTYPE *pDevPrevHidden = prevHidden->GetDeviceData(pTime - 1);
-            DTYPE *pDevTempHidden = tempHidden->GetDeviceData(pTime);
+            DTYPE* pDevPrevHidden = prevHidden->GetDeviceData(pTime - 1);
+            DTYPE* pDevTempHidden = tempHidden->GetDeviceData(pTime);
 
             desc = prevHidden->GetDescriptor();
 
-            checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
-                                      &alpha, desc, pDevPrevHidden,
-                                      &alpha, desc, pDevTempHidden));
+            checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(), &alpha, desc, pDevPrevHidden, &alpha,
+                                      desc, pDevTempHidden));
 
             m_aHidden2Hidden->ForwardPropagateOnGPU(pTime);
         }
@@ -204,14 +230,16 @@ public:
 
         m_aHidden2Output->ForwardPropagateOnGPU(pTime);
 
-        Tensor<DTYPE> *_result = m_aHidden2Output->GetResult();
-        Tensor<DTYPE> *result  = this->GetResult();
+        Tensor<DTYPE>* _result = m_aHidden2Output->GetResult();
+        Tensor<DTYPE>* result = this->GetResult();
 
-        int colSize        = result->GetColSize();
-        Shape *ResultShape = result->GetShape();
+        int colSize = result->GetColSize();
+        Shape* ResultShape = result->GetShape();
 
-        for (int i = 0; i < colSize; i++) {
-            (*result)[Index5D(ResultShape, pTime, 0, 0, 0, i)] = (*_result)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
+        for (int i = 0; i < colSize; i++)
+        {
+            (*result)[Index5D(ResultShape, pTime, 0, 0, 0, i)] =
+                (*_result)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
         }
 
         // DTYPE *_pDevResult = _result->GetDeviceData(pTime);
@@ -223,27 +251,29 @@ public:
         // &alpha, desc, _pDevResult,
         // &alpha, desc, pDevResult));
 
-
         return TRUE;
     }
 
-    int BackPropagateOnGPU(int pTime = 0) {
+    int BackPropagateOnGPU(int pTime = 0)
+    {
         int alpha = 1.f;
-        int beta  = 0.f;
+        int beta = 0.f;
 
         cudnnTensorDescriptor_t desc = NULL;
 
-        Tensor<DTYPE> *_grad = m_aHidden2Output->GetGradient();
-        Tensor<DTYPE> *grad  = this->GetGradient();
+        Tensor<DTYPE>* _grad = m_aHidden2Output->GetGradient();
+        Tensor<DTYPE>* grad = this->GetGradient();
 
-        DTYPE *_pDevGrad = _grad->GetDeviceData(pTime);
-        DTYPE *pDevGrad  = grad->GetDeviceData(pTime);
+        DTYPE* _pDevGrad = _grad->GetDeviceData(pTime);
+        DTYPE* pDevGrad = grad->GetDeviceData(pTime);
 
-        int colSize        = grad->GetColSize();
-        Shape *ResultShape = grad->GetShape();
+        int colSize = grad->GetColSize();
+        Shape* ResultShape = grad->GetShape();
 
-        for (int i = 0; i < colSize; i++) {
-            (*_grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)] = (*grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
+        for (int i = 0; i < colSize; i++)
+        {
+            (*_grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)] =
+                (*grad)[Index5D(ResultShape, pTime, 0, 0, 0, i)];
         }
 
         // std::cout << _grad << '\n';
@@ -260,19 +290,19 @@ public:
 
         m_aPrevActivate->BackPropagateOnGPU(pTime);
 
-        if (pTime != 0) {
+        if (pTime != 0)
+        {
             m_aHidden2Hidden->BackPropagateOnGPU(pTime);
 
-            Tensor<DTYPE> *tempHiddenGrad = m_aTempHidden->GetGradient();
-            Tensor<DTYPE> *prevHiddenGrad = m_aHidden2Hidden->GetGradient();
+            Tensor<DTYPE>* tempHiddenGrad = m_aTempHidden->GetGradient();
+            Tensor<DTYPE>* prevHiddenGrad = m_aHidden2Hidden->GetGradient();
 
-            DTYPE *pDevTempHiddenGrad = tempHiddenGrad->GetDeviceData(pTime);
-            DTYPE *pDevPrevHiddenGrad = prevHiddenGrad->GetDeviceData(pTime - 1);
+            DTYPE* pDevTempHiddenGrad = tempHiddenGrad->GetDeviceData(pTime);
+            DTYPE* pDevPrevHiddenGrad = prevHiddenGrad->GetDeviceData(pTime - 1);
 
             desc = tempHiddenGrad->GetDescriptor();
 
-            checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
-                                      &alpha, desc, pDevTempHiddenGrad,
+            checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(), &alpha, desc, pDevTempHiddenGrad,
                                       &alpha, desc, pDevPrevHiddenGrad));
         }
 
@@ -283,7 +313,8 @@ public:
         return TRUE;
     }
 
-    int ResetResult() {
+    int ResetResult()
+    {
         m_aInput2Hidden->ResetResult();
         m_aHidden2Hidden->ResetResult();
         m_aTempHidden->ResetResult();
@@ -292,7 +323,8 @@ public:
         m_aHidden2Output->ResetResult();
     }
 
-    int ResetGradient() {
+    int ResetGradient()
+    {
         m_aInput2Hidden->ResetGradient();
         m_aHidden2Hidden->ResetGradient();
         m_aTempHidden->ResetGradient();
@@ -301,8 +333,7 @@ public:
         m_aHidden2Output->ResetGradient();
     }
 
-#endif  // if __CUDNN__
+#endif // if __CUDNN__
 };
 
-
-#endif  // RECURRENT_H_
+#endif // RECURRENT_H_

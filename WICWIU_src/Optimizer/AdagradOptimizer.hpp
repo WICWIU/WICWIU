@@ -1,14 +1,15 @@
 #ifndef ADAGRADOPTIMIZER_H_
-#define ADAGRADOPTIMIZER_H_    value
+#define ADAGRADOPTIMIZER_H_ value
 
 #include "../Optimizer.hpp"
 
-
-template<typename DTYPE> class AdagradOptimizer : public Optimizer<DTYPE>{
+template <typename DTYPE>
+class AdagradOptimizer : public Optimizer<DTYPE>
+{
 private:
-    Container<Operator<DTYPE> *> *m_ppParameter;
+    Container<Operator<DTYPE>*>* m_ppParameter;
     ///< 값을 업데이트 할 Tensor들을 가리키는 포인터
-    Container<Tensor<DTYPE> *> *m_aaGradientSquared;
+    Container<Tensor<DTYPE>*>* m_aaGradientSquared;
     ///<  @gradient의 제곱으로 업데이트 되는 variable
 
     int m_numOfParameter;
@@ -27,15 +28,20 @@ public:
      * @return 없음
      * @see int Alloc(epsilon)
      */
-    AdagradOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
-        #ifdef __DEBUG__
-        std::cout << "AdagradOptimizer::AdagradOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
-        #endif  // __DEBUG__
-        m_ppParameter       = NULL;
+    AdagradOptimizer(Container<Operator<DTYPE>*>* pParameterContainer, float pLearningRate,
+                     OptimizeDirection pOptimizeDirection)
+        : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection)
+    {
+#ifdef __DEBUG__
+        std::cout
+            << "AdagradOptimizer::AdagradOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)"
+            << '\n';
+#endif // __DEBUG__
+        m_ppParameter = NULL;
         m_aaGradientSquared = NULL;
 
         m_numOfParameter = 0;
-        m_epsilon        = 0.f;
+        m_epsilon = 0.f;
 
         Alloc();
     }
@@ -51,15 +57,20 @@ public:
      * @return 없음
      * @see int Alloc(epsilon)
      */
-    AdagradOptimizer(Container<Operator<DTYPE> *> *pParameterContainer, float pLearningRate, float epsilon, OptimizeDirection pOptimizeDirection) : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection) {
-        #ifdef __DEBUG__
-        std::cout << "AdagradOptimizer::AdagradOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)" << '\n';
-        #endif  // __DEBUG__
-        m_ppParameter       = NULL;
+    AdagradOptimizer(Container<Operator<DTYPE>*>* pParameterContainer, float pLearningRate,
+                     float epsilon, OptimizeDirection pOptimizeDirection)
+        : Optimizer<DTYPE>(pParameterContainer, pLearningRate, pOptimizeDirection)
+    {
+#ifdef __DEBUG__
+        std::cout
+            << "AdagradOptimizer::AdagradOptimizer(LossFunction<DTYPE> *, float, OptimizeDirection)"
+            << '\n';
+#endif // __DEBUG__
+        m_ppParameter = NULL;
         m_aaGradientSquared = NULL;
 
         m_numOfParameter = 0;
-        m_epsilon        = 0.f;
+        m_epsilon = 0.f;
 
         Alloc(epsilon);
     }
@@ -68,10 +79,11 @@ public:
      * @brief AdagradOptimizer 소멸자
      * @return 없음
      */
-    ~AdagradOptimizer() {
-        #ifdef __DEBUG__
+    ~AdagradOptimizer()
+    {
+#ifdef __DEBUG__
         std::cout << "AdagradOptimizer::~AdagradOptimizer()" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         Delete();
     }
 
@@ -80,15 +92,18 @@ public:
      * @details 맴버 변수 m_aaGradientSquared 메모리 할당을 해제한다.
      * @return 없음
      */
-    void Delete() {
-        if (m_aaGradientSquared) {
+    void Delete()
+    {
+        if (m_aaGradientSquared)
+        {
             delete m_aaGradientSquared;
             m_aaGradientSquared = NULL;
         }
     }
 
-    int Alloc() {
-        m_ppParameter    = this->GetTrainableTensor();
+    int Alloc()
+    {
+        m_ppParameter = this->GetTrainableTensor();
         m_numOfParameter = this->GetTrainableTensorDegree();
 
         return TRUE;
@@ -96,21 +111,24 @@ public:
 
     /*!
      * @brief Optimizer의 Alloc 매소드
-     * @details 맴버 변수 m_ppParameter, m_numOfParameter, m_ppParameter, m_aaGradientSquared 초기화한다.
+     * @details 맴버 변수 m_ppParameter, m_numOfParameter, m_ppParameter, m_aaGradientSquared
+     * 초기화한다.
      * @details m_aaGradientSquared m_ppParameter와 같은 Shape의 Tensor를 생성하여 넣는다.
      * @param epsilon 분모 값이 0이 되는 것을 방지 하는 값
      * @return 성공 시 TRUE
      * @see Container<Operator<DTYPE> *>* GetTrainableTensor()
      * @see int GetTrainableTensorDegree()
      */
-    int Alloc(float epsilon) {
+    int Alloc(float epsilon)
+    {
         Alloc();
 
-        m_aaGradientSquared = new Container<Tensor<DTYPE> *>();
+        m_aaGradientSquared = new Container<Tensor<DTYPE>*>();
 
-        Shape *pParameterGradShape = NULL;
+        Shape* pParameterGradShape = NULL;
 
-        for (int i = 0; i < m_numOfParameter; i++) {
+        for (int i = 0; i < m_numOfParameter; i++)
+        {
             pParameterGradShape = (*m_ppParameter)[i]->GetGradient()->GetShape();
             m_aaGradientSquared->Push(new Tensor<DTYPE>(new Shape(pParameterGradShape)));
             pParameterGradShape = NULL;
@@ -121,9 +139,12 @@ public:
         return TRUE;
     }
 
-    void InitializeAttributeForGPU(unsigned int idOfDevice) {
-        if (m_epsilon != 0.f) {
-            for (int i = 0; i < m_numOfParameter; i++) {
+    void InitializeAttributeForGPU(unsigned int idOfDevice)
+    {
+        if (m_epsilon != 0.f)
+        {
+            for (int i = 0; i < m_numOfParameter; i++)
+            {
                 (*m_aaGradientSquared)[i]->SetDeviceGPU(idOfDevice);
             }
         }
@@ -135,14 +156,22 @@ public:
      * @return 성공 시 TRUE
      * @see int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *m_pGradientSquared)
      */
-    virtual int UpdateParameter() {
-        if (m_epsilon == 0.f) {
-            for (int i = 0; i < m_numOfParameter; i++) {
-                if ((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i]);
+    virtual int UpdateParameter()
+    {
+        if (m_epsilon == 0.f)
+        {
+            for (int i = 0; i < m_numOfParameter; i++)
+            {
+                if ((*m_ppParameter)[i]->GetIsTrainable())
+                    UpdateParameter((*m_ppParameter)[i]);
             }
-        } else {
-            for (int i = 0; i < m_numOfParameter; i++) {
-                if ((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i], (*m_aaGradientSquared)[i]);
+        }
+        else
+        {
+            for (int i = 0; i < m_numOfParameter; i++)
+            {
+                if ((*m_ppParameter)[i]->GetIsTrainable())
+                    UpdateParameter((*m_ppParameter)[i], (*m_aaGradientSquared)[i]);
             }
         }
         return TRUE;
@@ -153,15 +182,17 @@ public:
      * @param pParameter 업데이트 할 Tensor를 가지고 있는 Operator포인터
      * @return 성공 시 TRUE
      */
-    int UpdateParameter(Operator<DTYPE> *pParameter) {
-        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
-        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+    int UpdateParameter(Operator<DTYPE>* pParameter)
+    {
+        Tensor<DTYPE>* trainable_data = pParameter->GetResult();
+        Tensor<DTYPE>* gradient = pParameter->GetGradient();
 
         float learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
 
         int capacity = trainable_data->GetCapacity();
 
-        for (int i = 0; i < capacity; i++) {
+        for (int i = 0; i < capacity; i++)
+        {
             (*trainable_data)[i] += learning_rate * (*gradient)[i];
         }
 
@@ -171,21 +202,25 @@ public:
     /*!
      * @brief 파라미터 값들을 업데이트 하는 메소드
      * @details gradient 제곱 값으로 pGradientSquared 업데이트
-     * @details signed_learning_rate와 gradient의 곱을 업데이트 된 pGradientSquared값에 root를 적용 한 값으로 나누어 파라미터를 업데이트 한다.
+     * @details signed_learning_rate와 gradient의 곱을 업데이트 된 pGradientSquared값에 root를 적용
+     * 한 값으로 나누어 파라미터를 업데이트 한다.
      * @param pGradientSquared 업데이트 할 pGradientSquared
      * @return 성공 시 TURE
      */
-    int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *m_pGradientSquared) {
-        Tensor<DTYPE> *trainable_data = pParameter->GetResult();
-        Tensor<DTYPE> *gradient       = pParameter->GetGradient();
+    int UpdateParameter(Operator<DTYPE>* pParameter, Tensor<DTYPE>* m_pGradientSquared)
+    {
+        Tensor<DTYPE>* trainable_data = pParameter->GetResult();
+        Tensor<DTYPE>* gradient = pParameter->GetGradient();
 
         float signed_learning_rate = this->GetOptimizeDirection() * this->GetLearningRate();
 
         int capacity = trainable_data->GetCapacity();
 
-        for (int i = 0; i < capacity; i++) {
+        for (int i = 0; i < capacity; i++)
+        {
             (*m_pGradientSquared)[i] = ((*gradient)[i] * (*gradient)[i]);
-            (*trainable_data)[i]    += (signed_learning_rate * (*gradient)[i]) / std::sqrt((*m_pGradientSquared)[i] + m_epsilon);
+            (*trainable_data)[i] += (signed_learning_rate * (*gradient)[i]) /
+                                    std::sqrt((*m_pGradientSquared)[i] + m_epsilon);
         }
 
         return TRUE;
@@ -199,14 +234,22 @@ public:
      * @return 성공 시 TRUE
      * @see int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pGradientSquared)
      */
-    virtual int UpdateParameterOnGPU() {
-        if (m_epsilon == 0.f) {
-            for (int i = 0; i < m_numOfParameter; i++) {
-                if ((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameterOnGPU((*m_ppParameter)[i]);
+    virtual int UpdateParameterOnGPU()
+    {
+        if (m_epsilon == 0.f)
+        {
+            for (int i = 0; i < m_numOfParameter; i++)
+            {
+                if ((*m_ppParameter)[i]->GetIsTrainable())
+                    UpdateParameterOnGPU((*m_ppParameter)[i]);
             }
-        } else {
-            for (int i = 0; i < m_numOfParameter; i++) {
-                if ((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaGradientSquared)[i]);
+        }
+        else
+        {
+            for (int i = 0; i < m_numOfParameter; i++)
+            {
+                if ((*m_ppParameter)[i]->GetIsTrainable())
+                    UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaGradientSquared)[i]);
             }
         }
         return TRUE;
@@ -217,7 +260,8 @@ public:
      * @param pParameter 업데이트 할 Tensor를 가지고 있는 Operator포인터
      * @return 성공 시 TRUE
      */
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter) {
+    int UpdateParameterOnGPU(Operator<DTYPE>* pParameter)
+    {
         // Tensor<DTYPE> *trainable_data = pParameter->GetResult();
         // Tensor<DTYPE> *gradient       = pParameter->GetGradient();
         //
@@ -239,14 +283,13 @@ public:
         return TRUE;
     }
 
-    int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pGradientSquared);
+    int UpdateParameterOnGPU(Operator<DTYPE>* pParameter, Tensor<DTYPE>* pGradientSquared);
 
     // __global__ void rsquare(DTYPE *myArrayGPU) {
     // myArrayGPU[capacity] = pow((float) capacity, -0.5);
     // }
 
-#endif  // if __CUDNN__
+#endif // if __CUDNN__
 };
 
-
-#endif  // ADAGRADOPTIMIZER_H_
+#endif // ADAGRADOPTIMIZER_H_
