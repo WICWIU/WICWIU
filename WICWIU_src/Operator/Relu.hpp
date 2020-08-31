@@ -1,12 +1,15 @@
 #ifndef RELU_H_
-#define RELU_H_    value
+#define RELU_H_ value
 
 #include "../Operator.hpp"
 
-template<typename DTYPE> class Relu : public Operator<DTYPE>{
+template <typename DTYPE>
+class Relu : public Operator<DTYPE>
+{
 private:
 #ifdef __CUDNN__
-    cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc, m_aInputDeltaDesc;
+    cudnnTensorDescriptor_t m_aInputTensorDesc, m_aOutputTensorDesc, m_aDeltaDesc,
+        m_aInputDeltaDesc;
     ///< GPU내의 Tensor값들을 가르키기 위한 descriptor.
     cudnnActivationDescriptor_t actDesc;
     ///< Activation 연산의 description을 가리키는 구조체 포인터.
@@ -20,7 +23,7 @@ private:
     double m_coef;
     ///< Activation모드에 따라 threashold값이나 alpha값을 지정하기 위한 변수.
 
-#endif  // __CUDNN__
+#endif // __CUDNN__
 
 public:
     /*!
@@ -29,10 +32,11 @@ public:
     @param pInput Alloc할 대상 Operator
     @ref int Alloc(Operator<DTYPE> *pInput)
     */
-    Relu(Operator<DTYPE> *pInput, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pLoadflag) {
-        #ifdef __DEBUG__
+    Relu(Operator<DTYPE>* pInput, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pLoadflag)
+    {
+#ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput);
     }
 
@@ -43,10 +47,12 @@ public:
     @param pName Operator에 사용자가 부여한 이름.
     @ref int Alloc(Operator<DTYPE> *pInput)
     */
-    Relu(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
-        #ifdef __DEBUG__
+    Relu(Operator<DTYPE>* pInput, std::string pName, int pLoadflag = TRUE)
+        : Operator<DTYPE>(pInput, pName, pLoadflag)
+    {
+#ifdef __DEBUG__
         std::cout << "Relu::Relu(Operator<DTYPE> *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
         this->Alloc(pInput);
     }
 
@@ -54,10 +60,11 @@ public:
     @brief Relu의 소멸자.
     @see void Delete()
     */
-    ~Relu() {
-        #ifdef __DEBUG__
+    ~Relu()
+    {
+#ifdef __DEBUG__
         std::cout << "Relu::~Relu()" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
 
         Delete();
     }
@@ -68,21 +75,21 @@ public:
     @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
     @return 성공 시 TRUE.
     */
-    int Alloc(Operator<DTYPE> *pInput) {
-        #ifdef __DEBUG__
+    int Alloc(Operator<DTYPE>* pInput)
+    {
+#ifdef __DEBUG__
         std::cout << "Relu::Alloc(Operator<DTYPE> *, Operator<DTYPE> *)" << '\n';
-        #endif  // __DEBUG__
+#endif // __DEBUG__
 
-        int timesize    = pInput->GetResult()->GetTimeSize();
-        int batchsize   = pInput->GetResult()->GetBatchSize();
+        int timesize = pInput->GetResult()->GetTimeSize();
+        int batchsize = pInput->GetResult()->GetBatchSize();
         int channelsize = pInput->GetResult()->GetChannelSize();
-        int rowsize     = pInput->GetResult()->GetRowSize();
-        int colsize     = pInput->GetResult()->GetColSize();
+        int rowsize = pInput->GetResult()->GetRowSize();
+        int colsize = pInput->GetResult()->GetColSize();
 
         this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
 
         this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
-
 
         return TRUE;
     }
@@ -91,23 +98,25 @@ public:
     /*!
     @brief cudnn을 사용하기 전 관련 맴버변수들을 초기화 한다.
     @details Activation 함수를 Relu로 지정한다.
-    @details TensorDesriptor들을 생성하고, TensorDesriptor들의 데이터가 batch, channel, row, col 순서로 배치되도록 지정한다.
+    @details TensorDesriptor들을 생성하고, TensorDesriptor들의 데이터가 batch, channel, row, col
+    순서로 배치되도록 지정한다.
     @param idOfDevice 사용할 GPU의 id
     */
-    void InitializeAttributeForGPU(unsigned int idOfDevice) {
-        Operator<DTYPE> *pInput = this->GetInput()[0];
+    void InitializeAttributeForGPU(unsigned int idOfDevice)
+    {
+        Operator<DTYPE>* pInput = this->GetInput()[0];
 
-        int batchsize   = pInput->GetResult()->GetBatchSize();
+        int batchsize = pInput->GetResult()->GetBatchSize();
         int channelsize = pInput->GetResult()->GetChannelSize();
-        int rowsize     = pInput->GetResult()->GetRowSize();
-        int colsize     = pInput->GetResult()->GetColSize();
+        int rowsize = pInput->GetResult()->GetRowSize();
+        int colsize = pInput->GetResult()->GetColSize();
 
-        int inputCapacity  = pInput->GetResult()->GetCapacity();
+        int inputCapacity = pInput->GetResult()->GetCapacity();
         int outputCapacity = this->GetResult()->GetCapacity();
 
         m_alpha = 1.f;
-        m_beta  = 0.f;
-        m_coef  = 0.0;
+        m_beta = 0.f;
+        m_coef = 0.0;
 
         checkCUDNN(cudnnCreateTensorDescriptor(&m_aInputTensorDesc));
         checkCUDNN(cudnnCreateTensorDescriptor(&m_aOutputTensorDesc));
@@ -115,71 +124,89 @@ public:
         checkCUDNN(cudnnCreateTensorDescriptor(&m_aInputDeltaDesc));
         checkCUDNN(cudnnCreateActivationDescriptor(&actDesc));
 
-        checkCUDNN(cudnnSetActivationDescriptor(actDesc, CUDNN_ACTIVATION_RELU, CUDNN_PROPAGATE_NAN, m_coef));
+        checkCUDNN(cudnnSetActivationDescriptor(actDesc, CUDNN_ACTIVATION_RELU, CUDNN_PROPAGATE_NAN,
+                                                m_coef));
 
-        checkCUDNN(cudnnSetTensor4dDescriptor(m_aInputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              batchsize, channelsize, rowsize, colsize));
+        checkCUDNN(cudnnSetTensor4dDescriptor(m_aInputTensorDesc, CUDNN_TENSOR_NCHW,
+                                              CUDNN_DATA_FLOAT, batchsize, channelsize, rowsize,
+                                              colsize));
 
-        checkCUDNN(cudnnSetTensor4dDescriptor(m_aOutputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              batchsize, channelsize, rowsize, colsize));
+        checkCUDNN(cudnnSetTensor4dDescriptor(m_aOutputTensorDesc, CUDNN_TENSOR_NCHW,
+                                              CUDNN_DATA_FLOAT, batchsize, channelsize, rowsize,
+                                              colsize));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(m_aDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
                                               batchsize, channelsize, rowsize, colsize));
 
-        checkCUDNN(cudnnSetTensor4dDescriptor(m_aInputDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              batchsize, channelsize, rowsize, colsize));
+        checkCUDNN(cudnnSetTensor4dDescriptor(m_aInputDeltaDesc, CUDNN_TENSOR_NCHW,
+                                              CUDNN_DATA_FLOAT, batchsize, channelsize, rowsize,
+                                              colsize));
     }
 
-#endif  // if __CUDNN__
+#endif // if __CUDNN__
 
-    void Delete() {
+    void Delete()
+    {
 #ifdef __CUDNN__
 
-        if (m_aInputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aInputTensorDesc));
+        if (m_aInputTensorDesc)
+            checkCUDNN(cudnnDestroyTensorDescriptor(m_aInputTensorDesc));
         m_aInputTensorDesc = NULL;
 
-        if (m_aOutputTensorDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aOutputTensorDesc));
+        if (m_aOutputTensorDesc)
+            checkCUDNN(cudnnDestroyTensorDescriptor(m_aOutputTensorDesc));
         m_aOutputTensorDesc = NULL;
 
-        if (m_aDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aDeltaDesc));
+        if (m_aDeltaDesc)
+            checkCUDNN(cudnnDestroyTensorDescriptor(m_aDeltaDesc));
         m_aDeltaDesc = NULL;
 
-        if (m_aInputDeltaDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aInputDeltaDesc));
+        if (m_aInputDeltaDesc)
+            checkCUDNN(cudnnDestroyTensorDescriptor(m_aInputDeltaDesc));
         m_aInputDeltaDesc = NULL;
 
-        if (actDesc) checkCUDNN(cudnnDestroyActivationDescriptor(actDesc));
+        if (actDesc)
+            checkCUDNN(cudnnDestroyActivationDescriptor(actDesc));
         actDesc = NULL;
 
         // checkCudaErrors(cudaDeviceSynchronize());
-#endif  // if __CUDNN__
+#endif // if __CUDNN__
     }
 
     /*!
     @brief Relu의 ForwardPropagate 매소드.
-    @details input의 Tensor값들 중 0.f이상의 값은 그대로 result에 저장하고, 0.f미만의 값은 0.f로 저장한다.
+    @details input의 Tensor값들 중 0.f이상의 값은 그대로 result에 저장하고, 0.f미만의 값은 0.f로
+    저장한다.
     @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
     @return 성공 시 TRUE.
     */
-    int ForwardPropagate(int pTime = 0) {
-        Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
+    int ForwardPropagate(int pTime = 0)
+    {
+        Tensor<DTYPE>* input = this->GetInput()[0]->GetResult();
+        Tensor<DTYPE>* result = this->GetResult();
 
-        int timesize    = result->GetTimeSize();
-        int batchsize   = result->GetBatchSize();
+        int timesize = result->GetTimeSize();
+        int batchsize = result->GetBatchSize();
         int channelsize = result->GetChannelSize();
-        int rowsize     = result->GetRowSize();
-        int colsize     = result->GetColSize();
+        int rowsize = result->GetRowSize();
+        int colsize = result->GetColSize();
 
-        Shape *resultTenShape = result->GetShape();
+        Shape* resultTenShape = result->GetShape();
 
         int ti = pTime;
 
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
+        for (int ba = 0; ba < batchsize; ba++)
+        {
+            for (int ch = 0; ch < channelsize; ch++)
+            {
+                for (int ro = 0; ro < rowsize; ro++)
+                {
+                    for (int co = 0; co < colsize; co++)
+                    {
                         (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-//                            = this->MAX((*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)], 0.f);
+                            //                            =
+                            //                            this->MAX((*input)[Index5D(resultTenShape,
+                            //                            ti, ba, ch, ro, co)], 0.f);
                             = MAX((*input)[Index5D(resultTenShape, ti, ba, ch, ro, co)], 0.f);
                     }
                 }
@@ -195,36 +222,43 @@ public:
     @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
     @return 성공 시 TRUE.
     */
-    int BackPropagate(int pTime = 0) {
-        Tensor<DTYPE> *result      = this->GetResult();
-        Tensor<DTYPE> *this_delta  = this->GetGradient();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
+    int BackPropagate(int pTime = 0)
+    {
+        Tensor<DTYPE>* result = this->GetResult();
+        Tensor<DTYPE>* this_delta = this->GetGradient();
+        Tensor<DTYPE>* input_delta = this->GetInput()[0]->GetDelta();
 
-        int timesize    = result->GetTimeSize();
-        int batchsize   = result->GetBatchSize();
+        int timesize = result->GetTimeSize();
+        int batchsize = result->GetBatchSize();
         int channelsize = result->GetChannelSize();
-        int rowsize     = result->GetRowSize();
-        int colsize     = result->GetColSize();
+        int rowsize = result->GetRowSize();
+        int colsize = result->GetColSize();
 
-        Shape *resultTenShape = result->GetShape();
+        Shape* resultTenShape = result->GetShape();
 
         int ti = pTime;
 
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
-                        if ((*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)] > 0.0) {
-                            (*input_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
-                                += (*this_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)];
-                        } else {
+        for (int ba = 0; ba < batchsize; ba++)
+        {
+            for (int ch = 0; ch < channelsize; ch++)
+            {
+                for (int ro = 0; ro < rowsize; ro++)
+                {
+                    for (int co = 0; co < colsize; co++)
+                    {
+                        if ((*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)] > 0.0)
+                        {
+                            (*input_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)] +=
+                                (*this_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)];
+                        }
+                        else
+                        {
                             (*input_delta)[Index5D(resultTenShape, ti, ba, ch, ro, co)] += 0;
                         }
                     }
                 }
             }
         }
-
 
         return TRUE;
     }
@@ -236,7 +270,7 @@ public:
     @param data2 비교할 값
     @return data1, data2중 더 큰 값.
     */
-    
+
     // inline DTYPE MAX(DTYPE data1, DTYPE data2) {
     //     if (data1 >= data2) return data1;
     //     else return data2;
@@ -250,11 +284,12 @@ public:
     @param pTime 연산 할 Tensor가 위치한 Time값.
     @return 성공 시 TRUE.
     */
-    int ForwardPropagateOnGPU(int pTime = 0) {
-        Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *result = this->GetResult();
+    int ForwardPropagateOnGPU(int pTime = 0)
+    {
+        Tensor<DTYPE>* input = this->GetInput()[0]->GetResult();
+        Tensor<DTYPE>* result = this->GetResult();
 
-        m_pDevInput  = input->GetGPUData(pTime);
+        m_pDevInput = input->GetGPUData(pTime);
         m_pDevOutput = result->GetGPUData(pTime);
 
         checkCUDNN(cudnnActivationForward(this->GetCudnnHandle(), actDesc, &m_alpha,
@@ -272,21 +307,21 @@ public:
     @param pTime 연산 할 Tensor가 위치한 Time값.
     @return 성공 시 TRUE.
     */
-    int BackPropagateOnGPU(int pTime = 0) {
-        Tensor<DTYPE> *result      = this->GetResult();
-        Tensor<DTYPE> *this_delta  = this->GetGradient();
-        Tensor<DTYPE> *input       = this->GetInput()[0]->GetResult();
-        Tensor<DTYPE> *input_delta = this->GetInput()[0]->GetDelta();
+    int BackPropagateOnGPU(int pTime = 0)
+    {
+        Tensor<DTYPE>* result = this->GetResult();
+        Tensor<DTYPE>* this_delta = this->GetGradient();
+        Tensor<DTYPE>* input = this->GetInput()[0]->GetResult();
+        Tensor<DTYPE>* input_delta = this->GetInput()[0]->GetDelta();
 
-        m_pDevInput      = input->GetGPUData(pTime);
-        m_pDevOutput     = result->GetGPUData(pTime);
-        m_pDevDelta      = this_delta->GetGPUData(pTime);
+        m_pDevInput = input->GetGPUData(pTime);
+        m_pDevOutput = result->GetGPUData(pTime);
+        m_pDevDelta = this_delta->GetGPUData(pTime);
         m_pDevInputDelta = input_delta->GetGPUData(pTime);
 
         checkCUDNN(cudnnActivationBackward(this->GetCudnnHandle(), actDesc, &m_alpha,
-                                           m_aOutputTensorDesc, m_pDevOutput,
-                                           m_aDeltaDesc, m_pDevDelta,
-                                           m_aInputTensorDesc, m_pDevInput, &m_alpha,
+                                           m_aOutputTensorDesc, m_pDevOutput, m_aDeltaDesc,
+                                           m_pDevDelta, m_aInputTensorDesc, m_pDevInput, &m_alpha,
                                            m_aInputTensorDesc, m_pDevInputDelta));
 
         // checkCudaErrors(cudaDeviceSynchronize());
@@ -294,8 +329,7 @@ public:
         return TRUE;
     }
 
-#endif  // if __CUDNN__
+#endif // if __CUDNN__
 };
 
-
-#endif  // RELU_H_
+#endif // RELU_H_

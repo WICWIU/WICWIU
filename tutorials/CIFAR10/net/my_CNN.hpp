@@ -3,13 +3,15 @@
 
 #include "../../../WICWIU_src/NeuralNetwork.hpp"
 
-class my_CNN : public NeuralNetwork<float>{
+class my_CNN : public NeuralNetwork<float>
+{
 private:
 public:
-    my_CNN(Tensorholder<float> *x, Tensorholder<float> *label) {
+    my_CNN(Tensorholder<float>* x, Tensorholder<float>* label)
+    {
         SetInput(2, x, label);
 
-        Operator<float> *out = NULL;
+        Operator<float>* out = NULL;
 
         out = new ReShape<float>(x, 3, 32, 32, "Flat2Image");
 

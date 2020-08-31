@@ -1,23 +1,23 @@
-#include <iostream>
-#include <fstream>
 #include <algorithm>
-#include <vector>
-#include <ctime>
+#include <cassert>
 #include <cstdlib>
+#include <ctime>
+#include <dirent.h>
+#include <errno.h>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <pthread.h>
 #include <queue>
 #include <semaphore.h>
-#include <pthread.h>
-#include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <iterator>
-#include <dirent.h>
 #include <sys/types.h>
+#include <vector>
 
-#include "../../WICWIU_src/Shape.hpp"
 #include "../../WICWIU_src/ImageProcess.hpp"
+#include "../../WICWIU_src/Shape.hpp"
 
 class RandomCrop : public Transform
 {
@@ -26,27 +26,23 @@ private:
     int m_width;
 
 public:
-    RandomCrop(int heigth, int width) : m_heigth(heigth), m_width(width)
-    {
-    }
+    RandomCrop(int heigth, int width) : m_heigth(heigth), m_width(width) {}
 
-    RandomCrop(int size) : m_heigth(size), m_width(size)
-    {
-    }
+    RandomCrop(int size) : m_heigth(size), m_width(size) {}
 
     virtual ~RandomCrop() {}
 
-    virtual void DoTransform(ImageWrapper &imgWrp)
+    virtual void DoTransform(ImageWrapper& imgWrp)
     {
-        unsigned char *imgBuf = imgWrp.imgBuf;
-        Shape *imgShape = imgWrp.imgShape;
+        unsigned char* imgBuf = imgWrp.imgBuf;
+        Shape* imgShape = imgWrp.imgShape;
 
         int width = imgShape->GetDim(2);
         int height = imgShape->GetDim(1);
         int channel = imgShape->GetDim(0);
 
-        unsigned char *newImgBuf = new unsigned char[m_width * m_heigth * channel];
-        Shape *NewImgShape = new Shape(channel, m_heigth, m_width);
+        unsigned char* newImgBuf = new unsigned char[m_width * m_heigth * channel];
+        Shape* NewImgShape = new Shape(channel, m_heigth, m_width);
         srand((unsigned)time(NULL) + (unsigned int)(intptr_t)NewImgShape);
 
         int limit_h = height - m_heigth;
@@ -65,7 +61,8 @@ public:
 
                 for (int ch = 0; ch < channel; ch++)
                 {
-                    newImgBuf[ch * m_heigth * m_width + h * m_width + w] = imgBuf[ch * height * width + oldh * width + oldw];
+                    newImgBuf[ch * m_heigth * m_width + h * m_width + w] =
+                        imgBuf[ch * height * width + oldh * width + oldw];
                 }
             }
         }

@@ -9,18 +9,23 @@
 @details Operator 형식이지만 Tensor를 저장하는 용도로만 사용
 */
 template <typename DTYPE>
-class NoiseGenerator : public Operator<DTYPE>{
-  private:
-  public:
-    NoiseGenerator(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize, std::string pName = "No Name") : Operator<DTYPE>(pName){
-        this->SetResult(new Tensor<DTYPE>(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize, NoUseTime));
+class NoiseGenerator : public Operator<DTYPE>
+{
+private:
+public:
+    NoiseGenerator(int pTimeSize, int pBatchSize, int pChannelSize, int pRowSize, int pColSize,
+                   std::string pName = "No Name")
+        : Operator<DTYPE>(pName)
+    {
+        this->SetResult(
+            new Tensor<DTYPE>(pTimeSize, pBatchSize, pChannelSize, pRowSize, pColSize, NoUseTime));
     }
 
-    NoiseGenerator(Shape *pShape, std::string pName = "No Name") : Operator<DTYPE>(pName){
+    NoiseGenerator(Shape* pShape, std::string pName = "No Name") : Operator<DTYPE>(pName)
+    {
         this->SetResult(new Tensor<DTYPE>(pShape, NoUseTime));
     }
 
-    ~NoiseGenerator(){
-    }
+    ~NoiseGenerator() {}
 };
-#endif //NOISEGENERATOR_H_
+#endif // NOISEGENERATOR_H_

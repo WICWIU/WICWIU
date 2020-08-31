@@ -1,31 +1,31 @@
 #ifndef __ImageProcess__
 #define __ImageProcess__
 
-#include <iostream>
-#include <fstream>
 #include <algorithm>
-#include <vector>
-#include <ctime>
+#include <cassert>
 #include <cstdlib>
+#include <ctime>
+#include <dirent.h>
+#include <errno.h>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <pthread.h>
 #include <queue>
 #include <semaphore.h>
-#include <pthread.h>
-#include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <iterator>
-#include <dirent.h>
 #include <sys/types.h>
+#include <vector>
 
 #include "./Shape.hpp"
 
 class ImageWrapper
 {
 public:
-    unsigned char *imgBuf;
-    Shape *imgShape;
+    unsigned char* imgBuf;
+    Shape* imgShape;
 
     ImageWrapper()
     {
@@ -62,7 +62,7 @@ public:
 
     virtual ~Transform() {}
 
-    virtual void DoTransform(ImageWrapper &imgWrp)
+    virtual void DoTransform(ImageWrapper& imgWrp)
     {
         // std::cout << "do Transform" << '\n';
     }
@@ -71,11 +71,11 @@ public:
 class Compose : public Transform
 {
 private:
-    std::vector<Transform *> m_listOfTransform;
+    std::vector<Transform*> m_listOfTransform;
     int m_size;
 
 public:
-    Compose(std::initializer_list<Transform *> lvalue) : m_listOfTransform(lvalue)
+    Compose(std::initializer_list<Transform*> lvalue) : m_listOfTransform(lvalue)
     {
         // std::cout << "Compose" << '\n';
         m_size = m_listOfTransform.size();
@@ -90,7 +90,7 @@ public:
         }
     }
 
-    virtual void DoTransform(ImageWrapper &imgWrp)
+    virtual void DoTransform(ImageWrapper& imgWrp)
     {
         // std::cout << "do Compose" << '\n';
         // std::cout << "size: " << m_size << '\n';

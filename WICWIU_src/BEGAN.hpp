@@ -3,7 +3,9 @@
 
 #include "GAN.hpp"
 
-template<typename DTYPE> class BEGAN : public GAN<DTYPE> {
+template <typename DTYPE>
+class BEGAN : public GAN<DTYPE>
+{
 private:
     float m_LossX;
     float m_LossG;
@@ -18,33 +20,35 @@ public:
     BEGAN();
     virtual ~BEGAN();
 
-    int                                 SetBEGANParameter(float pK, float pLamda, float pGamma);
+    int SetBEGANParameter(float pK, float pLamda, float pGamma);
 
-    virtual int                         TrainGeneratorOnCPU();
-    virtual int                         ComputeGradientOfDiscriminatorAboutRealOnCPU();
-    virtual int                         ComputeGradientOfDiscriminatorAboutFakeOnCPU();
+    virtual int TrainGeneratorOnCPU();
+    virtual int ComputeGradientOfDiscriminatorAboutRealOnCPU();
+    virtual int ComputeGradientOfDiscriminatorAboutFakeOnCPU();
 
-    virtual int                         TrainGeneratorOnGPU();
-    virtual int                         ComputeGradientOfDiscriminatorAboutRealOnGPU();
-    virtual int                         ComputeGradientOfDiscriminatorAboutFakeOnGPU();
+    virtual int TrainGeneratorOnGPU();
+    virtual int ComputeGradientOfDiscriminatorAboutRealOnGPU();
+    virtual int ComputeGradientOfDiscriminatorAboutFakeOnGPU();
 
-    float                               SaveLossX();
-    float                               SaveLossG();
+    float SaveLossX();
+    float SaveLossG();
 
-    int                                 MultiplyKOnOutput();
-    int                                 MultiplyKOnGradient();
+    int MultiplyKOnOutput();
+    int MultiplyKOnGradient();
 
-    float                               UpdateK();
-    float                               GetK();
+    float UpdateK();
+    float GetK();
 
-    float                               ComputeConvergenceMeasure();
-    float                               GetConvergenceMeasure();
+    float ComputeConvergenceMeasure();
+    float GetConvergenceMeasure();
 };
 
-template<typename DTYPE> BEGAN<DTYPE>::BEGAN() : GAN<DTYPE>() {
-    #ifdef __DEBUG__
+template <typename DTYPE>
+BEGAN<DTYPE>::BEGAN() : GAN<DTYPE>()
+{
+#ifdef __DEBUG__
     std::cout << "BEGAN<DTYPE>::BEGAN()" << '\n';
-    #endif  // __DEBUG__
+#endif // __DEBUG__
 
     float m_LossX = 0.f;
     float m_LossG = 0.f;
@@ -56,13 +60,17 @@ template<typename DTYPE> BEGAN<DTYPE>::BEGAN() : GAN<DTYPE>() {
     float m_ConvergenceMeasure = 0.f;
 }
 
-template<typename DTYPE> BEGAN<DTYPE>::~BEGAN(){
-    #ifdef __DEBUG__
+template <typename DTYPE>
+BEGAN<DTYPE>::~BEGAN()
+{
+#ifdef __DEBUG__
     std::cout << "BEGAN<DTYPE>::~BEGAN()" << '\n';
-    #endif  // __DEBUG__
+#endif // __DEBUG__
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::SetBEGANParameter(float pK, float pLamda, float pGamma){
+template <typename DTYPE>
+int BEGAN<DTYPE>::SetBEGANParameter(float pK, float pLamda, float pGamma)
+{
     m_k = pK;
     m_lamda = pLamda;
     m_gamma = pGamma;
@@ -70,7 +78,9 @@ template<typename DTYPE> int BEGAN<DTYPE>::SetBEGANParameter(float pK, float pLa
     return TRUE;
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::TrainGeneratorOnCPU(){
+template <typename DTYPE>
+int BEGAN<DTYPE>::TrainGeneratorOnCPU()
+{
     this->ResetResult();
     this->ResetGradient();
     this->ResetGeneratorLossFunctionResult();
@@ -89,7 +99,9 @@ template<typename DTYPE> int BEGAN<DTYPE>::TrainGeneratorOnCPU(){
     return TRUE;
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRealOnCPU(){
+template <typename DTYPE>
+int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRealOnCPU()
+{
     this->ResetResult();
     this->GetDiscriminator()->ResetGradient();
     this->ResetDiscriminatorLossFunctionResult();
@@ -105,7 +117,9 @@ template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRe
     this->GetDiscriminator()->BackPropagate();
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFakeOnCPU(){
+template <typename DTYPE>
+int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFakeOnCPU()
+{
     this->ResetResult();
     this->GetDiscriminator()->ResetGradient();
     // this->ResetDiscriminatorLossFunctionResult();
@@ -125,32 +139,36 @@ template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFa
     this->GetDiscriminator()->BackPropagate();
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::TrainGeneratorOnGPU(){
-    #ifdef __CUDNN__
-        this->ResetResult();
-        this->ResetGradient();
-        this->ResetGeneratorLossFunctionResult();
-        this->ResetGeneratorLossFunctionGradient();
+template <typename DTYPE>
+int BEGAN<DTYPE>::TrainGeneratorOnGPU()
+{
+#ifdef __CUDNN__
+    this->ResetResult();
+    this->ResetGradient();
+    this->ResetGeneratorLossFunctionResult();
+    this->ResetGeneratorLossFunctionGradient();
 
-        this->GetSwitch()->SetSwitchNumber(FAKE);
-        this->ForwardPropagateOnGPU();
-        this->GetGeneratorLossFunction()->ForwardPropagateOnGPU();
-        this->SaveLossG();
+    this->GetSwitch()->SetSwitchNumber(FAKE);
+    this->ForwardPropagateOnGPU();
+    this->GetGeneratorLossFunction()->ForwardPropagateOnGPU();
+    this->SaveLossG();
 
-        this->GetGeneratorLossFunction()->BackPropagateOnGPU();
-        this->BackPropagateOnGPU();
+    this->GetGeneratorLossFunction()->BackPropagateOnGPU();
+    this->BackPropagateOnGPU();
 
-        this->GetGeneratorOptimizer()->UpdateParameterOnGPU();
+    this->GetGeneratorOptimizer()->UpdateParameterOnGPU();
 
-    #else  // __CUDNN__
-        std::cout << "There is no GPU option!" << '\n';
-        exit(-1);
-    #endif  // __CUDNN__
+#else  // __CUDNN__
+    std::cout << "There is no GPU option!" << '\n';
+    exit(-1);
+#endif // __CUDNN__
 
     return TRUE;
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRealOnGPU(){
+template <typename DTYPE>
+int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRealOnGPU()
+{
     this->ResetResult();
     this->GetDiscriminator()->ResetGradient();
     this->ResetDiscriminatorLossFunctionResult();
@@ -168,7 +186,9 @@ template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutRe
     return TRUE;
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFakeOnGPU(){
+template <typename DTYPE>
+int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFakeOnGPU()
+{
     this->ResetResult();
     this->GetDiscriminator()->ResetGradient();
     // this->ResetDiscriminatorLossFunctionResult();
@@ -188,45 +208,63 @@ template<typename DTYPE> int BEGAN<DTYPE>::ComputeGradientOfDiscriminatorAboutFa
     return TRUE;
 }
 
-template<typename DTYPE> float BEGAN<DTYPE>::SaveLossX(){
+template <typename DTYPE>
+float BEGAN<DTYPE>::SaveLossX()
+{
     return m_LossX = (*(this->GetDiscriminatorLossFunction()->GetResult()))[0];
 }
 
-template<typename DTYPE> float BEGAN<DTYPE>::SaveLossG(){
+template <typename DTYPE>
+float BEGAN<DTYPE>::SaveLossG()
+{
     return m_LossG = (*(this->GetGeneratorLossFunction()->GetResult()))[0];
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::MultiplyKOnOutput(){
+template <typename DTYPE>
+int BEGAN<DTYPE>::MultiplyKOnOutput()
+{
     this->GetDiscriminator()->GetResultOperator()->GetResult()->MultiplyScalar(0, m_k);
     return TRUE;
 }
 
-template<typename DTYPE> int BEGAN<DTYPE>::MultiplyKOnGradient(){
+template <typename DTYPE>
+int BEGAN<DTYPE>::MultiplyKOnGradient()
+{
     this->GetDiscriminator()->GetResultOperator()->GetGradient()->MultiplyScalar(0, m_k);
     return TRUE;
 }
 
-template<typename DTYPE> float BEGAN<DTYPE>::UpdateK(){
+template <typename DTYPE>
+float BEGAN<DTYPE>::UpdateK()
+{
     m_k = m_k + m_lamda * (m_gamma * m_LossX - m_LossG);
-    if(m_k > 1.f) m_k = 1.f;
-    if(m_k < 0.f) m_k = 0.f;
+    if (m_k > 1.f)
+        m_k = 1.f;
+    if (m_k < 0.f)
+        m_k = 0.f;
 
     return m_k;
 }
 
-template<typename DTYPE> float BEGAN<DTYPE>::GetK(){
+template <typename DTYPE>
+float BEGAN<DTYPE>::GetK()
+{
     return m_k;
 }
 
-template<typename DTYPE> float BEGAN<DTYPE>::ComputeConvergenceMeasure(){
+template <typename DTYPE>
+float BEGAN<DTYPE>::ComputeConvergenceMeasure()
+{
     m_ConvergenceMeasure = m_LossX + std::abs(m_gamma * m_LossX - m_LossG);
-    return  m_ConvergenceMeasure;
-}
-
-template<typename DTYPE> float BEGAN<DTYPE>::GetConvergenceMeasure(){
     return m_ConvergenceMeasure;
 }
 
-#endif  // BEGAN_H_
+template <typename DTYPE>
+float BEGAN<DTYPE>::GetConvergenceMeasure()
+{
+    return m_ConvergenceMeasure;
+}
+
+#endif // BEGAN_H_
 
 //////////////////////////////////////////

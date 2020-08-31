@@ -3,12 +3,14 @@
 
 #include "../../../WICWIU_src/NeuralNetwork.hpp"
 
-class AutoEncoder : public NeuralNetwork<float>{
+class AutoEncoder : public NeuralNetwork<float>
+{
 private:
 public:
-    AutoEncoder(Tensorholder<float> *x, Tensorholder<float> *label) {
+    AutoEncoder(Tensorholder<float>* x, Tensorholder<float>* label)
+    {
         SetInput(2, x, label);
-        Operator<float> *out = NULL;
+        Operator<float>* out = NULL;
 
         out = new ReShape<float>(x, 28, 28, "Flat2Image");
 
@@ -25,13 +27,16 @@ public:
         out = new Relu<float>(out, "Relu_2");
 
         // ======================= layer 3=======================
-        out = new TransposedConvolutionLayer2D<float>(out, 20, 10, 8, 8, 1, 1, 0, TRUE, "Trans_Conv_1");
-        // out = new TransposedConvolutionLayer2D<float>(out, 20, 10, 2, 2, 2, 2, 0, TRUE, "Trans_Conv_1"); //stride test -> ok
+        out = new TransposedConvolutionLayer2D<float>(out, 20, 10, 8, 8, 1, 1, 0, TRUE,
+                                                      "Trans_Conv_1");
+        // out = new TransposedConvolutionLayer2D<float>(out, 20, 10, 2, 2, 2, 2, 0, TRUE,
+        // "Trans_Conv_1"); //stride test -> ok
 
         out = new Relu<float>(out, "Relu_3");
 
         // ======================= layer 4=======================
-        out = new TransposedConvolutionLayer2D<float>(out, 10, 1, 15, 15, 1, 1, 0, TRUE, "Trans_Conv_2");
+        out = new TransposedConvolutionLayer2D<float>(out, 10, 1, 15, 15, 1, 1, 0, TRUE,
+                                                      "Trans_Conv_2");
 
         out = new Relu<float>(out, "Relu_4");
 
