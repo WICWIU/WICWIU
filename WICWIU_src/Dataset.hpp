@@ -59,7 +59,7 @@ public:
     virtual int 						  GetLabel(int idx) {
 		if(idx < 0 || idx >= label.size()){
             printf("idx = %d is out of range (label.size() = %lu) in %s (%s %d)\n", idx, label.size(), __FUNCTION__, __FILE__, __LINE__);
-            MyPause(__FUNCTION__);
+            // MyPause(__FUNCTION__);
             return -1;
         }
 
