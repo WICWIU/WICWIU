@@ -5,7 +5,6 @@
 
 template<typename DTYPE> class Dropout : public Operator<DTYPE>{
 private:
-
   float m_droprate;
   Mode  m_mode;
   Tensor<unsigned char> *m_activeshape; //1D Tensor, type: unsigned char
@@ -23,20 +22,34 @@ private:
 #endif  // __CUDNN__
 
 public:
-    Dropout(Operator<DTYPE> *pInput) : Operator<DTYPE>(pInput) {
-        #ifdef __DEBUG__
-        std::cout << "Dropout::Dropout(Operator<DTYPE> *)" << '\n';
-        #endif  // __DEBUG__
-    }
+    /*!
+    @brief Dropout 클래스 생성자
+    @details Dropout 클래스의 Alloc 함수를 호출한다.
+    @param pInput Dropot할 Operator.
+    @param pDroprate Dropout할 rate
+    @param pName 사용자가 부여한 Operator의 이름
+    */
 
+    Dropout(Operator<DTYPE> *pInput, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
+        #ifdef __DEBUG__
+        std::cout << "Dropout::Dropout(Operator<DTYPE> * float *)" << '\n';
+        #endif  // __DEBUG__
+
+        m_droprate = 0.f;
+        m_mode = TRAIN;
+
+        this->Alloc(pInput, 0.5, pLoadflag);
+    }
 
     Dropout(Operator<DTYPE> *pInput, float pDroprate, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Dropout::Dropout(Operator<DTYPE> * float *)" << '\n';
         #endif  // __DEBUG__
+
         m_droprate = 0.f;
         m_mode = TRAIN;
-        this->Alloc(pInput, pDroprate);
+
+        this->Alloc(pInput, pDroprate, pLoadflag);
     }
 
     ~Dropout() {
@@ -107,7 +120,7 @@ public:
 
 #endif  // if __CUDNN__
 
-  void Delete() {
+void Delete() {
 #ifdef __CUDNN__
 
         if (m_aInOutDesc) checkCUDNN(cudnnDestroyTensorDescriptor(m_aInOutDesc));
