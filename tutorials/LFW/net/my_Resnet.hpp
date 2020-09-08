@@ -80,10 +80,7 @@ public:
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1, 1, "Block1");
         out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 2, "Block2");
         out = this->MakeLayer(out, 256, pBlockType, pNumOfBlock3, 2, "Block3");
-        out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock3, 2, "Block4");
-
-        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
-        // out = new Relu<DTYPE>(out, "Relu1");
+        out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock4, 2, "Block4");
 
         out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
 

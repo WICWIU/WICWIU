@@ -117,7 +117,7 @@ public:
         out = this->MakeLayer(out, m_numOfInputChannel, typeOfBlock, numOfBlock1, 1, "Block1");
         out = this->MakeLayer(out, 128, typeOfBlock, numOfBlock2, 2, "Block2");
         out = this->MakeLayer(out, 256, typeOfBlock, numOfBlock3, 2, "Block3");
-        out = this->MakeLayer(out, 512, typeOfBlock, numOfBlock3, 2, "Block4");
+        out = this->MakeLayer(out, 512, typeOfBlock, numOfBlock4, 2, "Block4");
 
         out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
         out = new ReShape<DTYPE>(out, 1, 1, 512, "ReShape");
