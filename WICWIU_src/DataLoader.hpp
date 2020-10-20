@@ -56,7 +56,7 @@ public:
     void                          StopProcess();
 
     // distribute data idx to each thread
-    void                          DistributeIdxOfData2Thread();
+    virtual void                  DistributeIdxOfData2Thread();
     virtual void                  MakeAllOfIndex(std::vector<int> *pAllOfIndex);
 
     virtual void                  DataPreprocess();
@@ -69,11 +69,21 @@ public:
 
     void                          Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData);
 
-    std::vector<Tensor<DTYPE> *>* GetDataFromGlobalBuffer();
+    virtual std::vector<Tensor<DTYPE> *>* GetDataFromGlobalBuffer();
+
+    void SetWorkingSignal(int signal) { m_nowWorking = signal;}
 
     int GetBatchSize(){return m_batchSize;}
     int GetWorkingSignal(){return m_nowWorking;}
     int GetNumOfEachDatasetMember(){return m_numOfEachDatasetMember;}
+    int GetUseShuffle(){return m_useShuffle;}
+    int GetNumOfWorker() { return m_numOfWorker; }
+    sem_t* GetGlobalFullAddr() { return  &m_globalFull; }
+    sem_t* GetGlobalEmptyAddr() { return &m_globalEmpty; }
+    sem_t* GetGlobalMutexAddr() { return &m_globalMutex; }
+
+    std::queue<std::vector<Tensor<DTYPE>*>*>*  GetGlobalBufferAddr() { return &m_globalBuffer; }
+
     Dataset<DTYPE> * GetDataset(){return m_pDataset;}
 
     // static int random_generator(int upperbound);
@@ -196,7 +206,7 @@ template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, 
     sem_init(&m_globalMutex,  0, 1);
 
     this->Alloc();
-    this->StartProcess();
+    // this->StartProcess();
 }
 
 template<typename DTYPE> DataLoader<DTYPE>::~DataLoader() {
@@ -214,17 +224,21 @@ template<typename DTYPE> void DataLoader<DTYPE>::StartProcess() {
     // Generate thread set for Process -
     m_nowWorking = TRUE;
 
+    // this->DistributeIdxOfData2Thread();
+
     m_aThreadForDistInfo = std::thread([&]() {
         this->DistributeIdxOfData2Thread();
     });  // lambda expression
     printf("Generate dataloader base thread\r\n");
-
+    
+     
     for (int i = 0; i < m_numOfWorker; i++) {
         m_aaWorkerForProcess[i] = std::thread([&]() {
             this->DataPreprocess();
         });  // lambda expression
         printf("Generate worker[%d] for data preprocessing\r\n", i);
     }
+    
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
@@ -386,20 +400,19 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     capacity = temp->GetCapacity();
     result   = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, capacity);
 
-    // std::cout << result->GetShape() << '\n';
-    // std::cout << setOfData.size() << '\n';
-
     for (int i = 0; i < m_batchSize; i++) {
         temp = setOfData.front();
         setOfData.pop();
 
-        for (int j = 0; j < capacity; j++) (*result)[i * capacity + j] = (*temp)[j];
+        for (int j = 0; j < capacity; j++)
+        {
+            (*result)[i * capacity + j] = (*temp)[j];
+        }
 
         delete temp;
         temp = NULL;
     }
 
-    // std::cout << result << '\n';
 
 
     // concatenate all data;
@@ -410,6 +423,7 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
 
 template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData) {
     sem_wait(&m_globalEmpty);
+
     sem_wait(&m_globalMutex);
 
     // Push Tensor pair to Global buffer
@@ -417,10 +431,14 @@ template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer(std::vector<T
 
     sem_post(&m_globalMutex);
     sem_post(&m_globalFull);
+
+
 }
 
 template<typename DTYPE> std::vector<Tensor<DTYPE> *> *DataLoader<DTYPE>::GetDataFromGlobalBuffer() {
+
     sem_wait(&m_globalFull);
+
     sem_wait(&m_globalMutex);
 
     // pop Tensor pair from Global Buffer

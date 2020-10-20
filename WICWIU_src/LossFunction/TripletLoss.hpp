@@ -14,11 +14,12 @@ private:
 
 
 public:
-    TripletLoss(Operator<DTYPE> *pOperator, DTYPE margin, std::string pName = "NO NAME")
+    TripletLoss(Operator<DTYPE> *pOperator, DTYPE margin, int stepsPerUpdate, std::string pName = "NO NAME")
      : LossFunction<DTYPE>(pOperator, NULL, pName) {
         #ifdef __DEBUG__
         std::cout << "TripletLoss::TripletLoss(LossFunction<DTYPE> * 3, float, )" << '\n';
         #endif  // __DEBUG__
+        this->stepsPerUpdate_ = stepsPerUpdate;
 
         Alloc(pOperator, margin);
     }
@@ -111,13 +112,13 @@ public:
             }
 
             float loss = (d_pos - d_neg) + m_margin;
-            loss /= featureDim;
+            // loss /= featureDim;
 
             if(loss < 0.f)
                 loss = 0.F;
 
             if(loss > 0.f) {
-                result[ti * m_NumOfAnchorSample + ba] = loss;
+                result[ti * m_NumOfAnchorSample + ba] = loss; 
                 m_LossPerSample[ti][ba] = 1;
             } else {
                 result[ti * m_NumOfAnchorSample + ba] = 0;
