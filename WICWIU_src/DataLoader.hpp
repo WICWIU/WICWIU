@@ -42,6 +42,8 @@ private:
     sem_t m_globalEmpty;
     sem_t m_globalMutex;
 
+    bool isWorkerEnded_;
+
     void Alloc();
     void Delete();
 
@@ -78,6 +80,7 @@ public:
     int GetNumOfEachDatasetMember(){return m_numOfEachDatasetMember;}
     int GetUseShuffle(){return m_useShuffle;}
     int GetNumOfWorker() { return m_numOfWorker; }
+    bool GetIsWorkedEnded_() { return isWorkerEnded_; }
     sem_t* GetGlobalFullAddr() { return  &m_globalFull; }
     sem_t* GetGlobalEmptyAddr() { return &m_globalEmpty; }
     sem_t* GetGlobalMutexAddr() { return &m_globalMutex; }
@@ -160,6 +163,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::Init() {
     m_batchSize              = 1;
     m_dropLast               = FALSE;
     m_useShuffle             = FALSE;
+    this->isWorkerEnded_ = false;
 }
 
 template<typename DTYPE> DataLoader<DTYPE>::DataLoader(Dataset<DTYPE> *dataset, int batchSize, int useShuffle, int numOfWorker, int dropLast) {
@@ -215,7 +219,7 @@ template<typename DTYPE> DataLoader<DTYPE>::~DataLoader() {
     std::cout << __FILE__ << '\n';
 #endif  // ifdef __DEBUG___
     // need to free all dynamic allocated elements
-    this->StopProcess();
+    // this->StopProcess();
     this->Delete();
 }
 
@@ -254,6 +258,8 @@ template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
         m_aaWorkerForProcess[j].join();
         printf("Join worker[%d]\r\n", j);
     }
+
+    this->isWorkerEnded_ = true;
 
     sem_post(&m_distIdxEmpty);  // for thread terminate
     m_aThreadForDistInfo.join();
