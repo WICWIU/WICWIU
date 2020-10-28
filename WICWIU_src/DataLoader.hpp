@@ -394,13 +394,14 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     Tensor<DTYPE> *temp   = NULL;
     int capacity          = 1;
     Tensor<DTYPE> *result = NULL;
+    int dataSize = setOfData.size();
     // We need to consider Timesize
 
     temp     = setOfData.front();
     capacity = temp->GetCapacity();
     result   = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, capacity);
 
-    for (int i = 0; i < m_batchSize; i++) {
+    for (int i = 0; i < dataSize; i++) {
         temp = setOfData.front();
         setOfData.pop();
 
