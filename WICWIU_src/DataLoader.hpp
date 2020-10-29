@@ -80,7 +80,7 @@ public:
     int GetNumOfEachDatasetMember(){return m_numOfEachDatasetMember;}
     int GetUseShuffle(){return m_useShuffle;}
     int GetNumOfWorker() { return m_numOfWorker; }
-    bool GetIsWorkedEnded_() { return isWorkerEnded_; }
+    bool GetIsWorkerEnded_() { return isWorkerEnded_; }
     sem_t* GetGlobalFullAddr() { return  &m_globalFull; }
     sem_t* GetGlobalEmptyAddr() { return &m_globalEmpty; }
     sem_t* GetGlobalMutexAddr() { return &m_globalMutex; }
