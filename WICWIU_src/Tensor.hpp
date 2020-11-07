@@ -83,6 +83,8 @@ public:
 
     void                     Clip(float min, float max);
     void                     MultiplyScalar(unsigned int pTime, float pScalar);
+    int                      GetIdOfDevice() { return m_idOfDevice; }
+
 #ifdef __CUDNN__
     void                     SetDeviceGPU(unsigned int idOfDevice);
 
