@@ -93,9 +93,9 @@ public:
         int start = 0;
         int end   = 0;
 
-        for(int ba = 0; ba < m_NumOfAnchorSample; ba++){
-            float d_pos = 0.F;
-            float d_neg = 0.F;
+        for (int ba = 0; ba < m_NumOfAnchorSample; ba++) {
+            float dis_pos = 0.f;
+            float dis_neg = 0.f;
 
             int anc_idx = (pTime * batchsize + ba * 3) * featureDim;
             int anc_limit = anc_idx + featureDim;
@@ -103,21 +103,21 @@ public:
             int pos_idx = anc_idx + featureDim;
             int neg_idx = pos_idx + featureDim;
 
-            for(; anc_idx < anc_limit; anc_idx++, pos_idx++, neg_idx++){
-                float diff = (input[anc_idx] - input[pos_idx]);
-                d_pos += diff * diff;
+            for (; anc_idx < anc_limit; anc_idx++, pos_idx++, neg_idx++) {
+                float d1 = (input[anc_idx] - input[pos_idx]);
+                dis_pos += d1 * d1;
 
-                diff = (input[anc_idx] - input[neg_idx]);
-                d_neg += diff * diff;
+                float d2 = (input[anc_idx] - input[neg_idx]);
+                dis_neg += d2 * d2;
             }
 
-            float loss = (d_pos - d_neg) + m_margin;
+            float loss = (dis_pos - dis_neg) + m_margin;
             // loss /= featureDim;
 
-            if(loss < 0.f)
-                loss = 0.F;
+            if (loss < 0.f)
+                loss = 0.f;
 
-            if(loss > 0.f) {
+            if (loss > 0.f) {
                 result[ti * m_NumOfAnchorSample + ba] = loss; 
                 m_LossPerSample[ti][ba] = 1;
             } else {
@@ -129,33 +129,33 @@ public:
         return &result;
     }
 
-    Tensor<DTYPE>* BackPropagate(int pTime = 0){
+    Tensor<DTYPE>* BackPropagate(int pTime = 0) {
 
-        Tensor<DTYPE> &input       = *this->GetTensor();
-        Tensor<DTYPE> &input_delta = *this->GetOperator()->GetDelta();
-        Tensor<DTYPE> &result      = *this->GetResult();
+        Tensor<DTYPE> &input          = *this->GetTensor();
+        Tensor<DTYPE> &input_gradient = *this->GetOperator()->GetGradient();
+        Tensor<DTYPE> &result         = *this->GetResult();
 
-        int batchsize   = input_delta.GetBatchSize();
-        int channelsize = input_delta.GetChannelSize();
-        int rowsize     = input_delta.GetRowSize();
-        int colsize     = input_delta.GetColSize();
+        int batchsize   = input_gradient.GetBatchSize();
+        int channelsize = input_gradient.GetChannelSize();
+        int rowsize     = input_gradient.GetRowSize();
+        int colsize     = input_gradient.GetColSize();
 
-        int featureDim = channelsize *rowsize * colsize;
+        int featureDim = channelsize * rowsize * colsize;
 
-        for(int ba = 0; ba < m_NumOfAnchorSample; ba++){
+        for (int ba = 0; ba < m_NumOfAnchorSample; ba++) {
             int anc_idx = (pTime * batchsize + ba * 3) * featureDim;
             int anc_limit = anc_idx + featureDim;
-
             int pos_idx = anc_idx + featureDim;
             int neg_idx = pos_idx + featureDim;
-            if(m_LossPerSample[pTime][ba]){
-                for(; anc_idx < anc_limit; anc_idx++, pos_idx++, neg_idx++){
-                    input_delta[anc_idx] = (2.f * (input[neg_idx] - input[pos_idx])) / featureDim;
-                    input_delta[pos_idx] = (2.f * (input[pos_idx] - input[anc_idx])) / featureDim;
-                    input_delta[neg_idx] = (2.f * (input[anc_idx]- input[neg_idx])) / featureDim;
+
+            if (m_LossPerSample[pTime][ba]) {
+                for (; anc_idx < anc_limit; anc_idx++, pos_idx++, neg_idx++) {
+                    input_gradient[anc_idx] = (2.f * (input[neg_idx] - input[pos_idx])) / featureDim;
+                    input_gradient[pos_idx] = (2.f * (input[pos_idx] - input[anc_idx])) / featureDim;
+                    input_gradient[neg_idx] = (2.f * (input[anc_idx] - input[neg_idx])) / featureDim;
                 }
             } else {
-                memset(&input_delta[anc_idx], 0, featureDim * sizeof(DTYPE) * 3);
+                memset(&input_gradient[anc_idx], 0, featureDim * sizeof(DTYPE) * 3);
             }
         }
 
