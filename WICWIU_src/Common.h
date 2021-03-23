@@ -8,6 +8,7 @@
 #include <exception>
 #include <string>
 #include <cmath>
+#include <cstring>
 // #include <thread>
 
 // C header
