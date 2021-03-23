@@ -661,7 +661,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, in
 #ifdef __CUDNN__
         this->ForwardPropagateOnGPU();
 #else   //  __CUDNN__
-        this->ForwardPropagateOn():
+        this->ForwardPropagate();
 #endif  //  __CUDNN__
 
         Tensor<float> *result = this->GetResult();
