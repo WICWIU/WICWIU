@@ -46,6 +46,10 @@ int main(int argc, char const *argv[]) {
 
     // @ When load parameters
     // net->Load(filename);
+    //
+    train_dataloader->StartProcess();
+    test_dataloader->StartProcess();
+
 
     std::cout << "best_acc : " << best_acc << '\n';
     std::cout << "epoch : " << epoch << '\n';
@@ -67,8 +71,10 @@ int main(int argc, char const *argv[]) {
 
         startTime = clock();
 
+        
         for (int j = 0; j < LOOP_FOR_TRAIN; j++) {
             //dataset->CreateTrainDataPair(BATCH);
+            // std::cout << "buffers" << std::endl;
             std::vector<Tensor<float> *> * temp =  train_dataloader->GetDataFromGlobalBuffer();
             // printf("%d\r\n", temp->size());
 
@@ -87,12 +93,13 @@ int main(int argc, char const *argv[]) {
             // std::cin >> temp;
             train_accuracy += net->GetAccuracy();
             train_avg_loss += net->GetLoss();
-
-            printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
-                   j + 1, LOOP_FOR_TRAIN,
-                   train_avg_loss / (j + 1),
-                   train_accuracy / (j + 1)
-                   /*nProcessExcuteTime*/);
+            
+            // printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  /*(ExcuteTime : %f)*/,
+            //       j + 1, LOOP_FOR_TRAIN,
+            //       train_avg_loss / (j + 1),
+            //       train_accuracy / (j + 1)
+            //       /*nProcessExcuteTime*/);
+            
             fflush(stdout);
         }
         endTime            = clock();
@@ -104,7 +111,7 @@ int main(int argc, char const *argv[]) {
         float test_avg_loss = 0.f;
 
         net->SetModeInference();
-
+        
         for (int j = 0; j < (int)LOOP_FOR_TEST; j++) {
             //dataset->CreateTestDataPair(BATCH);
             std::vector<Tensor<float> *> * temp =  test_dataloader->GetDataFromGlobalBuffer();
