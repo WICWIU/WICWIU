@@ -50,7 +50,7 @@ template<typename DTYPE> Tensor<DTYPE> *SoftmaxCrossEntropy<DTYPE>::ForwardPropa
     DTYPE *pDevLabel  = label->GetGPUData(pTime);
     DTYPE *pDevResult = result->GetGPUData(pTime);
 
-    SoftmaxCrossEntropy_ForwardPropagate_kernel << < noBlock, threadsPerBlock >> > (pTime, batchsize, colsize, m_epsilon, pDevResult, pDevLabel, pDevSoftMax);
+    SoftmaxCrossEntropy_ForwardPropagate_kernel << < noBlock, threadsPerBlock >> > (0, batchsize, colsize, m_epsilon, pDevResult, pDevLabel, pDevSoftMax);
 
     return result;
 }
@@ -81,7 +81,7 @@ template<typename DTYPE> Tensor<DTYPE> *SoftmaxCrossEntropy<DTYPE>::BackPropagat
     int noBlock = 3, threadsPerBlock = 128;
     GetKernelParameters(capacity, &noBlock, &threadsPerBlock);
 
-    SoftmaxCrossEntropy_BackPropagate_kernel << < noBlock, threadsPerBlock >> > (pTime, capacity, pDevInputDelta, pDevLabel, pDevSoftMax);
+    SoftmaxCrossEntropy_BackPropagate_kernel << < noBlock, threadsPerBlock >> > (0, capacity, pDevInputDelta, pDevLabel, pDevSoftMax);
 
     return NULL;
 }

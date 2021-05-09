@@ -1,0 +1,79 @@
+Deep Neural Networks (DNNs) are extremely powerful machine learning models that achieve excellent performance on difficult problems such as speech recognition [13, 7] and visual object recognition [19, 6, 21, 20]. DNNs are powerful because they can perform arbitrary parallel computation
+for a modest number of steps. A surprising example of the power of DNNs is their ability to sort
+N N-bit numbers using only 2 hidden layers of quadratic size [27]. So, while neural networks are
+related to conventional statistical models, they learn an intricate computation. Furthermore, large
+DNNs can be trained with supervised backpropagation whenever the labeled training set has enough
+information to specify the network’s parameters. Thus, if there exists a parameter setting of a large
+DNN that achieves good results (for example, because humans can solve the task very rapidly),
+supervised backpropagation will find these parameters and solve the problem.
+Despite their flexibility and power, DNNs can only be applied to problems whose inputs and targets
+can be sensibly encoded with vectors of fixed dimensionality. It is a significant limitation, since
+many important problems are best expressed with sequences whose lengths are not known a-priori.
+For example, speech recognition and machine translation are sequential problems. Likewise, question answering can also be seen as mapping a sequence of words representing the question to a sequence of words representing the answer. It is therefore clear that a domain-independent method
+that learns to map sequences to sequences would be useful.
+Sequences pose a challenge for DNNs because they require that the dimensionality of the inputs and
+outputs is known and fixed. In this paper, we show that a straightforward application of the Long
+Short-Term Memory (LSTM) architecture [16] can solve general sequence to sequence problems.
+The idea is to use one LSTM to read the input sequence, one timestep at a time, to obtain large fixed dimensional vector representation, and then to use another LSTM to extract the output sequence
+from that vector (fig. 1). The second LSTM is essentially a recurrent neural network language model
+[28, 23, 30] except that it is conditioned on the input sequence. The LSTM’s ability to successfully
+learn on data with long range temporal dependencies makes it a natural choice for this application
+due to the considerable time lag between the inputs and their corresponding outputs (fig. 1).
+There have been a number of related attempts to address the general sequence to sequence learning
+problem with neural networks. Our approach is closely related to Kalchbrenner and Blunsom [18]
+who were the first to map the entire input sentence to vector, and is very similar to Cho et al. [5].
+Graves [10] introduced a novel differentiable attention mechanism that allows neural networks to
+focus on different parts of their input, and an elegant variant of this idea was successfully applied
+to machine translation by Bahdanau et al. [2]. The Connectionist Sequence Classification is another
+popular technique for mapping sequences to sequences with neural networks, although it assumes a
+monotonic alignment between the inputs and the outputs [11].
+The main result of this work is the following. On the WMT’14 English to French translation task,
+we obtained a BLEU score of 34.81 by directly extracting translations from an ensemble of 5 deep
+LSTMs (with 380M parameters each) using a simple left-to-right beam-search decoder. This is
+by far the best result achieved by direct translation with large neural networks. For comparison,
+the BLEU score of a SMT baseline on this dataset is 33.30 [29]. The 34.81 BLEU score was
+achieved by an LSTM with a vocabulary of 80k words, so the score was penalized whenever the
+reference translation contained a word not covered by these 80k. This result shows that a relatively
+unoptimized neural network architecture which has much room for improvement outperforms a
+mature phrase-based SMT system.
+Finally, we used the LSTM to rescore the publicly available 1000-best lists of the SMT baseline on
+the same task [29]. By doing so, we obtained a BLEU score of 36.5, which improves the baseline
+by 3.2 BLEU points and is close to the previous state-of-the-art (which is 37.0 [9]).
+Surprisingly, the LSTM did not suffer on very long sentences, despite the recent experience of other
+researchers with related architectures [26]. We were able to do well on long sentences because we
+reversed the order of words in the source sentence but not the target sentences in the training and test
+set. By doing so, we introduced many short term dependencies that made the optimization problem
+much simpler (see sec. 2 and 3.3). As a result, SGD could learn LSTMs that had no trouble with
+long sentences. The simple trick of reversing the words in the source sentence is one of the key
+technical contributions of this work.
+A useful property of the LSTM is that it learns to map an input sentence of variable length into
+a fixed-dimensional vector representation. Given that translations tend to be paraphrases of the
+source sentences, the translation objective encourages the LSTM to find sentence representations
+that capture their meaning, as sentences with similar meanings are close to each other while different sentences meanings will be far. A qualitative evaluation supports this claim, showing that our model
+is aware of word order and is fairly invariant to the active and passive voice.
+
+The RNN can easily map sequences to sequences whenever the alignment between the inputs the
+outputs is known ahead of time. However, it is not clear how to apply an RNN to problems whose
+input and the output sequences have different lengths with complicated and non-monotonic relationships.
+A simple strategy for general sequence learning is to map the input sequence to a fixed-sized vector
+using one RNN, and then to map the vector to the target sequence with another RNN (this approach
+has also been taken by Cho et al. [5]). While it could work in principle since the RNN is provided
+with all the relevant information, it would be difficult to train the RNNs due to the resulting long
+term dependencies [14, 4] (figure 1) [16, 15]. However, the Long Short-Term Memory (LSTM) [16]
+is known to learn problems with long range temporal dependencies, so an LSTM may succeed in
+this setting.
+
+While the LSTM is capable of solving problems with long term dependencies, we discovered that
+the LSTM learns much better when the source sentences are reversed (the target sentences are not
+reversed). By doing so, the LSTM’s test perplexity dropped from 5.8 to 4.7, and the test BLEU
+scores of its decoded translations increased from 25.9 to 30.6.
+While we do not have a complete explanation to this phenomenon, we believe that it is caused by
+the introduction of many short term dependencies to the dataset. Normally, when we concatenate a
+source sentence with a target sentence, each word in the source sentence is far from its corresponding
+word in the target sentence. As a result, the problem has a large “minimal time lag” [17]. By
+reversing the words in the source sentence, the average distance between corresponding words in
+the source and target language is unchanged. However, the first few words in the source language
+are now very close to the first few words in the target language, so the problem’s minimal time lag is
+greatly reduced. Thus, backpropagation has an easier time “establishing communication” between
+the source sentence and the target sentence, which in turn results in substantially improved overall
+performance.

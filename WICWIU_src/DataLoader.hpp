@@ -234,15 +234,15 @@ template<typename DTYPE> void DataLoader<DTYPE>::StartProcess() {
         this->DistributeIdxOfData2Thread();
     });  // lambda expression
     printf("Generate dataloader base thread\r\n");
-    
-     
+
+
     for (int i = 0; i < m_numOfWorker; i++) {
         m_aaWorkerForProcess[i] = std::thread([&]() {
             this->DataPreprocess();
         });  // lambda expression
         printf("Generate worker[%d] for data preprocessing\r\n", i);
     }
-    
+
 }
 
 template<typename DTYPE> void DataLoader<DTYPE>::StopProcess() {
@@ -385,7 +385,7 @@ template<typename DTYPE> void DataLoader<DTYPE>::Push2IdxBuffer(std::vector<int>
 template<typename DTYPE> std::vector<int> *DataLoader<DTYPE>::GetIdxSetFromIdxBuffer() {
     sem_wait(&m_distIdxFull);
     sem_wait(&m_distIdxMutex);
-    
+
     std::vector<int> *setOfIdx = m_splitedIdxBuffer.front();
     m_splitedIdxBuffer.pop();
 
@@ -395,25 +395,36 @@ template<typename DTYPE> std::vector<int> *DataLoader<DTYPE>::GetIdxSetFromIdxBu
     return setOfIdx;
 }
 
+//master랑 합치기위해 만든거
 template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queue<Tensor<DTYPE> *>& setOfData) {
     // concatenate all preprocessed data into one tensor
     Tensor<DTYPE> *temp   = NULL;
     int capacity          = 1;
+    int timesize          = 1;
     Tensor<DTYPE> *result = NULL;
     int dataSize = setOfData.size();
     // We need to consider Timesize
 
     temp     = setOfData.front();
     capacity = temp->GetCapacity();
-    result   = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, capacity);
+    timesize = temp->GetTimeSize();
+    int colsize = capacity/timesize;
+
+    result   = Tensor<DTYPE>::Zeros(timesize, m_batchSize, 1, 1, colsize);
+    Shape *resultShape = result->GetShape();
 
     for (int i = 0; i < dataSize; i++) {
         temp = setOfData.front();
         setOfData.pop();
 
-        for (int j = 0; j < capacity; j++)
-        {
-            (*result)[i * capacity + j] = (*temp)[j];
+        Shape *tempShape = temp->GetShape();
+
+        for (int ti = 0; ti < timesize; ti++){
+            for(int co=0; co < colsize; co++){
+              //(*result)[i * capacity + j] = (*temp)[j];
+
+              (*result)[Index5D(resultShape, ti, i, 0, 0, co)] = (*temp)[Index5D(tempShape, ti, 0, 0, 0, co)];
+            }
         }
 
         delete temp;
@@ -428,6 +439,55 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     return result;
 }
 
+//내가 사용하던거
+/*
+template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queue<Tensor<DTYPE> *>& setOfData) {
+    // concatenate all preprocessed data into one tensor
+    Tensor<DTYPE> *temp   = NULL;
+    int capacity          = 1;
+    int timesize          = 1;
+    Tensor<DTYPE> *result = NULL;
+    // We need to consider Timesize
+
+    temp     = setOfData.front();
+    capacity = temp->GetCapacity();
+    timesize = temp->GetTimeSize();
+    int colsize = capacity/timesize;          //timesize가 결국은 1 이여서 문제가 없을거 같음....
+    //result   = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, capacity);
+    result   = Tensor<DTYPE>::Zeros(timesize, m_batchSize, 1, 1, colsize);
+
+    Shape *resultShape = result->GetShape();
+
+    // std::cout << result->GetShape() << '\n';
+    // std::cout << setOfData.size() << '\n';
+
+    for (int i = 0; i < m_batchSize; i++) {
+        temp = setOfData.front();
+        setOfData.pop();
+
+        Shape *tempShape = temp->GetShape();
+
+        for (int ti = 0; ti < timesize; ti++){
+            for(int co=0; co < colsize; co++){
+              //(*result)[i * capacity + j] = (*temp)[j];
+
+              (*result)[Index5D(resultShape, ti, i, 0, 0, co)] = (*temp)[Index5D(tempShape, ti, 0, 0, 0, co)];
+            }
+        }
+
+        delete temp;
+        temp = NULL;
+    }
+
+    // std::cout << result << '\n';
+
+
+    // concatenate all data;
+    // and pop data on queue;
+
+    return result;
+}
+*/
 template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData) {
     sem_wait(&m_globalEmpty);
 

@@ -12,8 +12,8 @@ ENABLE_CUDNN = -D__CUDNN__
 #	uncomment the following to debug
 #DFLAGS = -D__DEBUG__
 
-INCLUDE_PATH = -I/usr/local/cuda/include
-LIB_PATH = -L. -L/usr/local/cuda/lib64
+INCLUDE_PATH = -I/usr/local/cuda-10.2/include
+LIB_PATH = -L. -L/usr/local/cuda-10.2/lib64
 
 CC = g++
 NVCC = nvcc
@@ -49,7 +49,9 @@ ifdef	ENABLE_CUDNN
 		WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.cu \
 		WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.cu \
 		WICWIU_src/Operator/L2Normalize.cu \
-		WICWIU_src/Operator/Passer.cu
+		WICWIU_src/Operator/Passer.cu \
+		WICWIU_src/Operator/Embedding_CUDA.cu \
+		WICWIU_src/Module/Decoder2_CUDA.cu
 
 
 	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
@@ -94,6 +96,12 @@ WICWIU_src/Operator/Passer.o: WICWIU_src/Operator/Passer.cu
 
 
 WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.o: WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/Embedding_CUDA.o: WICWIU_src/Operator/Embedding_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Module/Decoder2_CUDA.o: WICWIU_src/Module/Decoder2_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
 $(WICWIU_LIB): $(WICWIU_OBJS) $(WICWIU_CUDA_OBJS)
