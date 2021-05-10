@@ -1,6 +1,6 @@
 
 #include "net/my_SeqToSeq.hpp"
-#include "net/my_AttentionSeqToSeq.hpp"
+// #include "net/my_AttentionSeqToSeq.hpp"
 #include <time.h>
 #include <unistd.h>
 #include <iostream>
@@ -13,14 +13,14 @@
 
 using namespace std;
 
-#define EMBEDDIM               350            // 이걸 늘리면 segfault가 발생하는데... 이상하네....
+#define EMBEDDIM               64            // 이걸 늘리면 segfault가 발생하는데... 이상하네....
 // #define ENCODER_TIME           3
 // #define DECODER_TIME           4
-#define BATCH                  64
+#define BATCH                  5
 #define EPOCH                  10
 #define MAX_TRAIN_ITERATION    1500   // (60000 / BATCH)
 #define MAX_TEST_ITERATION     5   // (10000 / BATCH)
-#define GPUID                  6
+#define GPUID                  4
 
 
 
@@ -35,8 +35,8 @@ int main(int argc, char const *argv[]) {
     double  nProcessExcuteTime = 0;
 
     //RNNParalleledCorpusDataset<float>* translation_data = new RNNParalleledCorpusDataset<float>("Data/eng-fra_short.txt", "eng", "fra");      //input 2개는 확인해 봤지만 label은 확인하지 못함!
-    RNNParalleledCorpusDataset<float>* translation_data = new RNNParalleledCorpusDataset<float>("Data/test3.txt", "eng", "fra");
-    //RNNParalleledCorpusDataset<float>* translation_data = new RNNParalleledCorpusDataset<float>("Data/test2.txt", "eng", "fra");
+    // RNNParalleledCorpusDataset<float>* translation_data = new RNNParalleledCorpusDataset<float>("Data/test3.txt", "eng", "fra");
+    RNNParalleledCorpusDataset<float>* translation_data = new RNNParalleledCorpusDataset<float>("Data/test.txt", "eng", "fra");
     //RNNParalleledCorpusDataset<float>* translation_data = new RNNParalleledCorpusDataset<float>("Data/padding_test.txt", "eng", "fra");
     translation_data->BuildVocab();
 
@@ -78,6 +78,7 @@ int main(int argc, char const *argv[]) {
     float best_acc = 0;
     int   epoch    = 0;
 
+    train_dataloader->StartProcess();
     // net->FeedInputTensor(2, x, label);
 
     for (int i = epoch + 1; i < EPOCH; i++) {
@@ -117,25 +118,6 @@ int main(int argc, char const *argv[]) {
             d_l->SetDeviceGPU(GPUID);
 #endif  // __CUDNN__
 
-            // std::cout<<"encoder input"<<'\n';
-            // std::cout<<'\n'<<e_t->GetShape()<<'\n'<<e_t<<'\n';
-            //
-            //  std::cout<<"Decoder input"<<'\n';
-            //  std::cout<<d_t->GetShape()<<'\n'<<d_t<<'\n';
-            // std::cout<<l_t->GetShape()<<'\n';
-            // //
-            // std::cout<<"Deocder label"<<'\n';
-            // std::cout<<l_t->GetShape()<<'\n';
-            // std::cout<<l_t<<'\n';
-
-            //   std::cout<<'\n';
-            // std::cout<<"encoder length"<<'\n';
-            // std::cout<<e_l<<'\n';
-            //
-            // std::cout<<"decoder length"<<'\n';
-            // std::cout<<d_l<<'\n';
-
-            //label은 one-hot으로 만들어서... 값의 확인이 어려워 보임....
 
 
             net->FeedInputTensor(5, e_t, d_t, l_t, e_l, d_l);
@@ -148,22 +130,16 @@ int main(int argc, char const *argv[]) {
             net->seq2seqBPTT(EncoderTime, DecoderTime);
         #endif
 
-            //batch로 했을 경우
-            //net->BPTT(time_size);
 
-            // std::cin >> temp;
-            //train_accuracy += net->GetAccuracy(4);                               // default로는 10으로 되어있음   이게 기존꺼임
-            //train_avg_loss += net->GetLoss();
-
-            train_accuracy = net->GetAccuracy(vocab_size, d_l);
-            train_avg_loss = net->GetLoss(d_l); //d_l
+            train_accuracy += net->GetAccuracy(vocab_size, d_l);
+            train_avg_loss += net->GetLoss(d_l); //d_l
 
             //std::cout<<'\n';
 
             printf("\rTrain complete percentage is %d / %d -> loss : %f, acc : %f"  ,
                    j + 1, MAX_TRAIN_ITERATION,
-                   train_avg_loss, ///  (j + 1),                              //+=이니깐 j+1로 나눠주는거는 알겠는데........ 근데 왜 출력되는 값이 계속 작아지는 거지??? loss값이 같아도 왜 이건 작아지는거냐고...
-                   train_accuracy  /// (j + 1)
+                   train_avg_loss / (j + 1),                              //+=이니깐 j+1로 나눠주는거는 알겠는데........ 근데 왜 출력되는 값이 계속 작아지는 거지??? loss값이 같아도 왜 이건 작아지는거냐고...
+                   train_accuracy / (j + 1)
                  );
             //std::cout<<'\n';
 
@@ -217,11 +193,13 @@ int main(int argc, char const *argv[]) {
             //
 
             map<int, string>* index2vocab = translation_data->GetpIndex2Vocab();
-        #ifdef __CUDNN__
-            net->SentenceTranslateOnGPU(index2vocab);
-        #else
-            net->SentenceTranslate(index2vocab);
-        #endif
+
+            #ifdef __CUDNN__
+                net->SentenceTranslateOnGPU(index2vocab);
+            #else
+                net->SentenceTranslateOnCPU(index2vocab);
+            #endif
+
 
               std::cout << "\n\n";
         }

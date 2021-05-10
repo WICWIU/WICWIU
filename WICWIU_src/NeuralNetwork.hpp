@@ -61,11 +61,11 @@ public:
     int                  TrainOnGPU();
     int                  TestOnGPU();
 
-    float                GetAccuracy(int numOfClass = 10);
+    float                GetAccuracy(int numOfClass = 10, Tensor<DTYPE> *Lengths =NULL);      //수정
     int                  GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
     float                GetTop5Accuracy(int numOfClass);
     void                 GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
-    float                GetLoss();
+    float                GetLoss(Tensor<DTYPE> *Lengths =NULL); //padding을 위해 수정
 
     void                 PrintGraphInformation();
 
@@ -89,6 +89,11 @@ public:
     int                  seq2seqBPTTOnGPU(int EncTimeSize, int DecTimeSize);
 
     int                  GenerateSentence(int maxTimeSize, std::map<int, std::string>* Index2Vocab, int startIndex, int vocabSize);               //textdataset 통합하면서 수정!
+    int                  SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab);
+    int                  SentenceTranslateOnGPU(std::map<int, std::string>* index2vocab);
+
+    //일단은 별개로 만들자!..
+
 
 #ifdef __CUDNN__
     void SetDeviceGPU(unsigned int idOfDevice);
@@ -385,7 +390,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::TestOnGPU() {
  * @param numOfClass 데이터의 분류(Classification)에 이용되는 label의 개수
  * @return 신경망의 Top 1 Accuracy : 0. ~ 1.
  */
-template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass) {
+template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass, Tensor<DTYPE> *Lengths) {
     Operator<DTYPE> *result = GetResultOperator();
     Operator<DTYPE> *label  = m_aLossFunction->GetLabel();
 
@@ -400,8 +405,10 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass)
     int pred_index = 0;
     int ans_index  = 0;
     // printf("\n\n");
+    int totalTimeSize = 0;
 
     for (int ba = 0; ba < batchsize; ba++) {
+        if( Lengths != NULL){ timesize = (*Lengths)[ba]; totalTimeSize += timesize; }
         for (int ti = 0; ti < timesize; ti++) {
             pred_index = GetMaxIndex(pred, ba, ti, numOfClass);
             ans_index  = GetMaxIndex(ans, ba, ti, numOfClass);
@@ -415,6 +422,7 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass)
     // printf("\n\n");
 
     // return (float)((accuracy / 1) / 1);
+    if(Lengths != NULL)   return (float)(accuracy / totalTimeSize );
     return (float)((accuracy / timesize) / batchsize);
 }
 
@@ -550,13 +558,14 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::GetTop5Index(Tensor<DTYPE> *
  * @brief 데이터에 대해 학습된 신경망의 평균 Loss를 계산하여 반환하는 메소드
  * @return 학습된 신경망의 평균 Loss
  */
-template<typename DTYPE> float NeuralNetwork<DTYPE>::GetLoss() {
+template<typename DTYPE> float NeuralNetwork<DTYPE>::GetLoss(Tensor<DTYPE> *Lengths) {
     float avg_loss = 0.f;
 
     int batchsize = m_aLossFunction->GetResult()->GetBatchSize();
     int timesize  = m_aLossFunction->GetResult()->GetTimeSize();
 
     for (int ba = 0; ba < batchsize; ba++) {
+        if(Lengths != NULL)   timesize = (*Lengths)[ba];
         for (int ti = 0; ti < timesize; ti++) {
             avg_loss += (*m_aLossFunction)[ba] / batchsize / timesize;
         }
@@ -969,6 +978,119 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::GenerateSentence(int maxTimeS
     return TRUE;
 }
 
+template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab){
+
+
+    //Result
+    Tensor<DTYPE> *pred = this->GetResult();
+
+    //DecoderInput
+    Tensor<DTYPE> *DecoderInput = this->GetInput()[1]->GetResult();
+    Shape *InputShape = DecoderInput->GetShape();
+
+    //encoder, decoder time size
+    int EncoderTimeSize = this->GetInput()[0]->GetResult()->GetTimeSize();
+    int DecoderTimeSize = DecoderInput->GetTimeSize();
+
+    //Encoder, Decoder module access
+    int numOfExcutableOperator = this->GetNumOfExcutableOperator();
+    Container<Operator<DTYPE> *> *ExcutableOperator = this->GetExcutableOperatorContainer();
+
+    // std::cout<<"num : "<<numOfExcutableOperator<<'\n';
+    // std::cout<<(*ExcutableOperator)[0]->GetName()<<'\n';
+    // std::cout<<(*ExcutableOperator)[1]->GetName()<<'\n';
+
+    //encoder forward
+    for(int ti = 0; ti < EncoderTimeSize; ti++){
+        (*ExcutableOperator)[0]->ForwardPropagate(ti);
+
+    }
+
+
+
+    //First Input SOS
+    (*DecoderInput)[0] = 1;
+
+    for(int ti = 0; ti < DecoderTimeSize; ti++){
+
+        //decoder forward
+        (*ExcutableOperator)[1]->ForwardPropagate(ti);
+
+
+        int pred_index = GetMaxIndex(pred, 0, ti, pred->GetColSize());
+
+
+        std::cout<<pred_index<<" : ";
+        std::cout<<index2vocab->at(pred_index)<<'\n';
+
+        //EOS
+        if( pred_index == 2)
+          break;
+
+        //Output t-1 to Input of next time
+        if(ti != DecoderTimeSize-1){
+            (*DecoderInput)[Index5D(InputShape, ti+1, 0, 0, 0, 0)] = pred_index;
+        }
+
+    }
+
+    //test 완료후 reset
+    this->ResetResult();
+
+
+    //std::cout<<"SentenceTranslate 완료"<<'\n';
+
+}
+
+template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnGPU(std::map<int, std::string>* index2vocab){
+#ifdef __CUDNN__
+
+    //Result
+    Tensor<DTYPE> *pred = this->GetResult();
+
+    //DecoderInput
+    Tensor<DTYPE> *DecoderInput = this->GetInput()[1]->GetResult();
+    Shape *InputShape = DecoderInput->GetShape();
+
+    //encoder, decoder time size
+    int EncoderTimeSize = this->GetInput()[0]->GetResult()->GetTimeSize();
+    int DecoderTimeSize = DecoderInput->GetTimeSize();
+
+    //Encoder, Decoder module access
+    int numOfExcutableOperator = this->GetNumOfExcutableOperator();
+    Container<Operator<DTYPE> *> *ExcutableOperator = this->GetExcutableOperatorContainer();
+
+    //encoder forward
+    for(int ti = 0; ti < EncoderTimeSize; ti++)
+        (*ExcutableOperator)[0]->ForwardPropagateOnGPU(ti);
+
+    (*DecoderInput)[0] = 1;
+
+    for(int ti = 0; ti < DecoderTimeSize; ti++){
+
+        //decoder forward
+        (*ExcutableOperator)[1]->ForwardPropagateOnGPU(ti);
+
+        int pred_index = GetMaxIndex(pred, 0, ti, pred->GetColSize());
+
+        std::cout<<pred_index<<" : ";
+        std::cout<<index2vocab->at(pred_index)<<'\n';
+
+        if( pred_index == 2)
+          break;
+
+        if(ti != DecoderTimeSize-1){
+            (*DecoderInput)[Index5D(InputShape, ti+1, 0, 0, 0, 0)] = pred_index;
+        }
+
+    }
+    this->ResetResult();
+#else  // __CUDNN__
+    std::cout << "There is no GPU option!" << '\n';
+    exit(-1);
+#endif  // __CUDNN__
+    return TRUE;
+}
 
 #ifdef __CUDNN__
 

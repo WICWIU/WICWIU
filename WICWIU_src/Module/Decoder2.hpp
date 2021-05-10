@@ -41,35 +41,16 @@ public:
 
         Operator<DTYPE> *out = pInput;
 
-        //pEncoder        ????
-
-        //------------------------------weight 생성-------------------------
-        // Tensorholder<DTYPE> *pWeight_x2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, embeddingDim, 0.0, 0.01), "RecurrentLayer_pWeight_x2h_" + pName);
-        // //Tensorholder<DTYPE> *pWeight_h2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, hiddensize, hiddensize, 0.0, 0.01), "RecurrentLayer_pWeight_h2h_" + pName);
-        // Tensorholder<DTYPE> *pWeight_h2h = new Tensorholder<DTYPE>(Tensor<DTYPE>::IdentityMatrix(1, 1, 1, hiddensize, hiddensize), "RecurrentLayer_pWeight_h2h_" + pName);
-        //
-        // Tensorholder<DTYPE> *pWeight_h2o = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, outputsize, hiddensize, 0.0, 0.01), "RecurrentLayer_pWeight_h2o_" + pName);
-        //
-        // Tensorholder<DTYPE> *rBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, hiddensize, 0.f), "RNN_Bias_" + pName);
 
         //Embedding 추가!!!
         out = new EmbeddingLayer<DTYPE>(out, vocabLength, embeddingDim, "Embedding");
 
-        // out = new SeqRecurrent<DTYPE>(out, pWeight_x2h, pWeight_h2h, rBias, m_initHiddenTensorholder);                           //tensor 넘겨주는지 operator 넘겨주는지 이걸로ㄱㄱ!!!
-        //
-        // out = new MatMul<DTYPE>(pWeight_h2o, out, "rnn_matmul_ho");
-        //
-        // if (use_bias) {
-        //     Tensorholder<DTYPE> *pBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, outputsize, 0.f), "Add_Bias_" + pName);
-        //     out = new AddColWise<DTYPE>(out, pBias, "Layer_Add_" + pName);
-        // }
 
          // out = new RecurrentLayer<DTYPE>(out, embeddingDim, hiddensize, outputsize, m_initHiddenTensorholder, use_bias, "Recur_1");
-        // out = new LSTM2Layer<float>(out, embeddingDim, hiddensize, m_initHiddenTensorholder, TRUE, "Recur_1");
-        out = new GRULayer<float>(out, embeddingDim, hiddensize, m_initHiddenTensorholder, TRUE, "Recur_1");
+        out = new LSTM2Layer<float>(out, embeddingDim, hiddensize, m_initHiddenTensorholder, TRUE, "Recur_1");
+        // out = new GRULayer<float>(out, embeddingDim, hiddensize, m_initHiddenTensorholder, TRUE, "Recur_1");
 
 
-        //이제 h2o을 밖으로!
         out = new Linear<DTYPE>(out, hiddensize, outputsize, TRUE, "Fully-Connected-H2O");
 
         this->AnalyzeGraph(out);

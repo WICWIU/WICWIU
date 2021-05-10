@@ -1,8 +1,35 @@
 We're not desperate yet.	Nous ne sommes pas encore désespérées.
-What did you buy it for?	À quel effet en avez-vous fait l'acquisition ?
+We're not entirely sure.	Nous n'en sommes pas entièrement sûrs.
 We're not entirely sure.	Nous n'en sommes pas entièrement sûres.
 We're not going, are we?	Nous n'y allons pas, si ?
 We're not gonna make it.	Ça va pas le faire.
+We're not gonna make it.	Nous n'allons pas y arriver.
+We're not gonna make it.	Nous n'allons pas y parvenir.
+We're on speaking terms.	Nous nous parlons.
+We're out of ammunition.	Nous sommes à court de munitions.
+We're out of luck again.	Nous n'avons pas de chance une fois de plus.
+We're smarter than that.	Nous sommes plus malins que ça.
+We've all been laid off.	Nous avons tous été licenciés.
+We've all read that one.	Nous avons tous lu celui-là.
+We've all read that one.	Nous avons tous lu celle-là.
 We've been disqualified.	Nous avons été disqualifiés.
 We've been there before.	Nous y avons été auparavant.
 We've said our goodbyes.	Nous nous sommes dit au revoir.
+We've talked about that.	Nous en avons parlé.
+Well begun is half done.	Commencer, c'est avoir à moitié fini.
+Well, let's talk turkey.	Bon, parlons franchement !
+Were the windows closed?	Les fenêtres étaient-elles fermées ?
+Were there any problems?	Y avait-il le moindre problème ?
+Were there any problems?	Y a-t-il eu le moindre problème ?
+Were you at the concert?	Étais-tu au concert ?
+Were you busy yesterday?	Est-ce que tu étais occupé hier ?
+Were you busy yesterday?	Étiez-vous occupé hier ?
+Were you here all night?	Étais-tu ici toute la nuit ?
+Were you here all night?	Étiez-vous ici toute la nuit ?
+Were you looking at him?	Le regardais-tu ?
+Were you looking at him?	Le regardiez-vous ?
+Were you out last night?	Es-tu sorti hier soir ?
+What I need is a friend.	Ce dont j'ai besoin, c'est d'un ami.
+What I need is a friend.	Ce qu'il me faut, c'est un ami.
+What I wanted was water.	Ce que je voulais, c'était de l'eau.
+What Tom said was a lie.	Ce que Tom a dit n'était que mensonges.

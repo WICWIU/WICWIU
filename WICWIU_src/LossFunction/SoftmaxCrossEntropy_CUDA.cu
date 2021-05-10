@@ -18,6 +18,7 @@ __global__ void SoftmaxCrossEntropy_ForwardPropagate_kernel(int time, int batchs
 
         for (int i = start; i < end; i++) {
             result[result_idx] += -label[i] * log(softmaxresult[i] + epsilon);
+            // result[result_idx] += -label[i] * log(MAX(softmaxresult[i], softmaxresult[i] + epsilon));
         }
     }
 }
@@ -65,6 +66,17 @@ __global__ void SoftmaxCrossEntropy_BackPropagate_kernel(int time, int capacity,
     }
 }
 
+__global__ void SoftmaxCrossEntropy_BackPropagate_kernel_padding(int time, int batchIndex, int capacity, float *input_delta, float *label, float *softmaxresult) {
+    int idx = 0;
+
+
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < capacity; idx += blockDim.x * gridDim.x) {
+        idx = batchIndex * capacity + idx;
+
+        input_delta[idx] = softmaxresult[idx] - label[idx];
+    }
+}
+
 template<typename DTYPE> Tensor<DTYPE> *SoftmaxCrossEntropy<DTYPE>::BackPropagateOnGPU(int pTime) {
     Tensor<DTYPE> *label         = this->GetLabel()->GetResult();
     Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
@@ -81,7 +93,18 @@ template<typename DTYPE> Tensor<DTYPE> *SoftmaxCrossEntropy<DTYPE>::BackPropagat
     int noBlock = 3, threadsPerBlock = 128;
     GetKernelParameters(capacity, &noBlock, &threadsPerBlock);
 
-    SoftmaxCrossEntropy_BackPropagate_kernel << < noBlock, threadsPerBlock >> > (0, capacity, pDevInputDelta, pDevLabel, pDevSoftMax);
+    if(m_PaddingLengths != NULL){
+        capacity = colsize;
+        GetKernelParameters(capacity, &noBlock, &threadsPerBlock);
+        Tensor<DTYPE> *Lengths = m_PaddingLengths->GetResult();
+        for(int ba = 0; ba < batchsize; ba++){
+            if((*Lengths)[ba] <= pTime)  continue;
+            SoftmaxCrossEntropy_BackPropagate_kernel_padding << < noBlock, threadsPerBlock >> > (0, ba, capacity, pDevInputDelta, pDevLabel, pDevSoftMax);
+        }
+
+    }else{
+      SoftmaxCrossEntropy_BackPropagate_kernel << < noBlock, threadsPerBlock >> > (0, capacity, pDevInputDelta, pDevLabel, pDevSoftMax);
+    }
 
     return NULL;
 }

@@ -18,7 +18,7 @@ public:
         //embedding 추가???
 
         // ======================= layer 1=======================
-        out = new Encoder<float>(input1, vocabLength, embeddingDim, 700, TRUE, "Encoder");
+        out = new Encoder<float>(input1, vocabLength, embeddingDim, 128, TRUE, "Encoder");
         //out = new Encoder<float>(input1, vocabLength, 32, TRUE, "Encoder");
 
         //              Alloc(pInput, pEncoder, vocabLength, embeddingDim, hiddensize, outputsize,  teacheringforcing, pEncoderLengths, use_bias, pName);
@@ -26,7 +26,7 @@ public:
         //out = new Decoder<float>(input2, out, vocabLength, embeddingDim, 64, vocabLength, FALSE, EncoderLengths, TRUE, "Decoder");       //teacher forcing X
 
         //새로운 train함수를 위한 decoder
-        out = new Decoder2<float>(input2, out, vocabLength, embeddingDim, 700, vocabLength, FALSE, EncoderLengths, TRUE, "Decoder");
+        out = new Decoder2<float>(input2, out, vocabLength, embeddingDim, 128, vocabLength, FALSE, EncoderLengths, TRUE, "Decoder");
 
         AnalyzeGraph(out);
 
@@ -34,7 +34,7 @@ public:
         // SetLossFunction(new HingeLoss<float>(out, label, "HL"));
         // SetLossFunction(new MSE<float>(out, label, "MSE"));
         //SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE"));
-        SetLossFunction(new SoftmaxCrossEntropy_padding<float>(out, label, DecoderLengths, "SCE"));             //padding 처리를 위해서 추가!
+        SetLossFunction(new SoftmaxCrossEntropy<float>(out, label, "SCE", DecoderLengths));             //padding 처리를 위해서 추가!
         // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
 
         // ======================= Select Optimizer ===================

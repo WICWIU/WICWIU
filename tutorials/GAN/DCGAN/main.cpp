@@ -6,7 +6,7 @@
 #define EPOCH                 200
 #define LOOP_FOR_TRAIN        (60000 / BATCH)
 #define LOOP_FOR_GENERATE     (10000 / BATCH)
-#define GPUID                 2
+#define GPUID                 5
 
 using namespace std;
 

@@ -11,6 +11,7 @@
 #include "LinearLayer.hpp"
 #include "EmbeddingLayer.hpp"
 #include "RecurrentLayer.hpp"
+#include "LSTM2Layer.hpp"
 #include "GRULayer.hpp"
 #include "Decoder2.hpp"
 

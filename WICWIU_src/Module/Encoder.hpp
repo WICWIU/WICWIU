@@ -32,8 +32,8 @@ public:
 
 
         // out = new RecurrentLayer<DTYPE>(out, embeddingDim, hiddensize, 10, NULL, use_bias, "Recur_1");
-        // out = new LSTM2Layer<float>(out, embeddingDim, hiddensize, NULL, TRUE, "Recur_1");
-        out = new GRULayer<float>(out, embeddingDim, hiddensize, NULL, TRUE, "Recur_1");
+        out = new LSTM2Layer<float>(out, embeddingDim, hiddensize, NULL, TRUE, "Recur_1");
+        // out = new GRULayer<float>(out, embeddingDim, hiddensize, NULL, TRUE, "Recur_1");
 
 
 
