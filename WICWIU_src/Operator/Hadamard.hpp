@@ -31,15 +31,15 @@ public:
         std::cout << "Hadamard::Alloc(Operator *, Operator *)" << '\n';
         #endif  // __DEBUG__
 
-        int timesize    = pInput0->GetResult()->GetTimeSize();
-        int batchsize   = pInput0->GetResult()->GetBatchSize();
-        int channelsize = pInput0->GetResult()->GetChannelSize();
-        int rowsize     = pInput0->GetResult()->GetRowSize();
-        int colsize     = pInput0->GetResult()->GetColSize();
+        int timeSize    = pInput0->GetResult()->GetTimeSize();
+        int batchSize   = pInput0->GetResult()->GetBatchSize();
+        int channelSize = pInput0->GetResult()->GetChannelSize();
+        int rowSize     = pInput0->GetResult()->GetRowSize();
+        int colSize     = pInput0->GetResult()->GetColSize();
 
-        this->SetResult(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
+        this->SetResult(new Tensor<DTYPE>(timeSize, batchSize, channelSize, rowSize, colSize));
 
-        this->SetDelta(new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize));
+        this->SetDelta(new Tensor<DTYPE>(timeSize, batchSize, channelSize, rowSize, colSize));
 
         return TRUE;
     }
@@ -56,20 +56,20 @@ public:
         Tensor<DTYPE> *input1  = this->GetInput()[1]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-        int timesize    = result->GetTimeSize();
-        int batchsize   = result->GetBatchSize();
-        int channelsize = result->GetChannelSize();
-        int rowsize     = result->GetRowSize();
-        int colsize     = result->GetColSize();
+        int timeSize    = result->GetTimeSize();
+        int batchSize   = result->GetBatchSize();
+        int channelSize = result->GetChannelSize();
+        int rowSize     = result->GetRowSize();
+        int colSize     = result->GetColSize();
 
         Shape *resultTenShape = result->GetShape();
 
         int ti = pTime;
 
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
+        for (int ba = 0; ba < batchSize; ba++) {
+            for (int ch = 0; ch < channelSize; ch++) {
+                for (int ro = 0; ro < rowSize; ro++) {
+                    for (int co = 0; co < colSize; co++) {
                         (*result)[Index5D(resultTenShape, ti, ba, ch, ro, co)]
                             = ((*input0)[Index5D(resultTenShape, ti, ba, ch, ro, co)]) *
                                ((*input1)[Index5D(resultTenShape, ti, ba, ch, ro, co)]);
@@ -96,11 +96,11 @@ public:
         Tensor<DTYPE> *input0_delta  = this->GetInput()[0]->GetDelta();
         Tensor<DTYPE> *input1_delta     = this->GetInput()[1]->GetDelta();
 
-        int timesize    = this_delta->GetTimeSize();
-        int batchsize   = this_delta->GetBatchSize();
-        int channelsize = this_delta->GetChannelSize();
-        int rowsize     = this_delta->GetRowSize();
-        int colsize     = this_delta->GetColSize();
+        int timeSize    = this_delta->GetTimeSize();
+        int batchSize   = this_delta->GetBatchSize();
+        int channelSize = this_delta->GetChannelSize();
+        int rowSize     = this_delta->GetRowSize();
+        int colSize     = this_delta->GetColSize();
 
         Shape *resultTenShape = this_delta->GetShape();
         Shape *input0TenShape = input0_delta->GetShape();
@@ -112,10 +112,10 @@ public:
 
         int ti = pTime;
 
-        for (int ba = 0; ba < batchsize; ba++) {
-            for (int ch = 0; ch < channelsize; ch++) {
-                for (int ro = 0; ro < rowsize; ro++) {
-                    for (int co = 0; co < colsize; co++) {
+        for (int ba = 0; ba < batchSize; ba++) {
+            for (int ch = 0; ch < channelSize; ch++) {
+                for (int ro = 0; ro < rowSize; ro++) {
+                    for (int co = 0; co < colSize; co++) {
                       input0_index = Index5D(input0TenShape, ti, ba, ch, ro, co);
                       input1_index  = Index5D(input1TenShape, ti, ba, ch, ro, co);
                       result_index = Index5D(resultTenShape, ti, ba, ch, ro, co);

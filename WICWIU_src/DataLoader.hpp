@@ -395,7 +395,6 @@ template<typename DTYPE> std::vector<int> *DataLoader<DTYPE>::GetIdxSetFromIdxBu
     return setOfIdx;
 }
 
-//master랑 합치기위해 만든거
 template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queue<Tensor<DTYPE> *>& setOfData) {
     // concatenate all preprocessed data into one tensor
     Tensor<DTYPE> *temp   = NULL;
@@ -403,7 +402,6 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     int timesize          = 1;
     Tensor<DTYPE> *result = NULL;
     int dataSize = setOfData.size();
-    // We need to consider Timesize
 
     temp     = setOfData.front();
     capacity = temp->GetCapacity();

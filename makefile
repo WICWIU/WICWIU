@@ -51,7 +51,7 @@ ifdef	ENABLE_CUDNN
 		WICWIU_src/Operator/L2Normalize.cu \
 		WICWIU_src/Operator/Passer.cu \
 		WICWIU_src/Operator/Embedding_CUDA.cu \
-		WICWIU_src/Module/Decoder2_CUDA.cu
+		WICWIU_src/Module/Decoder_CUDA.cu
 
 
 	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
@@ -101,7 +101,7 @@ WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.o: WICWIU_src/LossFunction/Soft
 WICWIU_src/Operator/Embedding_CUDA.o: WICWIU_src/Operator/Embedding_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
-WICWIU_src/Module/Decoder2_CUDA.o: WICWIU_src/Module/Decoder2_CUDA.cu
+WICWIU_src/Module/Decoder_CUDA.o: WICWIU_src/Module/Decoder_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
 $(WICWIU_LIB): $(WICWIU_OBJS) $(WICWIU_CUDA_OBJS)

@@ -11,29 +11,25 @@ private:
 
 public:
 
-    Encoder(Operator<DTYPE> *pInput, int vocablength, int embeddingDim, int hiddensize, int use_bias = TRUE, std::string pName = "No Name") : Module<DTYPE>(pName) {
-        Alloc(pInput, vocablength, embeddingDim, hiddensize, use_bias, pName);
+    Encoder(Operator<DTYPE> *pInput, int vocabLength, int embeddingDim, int hiddenSize, int useBias = TRUE, std::string pName = "No Name") : Module<DTYPE>(pName) {
+        Alloc(pInput, vocabLength, embeddingDim, hiddenSize, useBias, pName);
     }
 
 
     virtual ~Encoder() {}
 
-    int Alloc(Operator<DTYPE> *pInput, int vocablength, int embeddingDim, int hiddensize, int use_bias, std::string pName) {
+    int Alloc(Operator<DTYPE> *pInput, int vocabLength, int embeddingDim, int hiddenSize, int useBias, std::string pName) {
 
         timesize = pInput->GetResult()->GetTimeSize();
         this->SetInput(pInput);
 
         Operator<DTYPE> *out = pInput;
 
+        out = new EmbeddingLayer<DTYPE>(out, vocabLength, embeddingDim, "Embedding");
 
-        //embedding 추가???
-        //out = new Embedding<DTYPE>(pWeight_in, out, "embedding");
-        out = new EmbeddingLayer<DTYPE>(out, vocablength, embeddingDim, "Embedding");
-
-
-        // out = new RecurrentLayer<DTYPE>(out, embeddingDim, hiddensize, 10, NULL, use_bias, "Recur_1");
-        out = new LSTM2Layer<float>(out, embeddingDim, hiddensize, NULL, TRUE, "Recur_1");
-        // out = new GRULayer<float>(out, embeddingDim, hiddensize, NULL, TRUE, "Recur_1");
+        // out = new RecurrentLayer<DTYPE>(out, embeddingDim, hiddenSize, NULL, useBias, "Recur_1");
+        out = new LSTMLayer<DTYPE>(out, embeddingDim, hiddenSize, NULL, useBias, "Recur_1");
+        // out = new GRULayer<DTYPE>(out, embeddingDim, hiddenSize, NULL, useBias, "Recur_1");
 
 
 
@@ -42,7 +38,6 @@ public:
         return TRUE;
     }
 
-    //새로 만든 seq2seqBPTT를 위한 forwrad, backward
     //이거 없애도 되는거 같은데!!!....???                                        !!! 중요!!! 여기는 없어도 되는거 같음!!!!!!!!!!!! 확인해보고 수정하기!!!
     int ForwardPropagate(int pTime=0) {
 
@@ -72,10 +67,6 @@ public:
 
         return TRUE;
     }
-
-
-
-
 };
 
 

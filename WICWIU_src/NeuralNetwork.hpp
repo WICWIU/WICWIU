@@ -61,11 +61,11 @@ public:
     int                  TrainOnGPU();
     int                  TestOnGPU();
 
-    float                GetAccuracy(int numOfClass = 10, Tensor<DTYPE> *Lengths =NULL);      //수정
+    float                GetAccuracy(int numOfClass = 10, Tensor<DTYPE> *Lengths =NULL);
     int                  GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
     float                GetTop5Accuracy(int numOfClass);
     void                 GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
-    float                GetLoss(Tensor<DTYPE> *Lengths =NULL); //padding을 위해 수정
+    float                GetLoss(Tensor<DTYPE> *Lengths =NULL);
 
     void                 PrintGraphInformation();
 
@@ -78,7 +78,6 @@ public:
 
     void                 InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize = 32);
 
-    //RNN을 위한 time train과 time test 추가
     int                  BPTT(int timesize);
     int                  BPTTOnCPU(int timesize);
     int                  BPTTOnGPU(int timesize);
@@ -88,12 +87,9 @@ public:
     int                  seq2seqBPTT(int EncTimeSize, int DecTimeSize);
     int                  seq2seqBPTTOnGPU(int EncTimeSize, int DecTimeSize);
 
-    int                  GenerateSentence(int maxTimeSize, std::map<int, std::string>* Index2Vocab, int startIndex, int vocabSize);               //textdataset 통합하면서 수정!
+    int                  GenerateSentence(int maxTimeSize, std::map<int, std::string>* Index2Vocab, int startIndex, int vocabSize);
     int                  SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab);
     int                  SentenceTranslateOnGPU(std::map<int, std::string>* index2vocab);
-
-    //일단은 별개로 만들자!..
-
 
 #ifdef __CUDNN__
     void SetDeviceGPU(unsigned int idOfDevice);
@@ -719,8 +715,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, in
     }
 }
 
-//여기서 부터!
-
+//for NLP Task
 template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT(int timesize) {
     if (m_Device == CPU) {
         this->BPTTOnCPU(timesize);
@@ -743,9 +738,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT_Test(int timesize) {
 }
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize) {
-    // this->ResetOperatorResult();
-    // this->ResetOperatorGradient();
-    //std::cout<<"TimeTrainOnCPU함수 호출"<<'\n';
+
     this->ResetResult();
     this->ResetGradient();
     this->ResetLossFunctionResult();
@@ -756,14 +749,10 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnCPU(int timesize) {
       m_aLossFunction->ForwardPropagate(i);
     }
     for(int j=timesize-1; j>=0; j--){
-      //std::cout<<"TimeTrain time :"<< j<< '\n';
       m_aLossFunction->BackPropagate(j);
       this->BackPropagate(j);
     }
 
-    //time_size를 안 넣어주는 이유는 time별 gradient 처리를 해주었다고 가정
-    //std::cout<<"UpdateParameter함수 호출 전"<<'\n';
-    //현재는 parameter 개수가 0개여서 안되는듯
     m_aOptimizer->UpdateParameter();
 
     return TRUE;
@@ -917,27 +906,20 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTT_TestOnGPU(int timesize) 
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::GenerateSentence(int maxTimeSize, std::map<int, std::string>* m_pIndex2Vocab, int startIndex, int vocabSize) {
 
-    std::ofstream fout("result/GRU-generateSentence-test-GPU.txt", std::ios::app);
-    fout<<'\n'<<'\n'<<"새로운 시작!"<<'\n';
+    std::ofstream fout("result/LSTM-generateSentence-test-CPU.txt", std::ios::app);
+    fout<<'\n'<<'\n'<<"New Sentence Generation Start"<<'\n';
     //fout.open("write.txt");
 
     this->ResetResult();
     this->ResetLossFunctionResult();
 
-    //결과값에 접근하기 위한 방법!
     Tensor<DTYPE> *pred = GetResultOperator()->GetResult();
     Shape *predShape  = pred->GetShape();
-    //int batchsize = pred->GetBatchSize();
-    //int timesize  = pred->GetTimeSize();
-    //int numOfClass = pred->GetColSize();
 
-    //입력에 접근하기 위한 방법!
     Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
     Shape *inputShape = input->GetShape();
 
-    //startChar 설정해주기
     (*input)[Index5D(inputShape, 0, 0, 0, 0, 0)] = startIndex;
-
 
     for(int ti=0; ti<maxTimeSize; ti++){
 #ifdef __CUDNN__
@@ -948,23 +930,14 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::GenerateSentence(int maxTimeS
 
         int pred_index = GetMaxIndex(pred, 0, ti, vocabSize);
 
-        //EOS이면 끝내기!
-        if( pred_index == vocabSize-1)   //textDataset에서 이렇게 해둔거임...    수정해야됨!
+        if( pred_index == vocabSize-1)
           break;
 
-        //결과값 입력값으로 복사!
         if(ti != maxTimeSize-1){
             (*input)[Index5D(inputShape, ti+1, 0, 0, 0, 0)] = pred_index;
         }
 
-        //결과값 출력하기
-         //std::cout<<m_pIndex2Vocab->at(pred_index)<<" ";
-
-        //std::cout<<ti<<" : "<<m_pIndex2Vocab->at(pred_index)<<'\n';
-
-
         if(fout.is_open()){
-            //fout.write(vocab[pred_index], 1);
             fout<<m_pIndex2Vocab->at(pred_index)<<" ";
         }
 
@@ -980,8 +953,6 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::GenerateSentence(int maxTimeS
 
 template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab){
 
-
-    //Result
     Tensor<DTYPE> *pred = this->GetResult();
 
     //DecoderInput
@@ -996,17 +967,11 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::m
     int numOfExcutableOperator = this->GetNumOfExcutableOperator();
     Container<Operator<DTYPE> *> *ExcutableOperator = this->GetExcutableOperatorContainer();
 
-    // std::cout<<"num : "<<numOfExcutableOperator<<'\n';
-    // std::cout<<(*ExcutableOperator)[0]->GetName()<<'\n';
-    // std::cout<<(*ExcutableOperator)[1]->GetName()<<'\n';
-
     //encoder forward
     for(int ti = 0; ti < EncoderTimeSize; ti++){
         (*ExcutableOperator)[0]->ForwardPropagate(ti);
 
     }
-
-
 
     //First Input SOS
     (*DecoderInput)[0] = 1;
@@ -1016,9 +981,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::m
         //decoder forward
         (*ExcutableOperator)[1]->ForwardPropagate(ti);
 
-
         int pred_index = GetMaxIndex(pred, 0, ti, pred->GetColSize());
-
 
         std::cout<<pred_index<<" : ";
         std::cout<<index2vocab->at(pred_index)<<'\n';
@@ -1034,11 +997,7 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::m
 
     }
 
-    //test 완료후 reset
     this->ResetResult();
-
-
-    //std::cout<<"SentenceTranslate 완료"<<'\n';
 
 }
 

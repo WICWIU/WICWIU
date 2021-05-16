@@ -3,7 +3,7 @@
 CFLAGS = -O2 -std=c++11 -g
 
 # if cuda device, cuda lib, or cuDNN is not installed, disable the following line
-#ENABLE_CUDNN = -D__CUDNN__
+ENABLE_CUDNN = -D__CUDNN__
 
 #DFLAGS = -D__DEBUG__
 
@@ -42,7 +42,7 @@ ifdef	ENABLE_CUDNN
 		../../WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.cu \
 		../../WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.cu \
 		../../WICWIU_src/Operator/Embedding_CUDA.cu \
-		../../WICWIU_src/Module/Decoder2_CUDA.cu
+		../../WICWIU_src/Module/Decoder_CUDA.cu
 
 	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
 endif
