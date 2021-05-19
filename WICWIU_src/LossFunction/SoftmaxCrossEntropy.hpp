@@ -23,6 +23,8 @@ private:
     ///< 텐서의 합을 저장하기 위한 이중 포인터
     DTYPE **max;
     ///< 텐서의 최댓값을 저장하기 위한 이중 포인터
+    Operator<DTYPE> *m_PaddingLengths;
+    //padding을 처리하기 위한 operator 포인터
 
 public:
     /*!
@@ -35,11 +37,11 @@ public:
     @return 없음
     @see SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon)
     */
-    SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon, std::string pName = "NO NAME") : LossFunction<DTYPE>(pOperator, pLabel, pName) {
+    SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, DTYPE epsilon, std::string pName = "NO NAME", Operator<DTYPE> *pPaddingLengths = NULL) : LossFunction<DTYPE>(pOperator, pLabel, pName) {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::SoftmaxCrossEntropy(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
-        Alloc(pOperator, epsilon);
+        Alloc(pOperator, epsilon, pPaddingLengths);
     }
 
     /*!
@@ -51,11 +53,11 @@ public:
     @return 없음
     @see SoftmaxCrossEntropy<DTYPE>::Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon)
     */
-    SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName = "NO NAME") : LossFunction<DTYPE>(pOperator, pLabel, pName) {
+    SoftmaxCrossEntropy(Operator<DTYPE> *pOperator, Operator<DTYPE> *pLabel, std::string pName = "NO NAME", Operator<DTYPE> *pPaddingLengths = NULL) : LossFunction<DTYPE>(pOperator, pLabel, pName) {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::SoftmaxCrossEntropy(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
-        Alloc(pOperator, 1e-6f);
+        Alloc(pOperator, 1e-6f, pPaddingLengths);
     }
 
     /*!
@@ -77,7 +79,7 @@ public:
     @param epsilon 연산에 대한 translation 요소
     @return TRUE
     */
-    int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon) {
+    int Alloc(Operator<DTYPE> *pOperator, DTYPE epsilon, Operator<DTYPE> *pPaddingLengths) {
         #ifdef __DEBUG__
         std::cout << "SoftmaxCrossEntropy::Alloc(Operator<DTYPE> *, Operator<DTYPE> *, int)" << '\n';
         #endif  // __DEBUG__
@@ -105,6 +107,8 @@ public:
         m_aSoftmaxResult = new Tensor<DTYPE>(timesize, batchsize, channelsize, rowsize, colsize);
 
         m_epsilon = epsilon;
+
+        m_PaddingLengths = pPaddingLengths;
 
         return TRUE;
     }
@@ -162,6 +166,9 @@ public:
         Tensor<DTYPE> *softmaxresult = m_aSoftmaxResult;
         Tensor<DTYPE> *result        = this->GetResult();
 
+        Tensor<DTYPE> *Lengths = NULL;
+        if(m_PaddingLengths != NULL)  Lengths = m_PaddingLengths->GetResult();
+
         int batchsize   = input->GetBatchSize();
         int channelsize = input->GetChannelSize();
         int rowsize     = input->GetRowSize();
@@ -201,6 +208,7 @@ public:
         }
 
         for (int ba = 0; ba < batchsize; ba++) {
+            if(m_PaddingLengths != NULL){ if((*Lengths)[ba] <= ti)   continue; }
             start = (ti * batchsize + ba) * capacity;
             end   = start + capacity;
 
@@ -226,6 +234,10 @@ public:
 
         Tensor<DTYPE> *input_delta = this->GetOperator()->GetDelta();
 
+        //For Padding
+        Tensor<DTYPE> *Lengths = NULL;
+        if(m_PaddingLengths != NULL)  Lengths = m_PaddingLengths->GetResult();
+
         int batchsize = input_delta->GetBatchSize();
         int colsize   = input_delta->GetColSize();
 
@@ -237,6 +249,7 @@ public:
         int ti = pTime;
 
         for (int ba = 0; ba < batchsize; ba++) {
+            if(m_PaddingLengths != NULL){ if((*Lengths)[ba] <= ti)   continue; }
             start = (ti * batchsize + ba) * capacity;
             end   = start + capacity;
 

@@ -31,4 +31,13 @@
 #include "Operator/Switch.hpp"
 #include "Operator/ReconstructionError.hpp"
 
+//RNN관련하여 추가
+#include "Operator/Recurrent.hpp"
+#include "Operator/Hadamard.hpp"
+#include "Operator/LSTM.hpp"
+#include "Operator/Minus.hpp"
+#include "Operator/GRU.hpp"
+
+#include "Operator/Embedding.hpp"             //순서도 영향이 있음!!!!
+
 #endif  // __OPERATER_UTIL_H__

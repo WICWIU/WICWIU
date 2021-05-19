@@ -9,3 +9,5 @@
 #include "LossFunction/WGANDiscriminatorLoss.hpp"
 #include "LossFunction/BEGANGeneratorLoss.hpp"
 #include "LossFunction/BEGANDiscriminatorLoss.hpp"
+
+#include "LossFunction/TripletLoss.hpp"

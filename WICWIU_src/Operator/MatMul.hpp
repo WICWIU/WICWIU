@@ -287,9 +287,9 @@ public:
 
         int hiddensize = input->GetColSize();
 
-        int weight_index = 0;
-        int input_index  = 0;
-        int result_index = 0;
+        // int weight_index = 0;
+        // int input_index  = 0;
+        // int result_index = 0;
 
         Shape *weightTenShape = weight->GetShape();
         Shape *inputTenShape  = input->GetShape();
