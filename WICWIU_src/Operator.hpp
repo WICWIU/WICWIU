@@ -42,6 +42,8 @@ private:
     ///< Operator가 학습가능한 Operator인지 알려주는 값.
     int m_Loadflag;
 
+    int m_isVisited;
+    ///< Operator가 AnalyzeGraph()에서 중복되는 함수인지 알려주는 값
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
     ///< cudnn 라이브러리를 가리키는 포인터.
@@ -84,6 +86,7 @@ public:
     int                           SetIsTensorholder(int pIsParameter);
     int                           SetIsTrainable(int pIsTrainable);
 
+    virtual int                           SetIsVisited(int isVisited);
     virtual int                           SetModeTrain();
     virtual int                           SetModeAccumulate();
     virtual int                           SetModeInference();
@@ -104,6 +107,7 @@ public:
     virtual int                           GetDeviceID();
     int                                   GetIsTensorholder();
     int                                   GetIsTrainable();
+    int                                   GetIsVisited();
 
     virtual int                           ForwardPropagate(int pTime = 0);
     virtual int                           BackPropagate(int pTime = 0);
@@ -315,6 +319,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName, int pLoadf
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+    m_isVisited = FALSE;
     Alloc();
 }
 
@@ -340,6 +345,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+    m_isVisited = FALSE;
     Alloc();
     AddEdgebetweenOperators(1, pInput, pLoadflag);
 }
@@ -367,6 +373,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+    m_isVisited = FALSE;
     Alloc();
     AddEdgebetweenOperators(2, pInput0, pInput1, pLoadflag);
 }
@@ -395,6 +402,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+    m_isVisited = FALSE;
     Alloc();
     AddEdgebetweenOperators(3, pInput0, pInput1, pInput2, pLoadflag);
 }
@@ -413,6 +421,7 @@ template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+    m_isVisited = FALSE;
     Alloc();
 
     va_list ap;
@@ -613,6 +622,11 @@ template<typename DTYPE> int Operator<DTYPE>::SetIsTrainable(int pIsTrainable) {
     return TRUE;
 }
 
+template<typename DTYPE> int Operator<DTYPE>::SetIsVisited(int isVisited) {
+    m_isVisited = isVisited;
+    return TRUE;
+}
+
 template<typename DTYPE> int Operator<DTYPE>::SetModeTrain() {
     m_Mode = TRAIN;
     return TRUE;
@@ -688,6 +702,10 @@ template<typename DTYPE> int Operator<DTYPE>::GetIsTensorholder() {
 
 template<typename DTYPE> int Operator<DTYPE>::GetIsTrainable() {
     return m_isTrainable;
+}
+
+template<typename DTYPE> int Operator<DTYPE>::GetIsVisited() {
+    return m_isVisited;
 }
 
 /*!

@@ -47,6 +47,7 @@ public:
 
     int                                 IsInput(Operator<DTYPE> *pOperator);
     int                                 IsValid(Operator<DTYPE> *pOperator); // Graph 분석 시 node에 추가할 것인지 확인한다.
+    int                                 IsVisitable(Operator<DTYPE> *pOperator);
 
     Operator<DTYPE>                   * AnalyzeGraph(Operator<DTYPE> *pResultOperator);
     int                                 FeedInputTensor(int pNumOfInput, ...);
@@ -72,7 +73,8 @@ public:
     int                                 SetModeTrain();
     int                                 SetModeAccumulate();
     int                                 SetModeInference();
-
+    int                                 SetExcutableOperatorIsVisited(int isVisited);
+    
     int                                 ForwardPropagate(int pTime = 0);
     int                                 BackPropagate(int pTime = 0);
 
@@ -172,7 +174,7 @@ template<typename DTYPE> Module<DTYPE>::Module(std::string pName) : Operator<DTY
     m_InputDegree            = 0;
     m_ParameterDegree        = 0;
     m_numOfExcutableOperator = 0;
-   
+
     Alloc();
 }
 
@@ -269,6 +271,18 @@ template<typename DTYPE> int Module<DTYPE>::IsValid(Operator<DTYPE> *pOperator) 
     return TRUE;
 }
 
+
+template<typename DTYPE> int Module<DTYPE>::IsVisitable(Operator<DTYPE> *pOperator) {
+    Container<Operator<DTYPE> *> * pOutputContainer = pOperator->GetOutputContainer();
+    int OutputNum = pOutputContainer->GetSize();
+
+    for(int i=0; i<OutputNum ; i++) {
+      if((*pOutputContainer)[i]->GetIsVisited())  return FALSE;
+    }
+
+    return TRUE;
+}
+
 /*!
  * @brief 학습 가능한 형태로 모듈 그래프를 구성해주는 메소드
  * @details 모듈의 Output에 해당하는 Operator를 매개변수로 받아 너비 우선 탐색으로 모듈 그래프를 구성한다.
@@ -280,48 +294,54 @@ template<typename DTYPE> int Module<DTYPE>::IsValid(Operator<DTYPE> *pOperator) 
  * @return 매개변수로 받은 그래프를 구성하고자 하는 신경망의 Output에 해당하는 Operator
  */
 template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::AnalyzeGraph(Operator<DTYPE> *pResultOperator) {
-    // BFS
-    Container<Operator<DTYPE> *> queue;
+  // BFS
+  Container<Operator<DTYPE> *> queue;
 
-    queue.Push(pResultOperator);
-    m_pLastOperator = pResultOperator;
+  queue.Push(pResultOperator);
+  m_pLastOperator = pResultOperator;
 
-    Container<Operator<DTYPE> *> *nextOp = NULL;
-    Container<Operator<DTYPE> *> *prevOp = NULL;
-    int numOfInputEdge                   = 0;
+  Container<Operator<DTYPE> *> *nextOp = NULL;
+  Container<Operator<DTYPE> *> *prevOp = NULL;
+  int numOfInputEdge                   = 0;
 
-    Operator<DTYPE> *out = NULL;
+  Operator<DTYPE> *out = NULL;
 
-    while (queue.GetSize() > 0) {
-        out = queue.Pop();
+  while (queue.GetSize() > 0) {
+      out = queue.Pop();
+      if (!(this->IsInput(out))) {
+          if (this->IsValid(out)) {
+              if(!out->GetIsVisited()) {
+                  if(IsVisitable(out)) {
+                      if (out->GetIsTensorholder()) {
+                          this->SetParameter(out);
+                      } else {
+                          this->SetExecutableOperater(out);
+                          out->SetIsVisited(TRUE);
+                      }
+                  } else {
+                      queue.Push(1, out);
+                  }
+              } else continue;
 
-        if (!(this->IsInput(out))) {
-            if (this->IsValid(out)) {
-                // std::cout << out->GetName() << '\n';
+              nextOp         = out->GetInputContainer();
+              numOfInputEdge = nextOp->GetSize();
 
-                if (out->GetIsTensorholder()) {
-                    this->SetParameter(out);
-                } else {
-                    this->SetExecutableOperater(out);
-                }
+              for (int i = 0; i < numOfInputEdge; i++) {
+                  prevOp = (*nextOp)[i]->GetOutputContainer();
+                  if (prevOp->FindElement(out)) {
+                      prevOp->Pop(out);
+                  }
+                  queue.Push((*nextOp)[i]);
+              }
+          } else continue;
+      } else continue;
+  }
 
-                nextOp         = out->GetInputContainer();
-                numOfInputEdge = nextOp->GetSize();
+  m_aaExcutableOperator->Reverse();
 
-                for (int i = 0; i < numOfInputEdge; i++) {
-                    prevOp = (*nextOp)[i]->GetOutputContainer();
-                    prevOp->Pop(out);
+  SetExcutableOperatorIsVisited(FALSE);
 
-                    queue.Push((*nextOp)[i]);
-                }
-            } else continue;
-        } else continue;
-    }
-    // std::cout << '\n';
-
-    m_aaExcutableOperator->Reverse();
-
-    return pResultOperator;
+  return pResultOperator;
 }
 
 /*!
@@ -421,6 +441,13 @@ template<typename DTYPE> int Module<DTYPE>::SetModeAccumulate() {
 template<typename DTYPE> int Module<DTYPE>::SetModeInference() {
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
         (*m_aaExcutableOperator)[i]->SetModeInference();
+    }
+    return TRUE;
+}
+
+template<typename DTYPE> int Module<DTYPE>::SetExcutableOperatorIsVisited(int isVisited) {
+    for (int i = 0; i < m_numOfExcutableOperator; i++) {
+        (*m_aaExcutableOperator)[i]->SetIsVisited(isVisited);
     }
     return TRUE;
 }

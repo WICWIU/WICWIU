@@ -71,6 +71,37 @@ public:
         return TRUE;
     }
 
+
+    int Push(unsigned int index, DTYPE pElement) {                            // Test
+        if(m_size<index) {
+          printf("Failed to allcate memory in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+          return FALSE;
+        }
+
+        try {
+            DTYPE *temp = new DTYPE[m_size + 1];
+
+            for (int i = 0; i < index; i++) temp[i] = m_aElement[i];
+            temp[index] = pElement;
+            for (int i = index+1; i < m_size+1; i++) temp[i] = m_aElement[i-1];
+
+            if (m_aElement) {
+                delete[] m_aElement;
+                m_aElement = NULL;
+            }
+
+            m_aElement = temp;
+        } catch (...) {
+            printf("Failed to allcate memory in %s (%s %d)\n", __FUNCTION__, __FILE__, __LINE__);
+            return FALSE;
+        }
+
+        m_size++;
+
+        return TRUE;
+    }
+
+
     /*!
     @brief Queue의 pop 메소드
     @details 기존의 queue를 할당 해제하고 Queue의 첫번째 Element를 반환한 후 새로운 Queue를 동적으로 할당한다.
@@ -156,6 +187,24 @@ public:
         return TRUE;
     }
 
+    int FindElement(DTYPE pElement) {
+        int index = -1;
+
+        for (int i = 0; i < m_size; i++) {
+            if (m_aElement[i] == pElement) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index == -1) {
+            return FALSE;
+        }
+        else {
+            return TRUE;
+        }
+    }
+    
     int SetElement(DTYPE pElement, unsigned int index) {
         m_aElement[index] = pElement;
         return TRUE;
