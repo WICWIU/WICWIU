@@ -11,6 +11,7 @@
 #include "Operator/Sigmoid.hpp"
 #include "Operator/Tanh.hpp"
 
+#include "Operator/Transpose.hpp"
 #include "Operator/Add.hpp"
 #include "Operator/MatMul.hpp"
 
