@@ -41,4 +41,7 @@
 
 #include "Operator/Embedding.hpp"             //순서도 영향이 있음!!!!
 
+#include "Operator/LimitRelu.hpp"
+#include "Operator/GroupedConvolution.hpp"
+
 #endif  // __OPERATER_UTIL_H__
