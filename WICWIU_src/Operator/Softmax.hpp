@@ -229,7 +229,7 @@ public:
 
         int ti = pTime;
 
-        for (int ba = 0; ba < batchsize; ba++) { // thread
+        for (int ba = 0; ba < batchsize; ba++) {
             sum[ti][ba] = 0.f;
             max[ti][ba] = 0.f;
         }
@@ -267,10 +267,6 @@ public:
                 (*result)[i] = (exp((*input)[i] - max[ti][ba]) + m_epsilon) / sum[ti][ba];
             }
         }
-
-        // std::cout<<"softmax forward"<<'\n';
-       // this->GetResult()->SaveTensor("GRU-attentionWeight-3");
-
         return TRUE;
     }
 
@@ -341,29 +337,12 @@ public:
         Tensor<DTYPE> *input  = this->GetInput()[0]->GetResult();
         Tensor<DTYPE> *result = this->GetResult();
 
-
-        // std::cout<<"softmax Foward "<<pTime<<'\n';
-        // std::cout<<result->GetShape()<<'\n';
-        //
-        // std::cout<<"softmax input"<<'\n';
-        // std::cout<<input<<'\n';
-
-
-
         m_pDevInput  = input->GetGPUData(pTime);
         m_pDevOutput = result->GetGPUData(pTime);
 
-        //359pg
         checkCUDNN(cudnnSoftmaxForward(this->GetCudnnHandle(), m_algo, m_mode,
                                        &m_alpha, m_aInDesc, m_pDevInput,
                                        &m_beta, m_aOutDesc, m_pDevOutput));
-
-        // std::cout<<"softmax result값"<<'\n';
-        // std::cout<<result<<'\n';
-
-
-
-        this->GetResult()->SaveTensor("AttentionWeight/pytorch-gru-256-256-1-01");
 
         return TRUE;
     }
@@ -377,15 +356,9 @@ public:
         m_pDevDelta      = this_delta->GetGPUData(pTime);
         m_pDevInputDelta = input_delta->GetGPUData(pTime);
 
-
-
         checkCUDNN(cudnnSoftmaxBackward(this->GetCudnnHandle(), m_algo, m_mode,
                                         &m_alpha, m_aOutDesc, m_pDevOutput, m_aDeltaDesc, m_pDevDelta,
                                         &m_beta, m_aInputDeltaDesc, m_pDevInputDelta));
-// std::cout<<"softmax Back GPU "<<pTime<<'\n';
-// std::cout<<input_delta<<'\n';
-
-
 
         return TRUE;
     }
