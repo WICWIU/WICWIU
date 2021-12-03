@@ -3,11 +3,21 @@
 
 #include "../Operator.hpp"
 
+/*!
+@class Hadamard Hadamard class 
+*/
 template<typename DTYPE>
 class Hadamard : public Operator<DTYPE>{
 private:
 
 public:
+    /**
+    * @brief Hadamard의 생성자
+    * @details 파라미터로 받은 pInput0, pInput1, pName로 Alloc한다
+    * @param pInput0 Hadamard연산을 할 Operator
+    * @param pInput1 Hadamard연산을 할 Operator
+    * @param pName 사용자가 부여한 Operator 이름
+    */
     Hadamard(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName, int pLoadflag = TRUE) : Operator<DTYPE>(pInput0, pInput1, pName, pLoadflag) {
         #ifdef __DEBUG__
         std::cout << "Hadamard::Hadamard(Operator *)" << '\n';
@@ -15,15 +25,19 @@ public:
         this->Alloc(pInput0, pInput1);
     }
 
-
+    /**
+     * @brief Hadamard의 소멸자
+     * @details Hadamard에서 할당했던 값들을 해제한다.
+     */
     ~Hadamard() {
         std::cout << "Hadamard::~Hadamard()" << '\n';
     }
 
     /*!
-    @brief 파라미터로 받은 pInput으로부터 맴버 변수들을 초기화 한다.
+    @brief 파라미터로 받은 pInput0, pInput1 으로부터 맴버 변수들을 초기화 한다.
     @details Result와 Gradient를 저장하기 위해 pInput의 Shape과 같은 dim을 갖는 Tensor를 생성한다.
-    @param pInput 생성 할 Tensor의 Shape정보를 가진 Operator
+    @param pInput0 생성 할 Tensor의 Shape정보를 가진 Operator
+    @param pInput1 생성 할 Tensor의 Shape정보를 가진 Operator
     @return 성공 시 TRUE.
     */
     int Alloc(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1) {
