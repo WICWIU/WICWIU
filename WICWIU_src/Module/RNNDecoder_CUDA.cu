@@ -5,9 +5,9 @@
 #include "RecurrentLayer.hpp"
 #include "LSTMLayer.hpp"
 #include "GRULayer.hpp"
-#include "Decoder.hpp"
+#include "RNNDecoder.hpp"
 
-template class Decoder<float>;
+template class RNNDecoder<float>;
 
 /*!
 @class LRelu cuda
@@ -26,7 +26,7 @@ __global__ void ForwardPropagate_kernel(float *pDevEncoderHidden, float *pDevini
   추후 추가 필요!
 */
 
-template<typename DTYPE> int Decoder<DTYPE>::ForwardPropagateOnGPU(int pTime) {
+template<typename DTYPE> int RNNDecoder<DTYPE>::ForwardPropagateOnGPU(int pTime) {
 
 
       if(pTime == 0){
@@ -39,7 +39,7 @@ template<typename DTYPE> int Decoder<DTYPE>::ForwardPropagateOnGPU(int pTime) {
           Tensor<DTYPE> *_initHidden = this->GetInput()[1]->GetResult();
           Tensor<DTYPE> *initHidden = m_initHiddenTensorholder->GetResult();
 
-          // std::cout<<"Encoder last hidden value"<<'\n';
+          // std::cout<<"RNNEncoder last hidden value"<<'\n';
           // std::cout<<_initHidden->GetShape()<<'\n';
           // std::cout<<_initHidden<<'\n';
 
@@ -66,7 +66,7 @@ template<typename DTYPE> int Decoder<DTYPE>::ForwardPropagateOnGPU(int pTime) {
           // std::cout<<initHidden->GetShape()<<'\n';
           // std::cout<<initHidden<<'\n';
           // //
-          // std::cout<<"Encoder length"<<'\n';
+          // std::cout<<"RNNEncoder length"<<'\n';
           // std::cout<<encoderLengths<<'\n';
 
       }
@@ -92,7 +92,7 @@ __global__ void BackPropagate_kernel(float *pDevEncoderHidden, float *pDevDecode
 }
 
 
-template<typename DTYPE> int Decoder<DTYPE>::BackPropagateOnGPU(int pTime) {
+template<typename DTYPE> int RNNDecoder<DTYPE>::BackPropagateOnGPU(int pTime) {
 
       //seq2seq에 맞춰서 수정하기!!! --> Decoder안에 embedding, rnn, linear 다 있어서 layer별로 time을 다 실행하고 나서 넘어가야 됨!
       if(pTime !=0)
@@ -151,7 +151,7 @@ template<typename DTYPE> int Decoder<DTYPE>::BackPropagateOnGPU(int pTime) {
           // std::cout<<_initHidden<<'\n';
           //
           //
-          // std::cout<<"Encoder length"<<'\n';
+          // std::cout<<"RNNEncoder length"<<'\n';
           // std::cout<<encoderLengths<<'\n';
 
       }
