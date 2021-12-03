@@ -18,7 +18,7 @@ endif
 CC = g++
 ifdef ENABLE_CUDNN
 	LINKER = nvcc
-	LFLAGS = -lcudart -lcudnn -lpthread
+	LFLAGS = -lcudart -lcudnn -lcublas -lpthread
 else
 	LINKER = g++
 	LFLAGS = -lpthread -pthread
