@@ -6,9 +6,9 @@
 #include <vector>
 #include <string>
 
-// #ifdef __TURBOJPEG__
+#ifdef __TURBOJPEG__
 #include <turbojpeg.h>
-// #endif  // ifdef __TURBOJPEG__
+#endif  // ifdef __TURBOJPEG__
 
 
 #define CAPACITY_OF_PLANE             4096
