@@ -47,13 +47,15 @@ public:
 
     int                                 IsInput(Operator<DTYPE> *pOperator);
     int                                 IsValid(Operator<DTYPE> *pOperator); // Graph 분석 시 node에 추가할 것인지 확인한다.
-    int                                 IsVisitable(Operator<DTYPE> *pOperator);
+    int                                 IsVisitable(Operator<DTYPE> *pOperator);        // Test
 
     Operator<DTYPE>                   * AnalyzeGraph(Operator<DTYPE> *pResultOperator);
     int                                 FeedInputTensor(int pNumOfInput, ...);
 
     Container<Operator<DTYPE> *>      * GetExcutableOperatorContainer();
     int                                 GetNumOfExcutableOperator();
+
+    void                                PopIfOverlap(Operator<DTYPE> *pOperator);
 
     virtual Tensor<DTYPE>             * GetResult() const;
     virtual Container<Tensor<DTYPE> *>* GetResultContainer();
@@ -74,7 +76,9 @@ public:
     int                                 SetModeAccumulate();
     int                                 SetModeInference();
     int                                 SetExcutableOperatorIsVisited(int isVisited);
-    
+
+    virtual int                         SetQuery(Operator<DTYPE>* pQuery);
+
     int                                 ForwardPropagate(int pTime = 0);
     int                                 BackPropagate(int pTime = 0);
 
@@ -95,10 +99,13 @@ public:
     virtual int                         SaveComponents(char *nameOfDir);
     virtual int                         LoadComponents(char *nameOfDir);
 
+    // virtual vector<int> *               MakeInference(Tensor<float> * pInput);
+    // virtual Tensor<float> *             MakeInference(Tensor<float> *pInput, Tensor<float> *pLabel);
+
 #ifdef __CUDNN__
 
-    virtual void SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
-    void         SetDeviceGPUOnModule(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    virtual void SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice);
+    void         SetDeviceGPUOnModule(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice);
 
     int          ForwardPropagateOnGPU(int pTime = 0);
     int          BackPropagateOnGPU(int pTime = 0);
@@ -130,7 +137,7 @@ template<typename DTYPE> void Module<DTYPE>::Delete() {
     #ifdef __DEBUG__
     std::cout << "Module<DTYPE>::Delete()" << '\n';
     #endif  // __DEBUG__
-
+    // std::cout<<"Moduel Delete : "<<this->GetName()<<std::endl;
     if (m_apInput) {
         delete m_apInput;
         m_apInput = NULL;
@@ -145,8 +152,10 @@ template<typename DTYPE> void Module<DTYPE>::Delete() {
         Operator<DTYPE> **OperatorContainer = m_aaExcutableOperator->GetRawData();
 
         for (int i = 0; i < m_numOfExcutableOperator; i++) {
-            delete OperatorContainer[i];
-            OperatorContainer[i] = NULL;
+            if(OperatorContainer[i]) {
+              delete OperatorContainer[i];
+              OperatorContainer[i] = NULL;
+            }
         }
         delete m_aaExcutableOperator;
         m_aaExcutableOperator = NULL;
@@ -171,9 +180,11 @@ template<typename DTYPE> Module<DTYPE>::Module(std::string pName) : Operator<DTY
     m_pLastOperator          = NULL;
     m_idOfDevice             = -1;
 
+    // for Window
     m_InputDegree            = 0;
     m_ParameterDegree        = 0;
     m_numOfExcutableOperator = 0;
+    // for Window
 
     Alloc();
 }
@@ -202,6 +213,7 @@ template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::SetInput(Operator<DTYPE
 
 template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::SetParameter(Operator<DTYPE> *pParameter) {
     m_apParameter->Push(pParameter);
+    // std::cout << "SetParameter(" << pParameter->GetName() << "): " << m_apParameter->GetSize() << std::endl;
     m_ParameterDegree++;
     this->AddEdgebetweenOperators(pParameter);
     return pParameter;
@@ -294,54 +306,55 @@ template<typename DTYPE> int Module<DTYPE>::IsVisitable(Operator<DTYPE> *pOperat
  * @return 매개변수로 받은 그래프를 구성하고자 하는 신경망의 Output에 해당하는 Operator
  */
 template<typename DTYPE> Operator<DTYPE> *Module<DTYPE>::AnalyzeGraph(Operator<DTYPE> *pResultOperator) {
-  // BFS
-  Container<Operator<DTYPE> *> queue;
+    // BFS
+    Container<Operator<DTYPE> *> queue;
 
-  queue.Push(pResultOperator);
-  m_pLastOperator = pResultOperator;
+    queue.Push(pResultOperator);
+    m_pLastOperator = pResultOperator;
 
-  Container<Operator<DTYPE> *> *nextOp = NULL;
-  Container<Operator<DTYPE> *> *prevOp = NULL;
-  int numOfInputEdge                   = 0;
+    Container<Operator<DTYPE> *> *nextOp = NULL;
+    Container<Operator<DTYPE> *> *prevOp = NULL;
+    int numOfInputEdge                   = 0;
 
-  Operator<DTYPE> *out = NULL;
+    Operator<DTYPE> *out = NULL;
 
-  while (queue.GetSize() > 0) {
-      out = queue.Pop();
-      if (!(this->IsInput(out))) {
-          if (this->IsValid(out)) {
-              if(!out->GetIsVisited()) {
-                  if(IsVisitable(out)) {
-                      if (out->GetIsTensorholder()) {
-                          this->SetParameter(out);
-                      } else {
-                          this->SetExecutableOperater(out);
-                          out->SetIsVisited(TRUE);
-                      }
-                  } else {
-                      queue.Push(1, out);
-                  }
-              } else continue;
+    while (queue.GetSize() > 0) {
+        out = queue.Pop();
+        if (!(this->IsInput(out))) {
+            if (this->IsValid(out)) {
+                if(!out->GetIsVisited()) {
+                    if(IsVisitable(out)) {
+                        if (out->GetIsTensorholder()) {
+                            // if( out->GetName() == "m_Query_no") continue; // for Bahdanau attention
+                            this->SetParameter(out);
+                        } else {
+                            this->SetExecutableOperater(out);
+                            out->SetIsVisited(TRUE);
+                        }
+                    } else {
+                        queue.Push(1, out);
+                    }
+                } else continue;
 
-              nextOp         = out->GetInputContainer();
-              numOfInputEdge = nextOp->GetSize();
+                nextOp         = out->GetInputContainer();
+                numOfInputEdge = nextOp->GetSize();
 
-              for (int i = 0; i < numOfInputEdge; i++) {
-                  prevOp = (*nextOp)[i]->GetOutputContainer();
-                  if (prevOp->FindElement(out)) {
-                      prevOp->Pop(out);
-                  }
-                  queue.Push((*nextOp)[i]);
-              }
-          } else continue;
-      } else continue;
-  }
+                for (int i = 0; i < numOfInputEdge; i++) {
+                    prevOp = (*nextOp)[i]->GetOutputContainer();
+                    if (prevOp->FindElement(out)) {
+                        prevOp->Pop(out);
+                    }
+                    queue.Push((*nextOp)[i]);
+                }
+            } else continue;
+        } else continue;
+    }
 
-  m_aaExcutableOperator->Reverse();
+    m_aaExcutableOperator->Reverse();
 
-  SetExcutableOperatorIsVisited(FALSE);
+    SetExcutableOperatorIsVisited(FALSE);
 
-  return pResultOperator;
+    return pResultOperator;
 }
 
 /*!
@@ -408,6 +421,10 @@ template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetParamet
 template<typename DTYPE> Container<Operator<DTYPE> *> *Module<DTYPE>::GetParameter() {
     return m_apParameter;
     // return this->GetInputContainer();
+}
+
+template<typename DTYPE> int Module<DTYPE>::SetQuery(Operator<DTYPE>* mQuery) {
+    return TRUE;
 }
 
 template<typename DTYPE> int Module<DTYPE>::SetIsTensorholder(int pIsParameter) {
@@ -626,28 +643,29 @@ template<typename DTYPE> int Module<DTYPE>::LoadComponents(char *nameOfDir) {
  * @param pCudnnHandle cudnn 라이브러리를 가리키는 구조체 포인터.
  * @param idOfDevice 사용하고자 하는 GPU번호
  */
-template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
-    if (this->GetDevice() != GPU) this->SetDeviceGPUOnModule(pCudnnHandle, idOfDevice);
+template<typename DTYPE> void Module<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice) {
+    if (this->GetDevice() != GPU) this->SetDeviceGPUOnModule(pCudnnHandle, pCublasHandle, idOfDevice);
 }
 
-template<typename DTYPE> void Module<DTYPE>::SetDeviceGPUOnModule(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
+template<typename DTYPE> void Module<DTYPE>::SetDeviceGPUOnModule(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice) {
     checkCudaErrors(cudaSetDevice(idOfDevice));
     this->SetDevice(GPU);
     this->SetDeviceID(idOfDevice);
     this->SetCudnnHandle(pCudnnHandle);
+    this->SetCublasHandle(pCublasHandle);
 
     for (int i = 0; i < m_numOfExcutableOperator; i++) {
-        (*m_aaExcutableOperator)[i]->SetDeviceGPU(pCudnnHandle, idOfDevice);
+        (*m_aaExcutableOperator)[i]->SetDeviceGPU(pCudnnHandle, pCublasHandle, idOfDevice);
     }
 
     for (int i = 0; i < m_ParameterDegree; i++) {
         // important order
-        (*m_apParameter)[i]->SetDeviceGPU(pCudnnHandle, idOfDevice);
+        (*m_apParameter)[i]->SetDeviceGPU(pCudnnHandle, pCublasHandle, idOfDevice);
     }
 
     for (int i = 0; i < m_InputDegree; i++) {
         // important order
-        (*m_apInput)[i]->SetDeviceGPU(pCudnnHandle, idOfDevice);
+        (*m_apInput)[i]->SetDeviceGPU(pCudnnHandle, pCublasHandle, idOfDevice);
     }
 }
 

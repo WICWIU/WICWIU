@@ -9,7 +9,8 @@
 #include <string>
 #include <cmath>
 #include <cstring>
-// #include <thread>
+#include <fstream>
+#include <map>
 
 // C header
 #include <stdio.h>
@@ -22,8 +23,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <assert.h>
 
-//내가 추가
 #include <fstream>
 #include <map>
 
@@ -40,6 +41,7 @@
     # include "cuda.h"
     # include "cudnn.h"
     # include "error_util.h"
+    # include "cublas_v2.h"
 #endif  // ifndef __CUDNN__
 
 /*!

@@ -1,6 +1,8 @@
 #ifndef TENSOR_H_
 #define TENSOR_H_
 
+#include <algorithm>
+
 #include "Shape.hpp"
 #include "LongArray.hpp"
 
@@ -33,10 +35,22 @@ private:
     IsUseTime m_IsUseTime;
     ///< time 축 사용 유무, IsUseTime 참고
 
+#ifdef __CUDNN__
+    cudnnHandle_t m_cudnnHandle;
+    cublasHandle_t m_cublasHandle;
+    int isHandleCreated;
+#endif // __CUDNN__
+
 private:
     int  Alloc(Shape *pShape, IsUseTime pAnswer);
     int  Alloc(Tensor *pTensor);
     void Delete();
+
+#ifdef __CUDNN__
+    int  AllocOnGPU(cudnnHandle_t &cudnnHandle, cublasHandle_t& cublasHandle);
+    int  AllocOnGPU();
+    void DeleteOnGPU();
+#endif // __CUDNN__
 
 public:
     Tensor(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, IsUseTime pAnswer = UseTime);  // For 5D-Tensor
@@ -52,7 +66,7 @@ public:
     Shape                  * GetShape();
     int                      GetRank();
     int                      GetDim(int pRanknum);
-    LongArray<DTYPE>       * GetLongArray();
+    LongArray<DTYPE>       * GetLongArray()  const;
     int                      GetCapacity();
     int                      GetElement(unsigned int index);
     DTYPE                  & operator[](unsigned int index);
@@ -66,6 +80,7 @@ public:
     int                      GetRowSize(); // 삭제 예정
     int                      GetColSize(); // 삭제 예정
 
+    int                      GetDeviceID();
 
     int                      ReShape(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4);
     int                      ReShape(int pSize0, int pSize1, int pSize2, int pSize3);
@@ -81,19 +96,22 @@ public:
     int                      Save(FILE *fp);
     int                      Load(FILE *fp);
 
-    void                     Clip(float min, float max);
-    void                     MultiplyScalar(unsigned int pTime, float pScalar);
-    int                      GetIdOfDevice() { return m_idOfDevice; }
+    int                      SaveTensor(std::string FileName = "Tensor");
+
 
 #ifdef __CUDNN__
-    void                     SetDeviceGPU(unsigned int idOfDevice);
+    void                     SetDeviceGPU(unsigned int idOfDevice, int isCreateHandle=FALSE);
+    void                     SetDeviceGPU(unsigned int idOfDevice, cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle);
 
     DTYPE                  * GetGPUData(unsigned int pTime = 0);
     cudnnTensorDescriptor_t& GetDescriptor();
 
+    cudnnHandle_t &          GetCudnnHandle();
+    cublasHandle_t &         GetCublasHandle();
     void                     Reset(cudnnHandle_t& pCudnnHandle);
 
 
+    int                      CopyGPULongArray(Tensor<DTYPE> *pCpyTensor);
 #endif  // if __CUDNN__
 
 
@@ -108,6 +126,34 @@ public:
     static Tensor<DTYPE>* Zeros(Shape *pShape, IsUseTime pAnswer = UseTime);
     static Tensor<DTYPE>* Constants(int pSize0, int pSize1, int pSize2, int pSize3, int pSize4, DTYPE constant, IsUseTime pAnswer = UseTime);
     static Tensor<DTYPE>* Constants(Shape *pShape, DTYPE constant, IsUseTime pAnswer = UseTime);
+
+    /////////////////////// TensorMath.cpp ////////////////////////
+
+    Tensor<DTYPE>*           Argmax(int dim);
+
+    void                     TriangleUpper(int standardDiagonal=0);
+    void                     TriangleLower(int standardDiagonal=0);
+    void                     TriangleUpper(int diagonal, DTYPE mask);
+    void                     TriangleLower(int diagonal, DTYPE mask);
+
+    void                     Clip(float min, float max);
+    void                     MultiplyScalar(unsigned int pTime, float pScalar);
+    void                     Power(unsigned int pTime, float pScalar);
+
+
+    static void GetSumTensor(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int dim);
+    static void GetSumTensorOverAxes(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int numArgs, ...);
+    static void GetSquaredSumTensorOverAxes(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int numArgs, ...);
+    static void GetVarTensor(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int dim, int unbiased=TRUE);
+    static void GetMeanTensor(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int dim);
+    static void GetMaxTensor(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int dim);
+    static void GetVarTensorOverAxes(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int unbiased, int numArgs, ...);
+    static void GetMeanTensorOverAxes(Tensor<DTYPE> *pInputTensor, Tensor<DTYPE> *pOutputTensor, int numArgs, ...);
+
+    Tensor&                  operator+(Tensor<DTYPE> &rTensor);
+    Tensor&                  operator-(Tensor<DTYPE> &rTensor);
+    Tensor&                  operator*(Tensor<DTYPE> &rTensor);
+    Tensor&                  operator/(Tensor<DTYPE> &rTensor);
 };
 
 //////////////////////////////////////////////////////////////////////////////// for private method
@@ -152,6 +198,10 @@ template<typename DTYPE> int Tensor<DTYPE>::Alloc(Shape *pShape, IsUseTime pAnsw
     }
 
     m_Device = CPU;
+
+    #ifdef __CUDNN__
+        isHandleCreated = FALSE;
+    #endif // __CUDNN__
 
     return TRUE;
 }
@@ -199,7 +249,35 @@ template<typename DTYPE> void Tensor<DTYPE>::Delete() {
         delete m_aLongArray;
         m_aLongArray = NULL;
     }
+
+    #ifdef __CUDNN__
+        this->DeleteOnGPU();
+    #endif  // if __CUDNN__
 }
+
+#ifdef __CUDNN__
+template<typename DTYPE> int Tensor<DTYPE>::AllocOnGPU(cudnnHandle_t& cudnnHandle, cublasHandle_t& cublasHandle) {
+    m_cudnnHandle = cudnnHandle;
+    m_cublasHandle = cublasHandle;
+    isHandleCreated = FALSE;
+    return TRUE;
+}
+
+template<typename DTYPE> int Tensor<DTYPE>::AllocOnGPU() {
+    checkCUDNN(cudnnCreate(&m_cudnnHandle));
+    checkCublasErrors(cublasCreate(&m_cublasHandle));
+    isHandleCreated = TRUE;
+    return TRUE;
+}
+
+template<typename DTYPE> void Tensor<DTYPE>::DeleteOnGPU() {
+    if(isHandleCreated) {
+      if (m_cudnnHandle)  checkCUDNN(cudnnDestroy(m_cudnnHandle));
+      if (m_cublasHandle) checkCublasErrors(cublasDestroy(m_cublasHandle));
+    }
+
+}
+#endif // __CUDNN__
 
 //////////////////////////////////////////////////////////////////////////////// for public method
 
@@ -412,7 +490,7 @@ template<typename DTYPE> int Tensor<DTYPE>::GetDim(int pRanknum) {
 *@brief Tensor의 m_aLongArray를 반환.
 *@return m_aLongArray
 */
-template<typename DTYPE> LongArray<DTYPE> *Tensor<DTYPE>::GetLongArray() {
+template<typename DTYPE> LongArray<DTYPE> *Tensor<DTYPE>::GetLongArray() const {
     #ifdef __DEBUG__
     std::cout << "Tensor<DTYPE>::GetLongArray()" << '\n';
     #endif  // __DEBUG__
@@ -576,6 +654,14 @@ template<typename DTYPE> int Tensor<DTYPE>::GetColSize() {
 
     if ((m_aShape->GetRank() == 5) && (m_IsUseTime == UseTime)) return (*m_aShape)[4];
     else return 0;
+}
+
+template<typename DTYPE> int Tensor<DTYPE>::GetDeviceID() {
+  #ifdef __DEBUG__
+  std::cout << "Tensor<DTYPE>::GetDeviceID()" << "\n";
+  #endif // __DEBUG__
+
+  return m_idOfDevice;
 }
 
 /*!
@@ -835,54 +921,11 @@ template<typename DTYPE> int Tensor<DTYPE>::Load(FILE *fp) {
     return TRUE;
 }
 
-template<typename DTYPE> void Tensor<DTYPE>::Clip(float min, float max) {
-    #ifdef __DEBUG__
-    std::cout << "Tensor<DTYPE>::Clip()" << '\n';
-    #endif  // __DEBUG__
 
-    int timesize    = this->GetTimeSize();
-    int batchsize   = this->GetBatchSize();
-    int channelsize = this->GetChannelSize();
-    int rowsize     = this->GetRowSize();
-    int colsize     = this->GetColSize();
-
-    Shape *resultTenShape = this->GetShape();
-    int index = 0;
-
-    int ti = 0;
-    for (int ba = 0; ba < batchsize; ba++) {
-        for (int ch = 0; ch < channelsize; ch++) {
-            for (int ro = 0; ro < rowsize; ro++) {
-                for (int co = 0; co < colsize; co++) {
-                    index = (((ti * (*resultTenShape)[1] + ba) * (*resultTenShape)[2] + ch) * (*resultTenShape)[3] + ro) * (*resultTenShape)[4] + co;
-                            if( (*m_aLongArray)[index] < min )
-                                (*m_aLongArray)[index] = min;
-                            else if( (*m_aLongArray)[index] > max )
-                                (*m_aLongArray)[index] = max;
-                }
-            }
-        }
-    }
-
-    return;
-}
-
-template<typename DTYPE> void Tensor<DTYPE>::MultiplyScalar(unsigned int pTime, float pScalar){
-    int batchsize   = this->GetBatchSize();
-    int channelsize = this->GetChannelSize();
-    int rowsize     = this->GetRowSize();
-    int colsize     = this->GetColSize();
-    int capacity    = batchsize * channelsize * rowsize * colsize;
-
-    int ti = pTime;
-
-    for (int index = ti * capacity; index < (ti + 1) * capacity; index++) {
-        (*m_aLongArray)[index] = (*m_aLongArray)[index] * pScalar;
-    }
-}
 
 #ifdef __CUDNN__
-template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU(unsigned int idOfDevice) {
+
+template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU(unsigned int idOfDevice, int isCreateHandle) {
     # if __DEBUG__
     std::cout << "Tensor<DTYPE>::SetDeviceGPU()" << '\n';
     # endif // __DEBUG__
@@ -890,6 +933,20 @@ template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU(unsigned int idOfDevic
 
     m_Device     = GPU;
     m_idOfDevice = idOfDevice;
+    if(isCreateHandle) this->AllocOnGPU();
+    m_aLongArray->SetDeviceGPU(idOfDevice);
+    m_aShape->SetDeviceGPU(idOfDevice);
+}
+
+template<typename DTYPE> void Tensor<DTYPE>::SetDeviceGPU(unsigned int idOfDevice, cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle) {
+    # if __DEBUG__
+    std::cout << "Tensor<DTYPE>::SetDeviceGPU()" << '\n';
+    # endif // __DEBUG__
+    checkCudaErrors(cudaSetDevice(idOfDevice));
+
+    m_Device     = GPU;
+    m_idOfDevice = idOfDevice;
+    this->AllocOnGPU(pCudnnHandle, pCublasHandle);
     m_aLongArray->SetDeviceGPU(idOfDevice);
     m_aShape->SetDeviceGPU(idOfDevice);
 }
@@ -949,6 +1006,14 @@ template<typename DTYPE> cudnnTensorDescriptor_t& Tensor<DTYPE>::GetDescriptor()
     # endif // __DEBUG__
 
     return m_aShape->GetDescriptor();
+}
+
+template<typename DTYPE> cudnnHandle_t &Tensor<DTYPE>::GetCudnnHandle() {
+    return m_cudnnHandle;
+}
+
+template<typename DTYPE> cublasHandle_t &Tensor<DTYPE>::GetCublasHandle() {
+    return m_cublasHandle;
 }
 
 template<typename DTYPE> void Tensor<DTYPE>::Reset(cudnnHandle_t& pCudnnHandle) {
@@ -1253,5 +1318,70 @@ inline unsigned int Index3D(Shape *pShape, int ch, int ro, int co) {
 inline unsigned int Index2D(Shape *pShape, int ro, int co) {
     return ro * (*pShape)[1] + co;
 }
+
+template<typename DTYPE> int Tensor<DTYPE>::SaveTensor(std::string FileName) {
+
+#ifdef __CUDNN__
+# if __DEBUG__
+    std::cout << "Tensor<DTYPE>::SaveTensor(std::string FileName)" << '\n';
+    if (m_Device == GPU) {
+        printf("Warning! Tensor is allocated in Device(GPU) latest time\n");
+        printf("Change mode GPU to CPU\n");
+        this->SetDeviceCPU();
+    }
+# else // if __DEBUG__
+    if (m_Device == GPU) {
+        this->SetDeviceCPU();
+    }
+#endif // __DEBUG__
+#endif  // __CUDNN__
+
+    int timesize    = GetTimeSize();
+    int batchsize   = GetBatchSize();
+    int channelsize = GetChannelSize();
+    int rowsize     = GetRowSize();
+    int colsize     = GetColSize();
+
+    std::ofstream writeFile;
+    writeFile.open(FileName);
+
+    if(writeFile.is_open()) {
+        std::string s1 = std::to_string(timesize) + " " + std::to_string(batchsize) + " " + std::to_string(channelsize) + " " + std::to_string(rowsize) + " " + std::to_string(colsize) + "\n";
+        writeFile << s1.c_str();
+        writeFile<< "[";
+        for(int ti = 0 ; ti < timesize ; ti++) {
+            writeFile<< "[";
+            for(int ba = 0 ; ba < batchsize ; ba++) {
+                writeFile<< "[";
+                for(int ch = 0 ; ch < channelsize ; ch++) {
+                    writeFile<< "[";
+                    for(int ro = 0 ; ro < rowsize ; ro++) {
+                        writeFile<< "[";
+                        for(int co = 0 ; co <colsize ; co++) {
+                            char n[20];
+                            sprintf(n, "%-10.6f", (*m_aLongArray)[Index5D(m_aShape, ti, ba, ch, ro, co)]);
+                            writeFile << n;
+                            if(co != colsize-1) writeFile << ", ";
+                            else writeFile << "]";
+                        }
+                        if(ro != rowsize-1) writeFile << ",\n    ";
+                    }
+                    if(ch != channelsize-1) writeFile << "],\n\n   ";
+                    else writeFile << "]";
+                }
+                if(ba != batchsize-1) writeFile << "],\n\n\n  ";
+                else writeFile << "]";
+            }
+            if(ti != timesize-1) writeFile << "],\n\n\n\n ";
+            else writeFile << "]";
+        }
+        writeFile<< "]";
+    }
+
+    writeFile.close();
+
+    return TRUE;
+}
+
 
 #endif  // TENSOR_H_

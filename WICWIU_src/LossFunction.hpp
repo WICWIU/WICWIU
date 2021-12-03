@@ -32,7 +32,9 @@ private:
 
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
-     ///< cudnn handler
+    ///< cudnn handler
+    cublasHandle_t m_pCublasHandle;
+    ///< cublas handler
 #endif  // if __CUDNN__
 
 public:
@@ -75,10 +77,11 @@ public:
     virtual int    SetGradientOnCPU();
 
     // virtual void   SetDeviceGPU(unsigned int idOfDevice);
-    virtual void   SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    virtual void   SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice);
     virtual void   InitializeAttributeForGPU(unsigned int idOfDevice);
 
     cudnnHandle_t& GetCudnnHandle();
+    cublasHandle_t& GetCublasHandle();
 
     // Setting Supporter
     virtual int    SetResultOnGPU(unsigned int idOfDevice);
@@ -333,11 +336,12 @@ template<typename DTYPE> int LossFunction<DTYPE>::SetGradientOnCPU() {
 @param pCudnnHandle cudnn 라이브러리를 가리키는 구조체 포인터.
 @param idOfDevice 사용하고자 하는 GPU번호
 */
-template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
+template<typename DTYPE> void LossFunction<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice) {
     checkCudaErrors(cudaSetDevice(idOfDevice));
-    m_Device       = GPU;
-    m_idOfDevice   = idOfDevice;
-    m_pCudnnHandle = pCudnnHandle;
+    m_Device        = GPU;
+    m_idOfDevice    = idOfDevice;
+    m_pCudnnHandle  = pCudnnHandle;
+    m_pCublasHandle = pCublasHandle;
     this->SetResultOnGPU(idOfDevice);
     this->SetGradientOnGPU(idOfDevice);
     this->InitializeAttributeForGPU(idOfDevice);
@@ -369,6 +373,10 @@ template<typename DTYPE> int LossFunction<DTYPE>::SetGradientOnGPU(unsigned int 
 
 template<typename DTYPE> cudnnHandle_t& LossFunction<DTYPE>::GetCudnnHandle() {
     return m_pCudnnHandle;
+}
+
+template<typename DTYPE> cublasHandle_t& LossFunction<DTYPE>::GetCublasHandle() {
+    return m_pCublasHandle;
 }
 
 #endif  // __CUDNN__

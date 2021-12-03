@@ -43,10 +43,12 @@ private:
     int m_Loadflag;
 
     int m_isVisited;
-    ///< Operator가 AnalyzeGraph()에서 중복되는 함수인지 알려주는 값
+
 #ifdef __CUDNN__
     cudnnHandle_t m_pCudnnHandle;
     ///< cudnn 라이브러리를 가리키는 포인터.
+    cublasHandle_t m_pCublasHandle;
+    ///< cublas 라이브러리를 가리키는 포인터.
 #endif  // __CUDNN__
 
 private:
@@ -67,6 +69,7 @@ public:
     Operator(Operator<DTYPE> *pInput, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, std::string pName = "NO NAME", int pLoadflag = TRUE);
+    Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, Operator<DTYPE> *pInput3, std::string pName = "NO NAME", int pLoadflag = TRUE);
     Operator(int numInput, ...);
     virtual ~Operator();
 
@@ -83,13 +86,15 @@ public:
     int                                   SetDevice(Device pDevice);
     int                                   SetDeviceID(unsigned int idOfDevice);
 
-    int                           SetIsTensorholder(int pIsParameter);
-    int                           SetIsTrainable(int pIsTrainable);
+    int                                   SetIsTensorholder(int pIsParameter);
+    int                                   SetIsTrainable(int pIsTrainable);
 
     virtual int                           SetIsVisited(int isVisited);
     virtual int                           SetModeTrain();
     virtual int                           SetModeAccumulate();
     virtual int                           SetModeInference();
+
+    virtual int                           SetQuery(Operator<DTYPE> *pQuery);
 
     virtual Operator<DTYPE>            ** GetOutput();
     virtual Container<Operator<DTYPE> *>* GetOutputContainer();
@@ -108,6 +113,7 @@ public:
     int                                   GetIsTensorholder();
     int                                   GetIsTrainable();
     int                                   GetIsVisited();
+    Mode                                  GetMode();
 
     virtual int                           ForwardPropagate(int pTime = 0);
     virtual int                           BackPropagate(int pTime = 0);
@@ -131,14 +137,17 @@ public:
     virtual int                           Save(FILE *fp);
 #ifdef __CUDNN__
     int                                   SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
+    int                                   SetCublasHandle(cublasHandle_t& pCublasHandle);
     virtual int                           SetResultOnGPU(unsigned int idOfDevice);
     virtual int                           SetGradientOnGPU(unsigned int idOfDevice);
 
     // virtual void                          SetDeviceGPU(unsigned int idOfDevice);
     virtual void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    virtual void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice);
     virtual void                          InitializeAttributeForGPU(unsigned int idOfDevice);
 
     cudnnHandle_t& GetCudnnHandle();
+    cublasHandle_t& GetCublasHandle();
 
     virtual int    ForwardPropagateOnGPU(int pTime = 0);
     virtual int    BackPropagateOnGPU(int pTime = 0);
@@ -319,7 +328,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(std::string pName, int pLoadf
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+
     m_isVisited = FALSE;
+
     Alloc();
 }
 
@@ -345,7 +356,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput, std:
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+
     m_isVisited = FALSE;
+
     Alloc();
     AddEdgebetweenOperators(1, pInput, pLoadflag);
 }
@@ -373,7 +386,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+
     m_isVisited = FALSE;
+
     Alloc();
     AddEdgebetweenOperators(2, pInput0, pInput1, pLoadflag);
 }
@@ -402,9 +417,33 @@ template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Ope
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
     m_Loadflag    = TRUE;
+
     m_isVisited = FALSE;
+
     Alloc();
     AddEdgebetweenOperators(3, pInput0, pInput1, pInput2, pLoadflag);
+}
+
+template<typename DTYPE> Operator<DTYPE>::Operator(Operator<DTYPE> *pInput0, Operator<DTYPE> *pInput1, Operator<DTYPE> *pInput2, Operator<DTYPE> *pInput3, std::string pName, int pLoadflag) {
+    #ifdef __DEBUG__
+    std::cout << "Operator<DTYPE>::Operator()" << '\n';
+    #endif  // __DEBUG__
+    m_apOutput    = NULL;
+    m_apInput     = NULL;
+    m_aaResult    = NULL;
+    m_aaGradient  = NULL;
+    m_name        = pName;
+    m_Device      = CPU;
+    m_Mode        = TRAIN;
+    m_isParameter = FALSE;
+    m_isTrainable = FALSE;
+    m_idOfDevice  = -1;
+    m_Loadflag    = TRUE;
+
+    m_isVisited = FALSE;
+
+    Alloc();
+    AddEdgebetweenOperators(4, pInput0, pInput1, pInput2, pInput3, pLoadflag);
 }
 
 template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {
@@ -421,7 +460,9 @@ template<typename DTYPE> Operator<DTYPE>::Operator(int numInput, ...) {
     m_isParameter = FALSE;
     m_isTrainable = FALSE;
     m_idOfDevice  = -1;
+
     m_isVisited = FALSE;
+
     Alloc();
 
     va_list ap;
@@ -642,6 +683,13 @@ template<typename DTYPE> int Operator<DTYPE>::SetModeInference() {
     return TRUE;
 }
 
+template<typename DTYPE> int Operator<DTYPE>::SetQuery(Operator<DTYPE> *pQuery) {
+    #ifdef __DEBUG__
+        std::cout<<"Operator::SetQuery"<<'\n';
+    #endif  // __DEBUG__
+    return TRUE;
+}
+
 template<typename DTYPE> Operator<DTYPE> **Operator<DTYPE>::GetOutput() {
     return m_apOutput->GetRawData();
 }
@@ -706,6 +754,10 @@ template<typename DTYPE> int Operator<DTYPE>::GetIsTrainable() {
 
 template<typename DTYPE> int Operator<DTYPE>::GetIsVisited() {
     return m_isVisited;
+}
+
+template<typename DTYPE> Mode Operator<DTYPE>::GetMode() {
+    return m_Mode;
 }
 
 /*!
@@ -867,6 +919,11 @@ template<typename DTYPE> int Operator<DTYPE>::SetCudnnHandle(cudnnHandle_t& pCud
     return TRUE;
 }
 
+template<typename DTYPE> int Operator<DTYPE>::SetCublasHandle(cublasHandle_t& pCublasHandle) {
+    m_pCublasHandle = pCublasHandle;
+    return TRUE;
+}
+
 template<typename DTYPE> int Operator<DTYPE>::SetResultOnGPU(unsigned int idOfDevice) {
     // Tensorholder의 경우는 하면 안된다.
     int size = m_aaResult->GetSize();
@@ -915,8 +972,25 @@ template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudn
     }
 }
 
+template<typename DTYPE> void Operator<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice) {
+    if (m_Device != GPU) {
+        checkCudaErrors(cudaSetDevice(idOfDevice));
+        this->SetCudnnHandle(pCudnnHandle);
+        this->SetCublasHandle(pCublasHandle);
+        this->SetDevice(GPU);
+        this->SetDeviceID(idOfDevice);
+        this->SetResultOnGPU(idOfDevice);
+        this->SetGradientOnGPU(idOfDevice);
+        this->InitializeAttributeForGPU(idOfDevice);
+    }
+}
+
 template<typename DTYPE> cudnnHandle_t& Operator<DTYPE>::GetCudnnHandle() {
     return m_pCudnnHandle;
+}
+
+template<typename DTYPE> cublasHandle_t& Operator<DTYPE>::GetCublasHandle() {
+    return m_pCublasHandle;
 }
 
 /*!
