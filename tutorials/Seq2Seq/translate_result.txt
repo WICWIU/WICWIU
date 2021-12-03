@@ -1,0 +1,106 @@
+
+24 : it
+50 : is
+316 : no
+195 : more
+196 : than
+8 : that
+10 : 
+2 : <EOS>
+
+31 : i
+100 : have
+39 : a
+445 : lot
+134 : of
+28 : the
+1161 : way
+10 : 
+2 : <EOS>
+
+31 : i
+100 : have
+39 : a
+445 : lot
+134 : of
+35 : my
+345 : car
+10 : 
+2 : <EOS>
+
+565 : she
+248 : has
+27 : to
+100 : have
+39 : a
+445 : lot
+134 : of
+312 : her
+10 : 
+2 : <EOS>
+
+82 : how
+211 : much
+50 : is
+28 : the
+689 : last
+1182 : card
+10 : 
+2 : <EOS>
+
+31 : i
+32 : am
+129 : so
+31 : i
+32 : am
+93 : going
+27 : to
+201 : do
+24 : it
+10 : 
+2 : <EOS>
+
+28 : the
+475 : first
+134 : of
+28 : the
+475 : first
+134 : of
+28 : the
+475 : first
+19 : are
+28 : the
+155 : same
+10 : 
+2 : <EOS>
+
+31 : i
+32 : am
+93 : going
+27 : to
+28 : the
+674 : music
+111 : with
+35 : my
+1634 : mind
+10 : 
+2 : <EOS>
+
+31 : i
+405 : had
+39 : a
+445 : lot
+134 : of
+314 : this
+501 : restaurant
+10 : 
+2 : <EOS>
+
+265 : where
+50 : is
+28 : the
+689 : last
+1546 : bus
+283 : here
+10 : 
+2 : <EOS>

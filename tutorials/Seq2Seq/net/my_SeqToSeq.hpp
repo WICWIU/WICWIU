@@ -14,14 +14,14 @@ public:
 
 
         // ======================= layer 1=======================
-        out = new Encoder<float>(input1, vocabLength, embeddingDim, hiddenDim, TRUE, "Encoder");
+        out = new RNNEncoder<float>(input1, vocabLength, embeddingDim, hiddenDim, TRUE, "RNNEncoder");
 
         //              Alloc(pInput, pEncoder, vocabLength, embeddingDim, hiddensize, outputsize,  teacheringforcing, pEncoderLengths, use_bias, pName);
-        //out = new Decoder<float>(input2, out, vocabLength, embeddingDim, 64, vocabLength, TRUE, EncoderLengths, TRUE, "Decoder");       //teacher forcing
-        //out = new Decoder<float>(input2, out, vocabLength, embeddingDim, 64, vocabLength, FALSE, EncoderLengths, TRUE, "Decoder");       //teacher forcing X
+        //out = new RNNDecoder<float>(input2, out, vocabLength, embeddingDim, 64, vocabLength, TRUE, EncoderLengths, TRUE, "RNNDecoder");       //teacher forcing
+        //out = new RNNDecoder<float>(input2, out, vocabLength, embeddingDim, 64, vocabLength, FALSE, EncoderLengths, TRUE, "RNNDecoder");       //teacher forcing X
 
         //새로운 train함수를 위한 decoder
-        out = new Decoder<float>(input2, out, vocabLength, embeddingDim, hiddenDim, vocabLength, FALSE, EncoderLengths, TRUE, "Decoder");
+        out = new RNNDecoder<float>(input2, out, vocabLength, embeddingDim, hiddenDim, vocabLength, FALSE, EncoderLengths, TRUE, "RNNDecoder");
 
         AnalyzeGraph(out);
 
