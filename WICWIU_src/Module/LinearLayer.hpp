@@ -46,7 +46,7 @@ public:
         // float stddev = 0.1;
 
         Tensorholder<DTYPE> *pWeight = new Tensorholder<DTYPE>(Tensor<DTYPE>::Random_normal(1, 1, 1, pNumOutputCol, pNumInputCol, 0.0, stddev), "Layer_Weight_" + pName);
-        out = new MatMul<DTYPE>(pWeight, out, "Layer_MatMul_" + pName);
+        out = new BroadMatMul<DTYPE>(out, new Transpose<DTYPE>(pWeight, 3, 4, pName+"_WeightTranspose"), "Layer_MatMul_" + pName);
 
         if (use_bias) {
             Tensorholder<DTYPE> *pBias = new Tensorholder<DTYPE>(Tensor<DTYPE>::Constants(1, 1, 1, 1, pNumOutputCol, 0.f), "Add_Bias_" + pName);
