@@ -31,6 +31,8 @@ private:
     float m_epsilon;
     ///< 분모 값이 0이 되는 것을 방지 하는 값
 
+    int m_accumIteration;
+    ///< m과 v의 bias correction시 beta1, beta2에 제곱해주는 값
 public:
     /*!
      * @brief AdamOptimizer의 생성자.
@@ -57,6 +59,7 @@ public:
         m_Beta2              = 0.f;
         m_numOfParameter     = 0;
         m_epsilon            = 0.f;
+        m_accumIteration     = 0;
 
         Alloc(Beta1, Beta2, epsilon);
     }
@@ -87,6 +90,7 @@ public:
         m_Beta2              = 0.f;
         m_numOfParameter     = 0;
         m_epsilon            = 0.f;
+        m_accumIteration     = 0;
 
         Alloc(Beta1, Beta2, epsilon);
     }
@@ -182,6 +186,7 @@ public:
      * @see int UpdateParameter(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pFirstMomentum, Tensor<DTYPE> *pFirstVelocity, Tensor<DTYPE> *pUnbiasedMomentum, Tensor<DTYPE> *pUnbiasedVelocity)
      */
     virtual int UpdateParameter() {
+        if (m_accumIteration < INT_MAX) m_accumIteration ++;
         if (m_Beta1 != 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
                 if ((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameter((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i]);
@@ -225,8 +230,8 @@ public:
         for (int i = 0; i < capacity; i++) {
             (*pFirstMomentum)[i]    = (m_Beta1 * (*pFirstMomentum)[i]) + ((1.f - m_Beta1) * (*gradient)[i]);
             (*pFirstVelocity)[i]    = (m_Beta2 * (*pFirstVelocity)[i]) + ((1.f - m_Beta2) * ((*gradient)[i] * (*gradient)[i]));
-            (*pUnbiasedMomentum)[i] = (*pFirstMomentum)[i] / (1.f - m_Beta1);
-            (*pUnbiasedVelocity)[i] = (*pFirstVelocity)[i] / (1.f - m_Beta2);
+            (*pUnbiasedMomentum)[i] = (*pFirstMomentum)[i] / (1.f - pow(m_Beta1, m_accumIteration));
+            (*pUnbiasedVelocity)[i] = (*pFirstVelocity)[i] / (1.f - pow(m_Beta2, m_accumIteration));
             (*trainable_data)[i]   += ((signed_learning_rate * (*pUnbiasedMomentum)[i]) / (std::sqrt((*pUnbiasedVelocity)[i]) + m_epsilon));
         }
 
@@ -258,6 +263,7 @@ public:
      * @see int UpdateParameterOnGPU(Operator<DTYPE> *pParameter, Tensor<DTYPE> *pFirstMomentum, Tensor<DTYPE> *pFirstVelocity, Tensor<DTYPE> *pUnbiasedMomentum, Tensor<DTYPE> *pUnbiasedVelocity)
      */
     virtual int UpdateParameterOnGPU() {
+        if (m_accumIteration < INT_MAX) m_accumIteration ++;
         if (m_Beta1 != 0.f) {
             for (int i = 0; i < m_numOfParameter; i++) {
                 if((*m_ppParameter)[i]->GetIsTrainable()) UpdateParameterOnGPU((*m_ppParameter)[i], (*m_aaFirstMomentum)[i], (*m_aaFirstVelocity)[i], (*m_aaUnbiasedMomentum)[i], (*m_aaUnbiasedVelocity)[i]);
