@@ -1,7 +1,7 @@
 .SUFFIXES = .cpp .o
 
 #CFLAGS = -O2 -std=c++11
-CFLAGS = -std=c++11 -g
+CFLAGS = -O2 -std=c++11 -g
 
 WICWIU_LIB = lib/libwicwiu.a
 
@@ -20,7 +20,7 @@ NVCC = nvcc
 
 ifdef	ENABLE_CUDNN
 	LINKER = nvcc
-	LFLAGS = -lcudart -lcudnn -lpthread
+	LFLAGS = -lcudart -lcudnn -lpthread -lcublas
 #	LFLAGS = -lpthread
 else
 	LINKER = g++
@@ -33,12 +33,14 @@ WICWIU_SRCS = \
 	WICWIU_src/Utils.cpp	\
 	WICWIU_src/Shape.cpp	\
 	WICWIU_src/KNearestNeighbor.cpp	\
+	WICWIU_src/TensorMath.cpp \
 	WICWIU_src/FewShotClassifier.cpp
 
 WICWIU_OBJS = ${WICWIU_SRCS:.cpp=.o}
 
 ifdef	ENABLE_CUDNN
 	WICWIU_CUDA_SRCS = \
+		WICWIU_src/TensorMath_CUDA.cu \
 		WICWIU_src/Utils_CUDA.cu \
 		WICWIU_src/Optimizer/AdamOptimizer_CUDA.cu \
 		WICWIU_src/Operator/Concatenate_CUDA.cu \
@@ -51,8 +53,17 @@ ifdef	ENABLE_CUDNN
 		WICWIU_src/Operator/L2Normalize.cu \
 		WICWIU_src/Operator/Passer.cu \
 		WICWIU_src/Operator/Embedding_CUDA.cu \
-		WICWIU_src/Module/Decoder_CUDA.cu
-
+		WICWIU_src/Module/RNNDecoder_CUDA.cu \
+		WICWIU_src/Operator/AttentionPaddingMask_CUDA.cu \
+		WICWIU_src/Operator/MaskedFill_CUDA.cu \
+		WICWIU_src/Operator/LayerNormalize_CUDA.cu \
+		WICWIU_src/Operator/Transpose_CUDA.cu \
+		WICWIU_src/Operator/Softmax1D_CUDA.cu \
+		WICWIU_src/Operator/BroadMatMul_CUDA.cu \
+		WICWIU_src/LossFunction/SmoothedKLDivLoss_CUDA.cu \
+		WICWIU_src/Operator/ConcatSimilarity_CUDA.cu \
+		WICWIU_src/Module/Bahdanau_CUDA.cu \
+		WICWIU_src/Operator/Flip_CUDA.cu
 
 	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
 endif
@@ -65,6 +76,9 @@ all:	$(WICWIU_LIB)
 
 # for cuda code
 WICWIU_src/Utils_CUDA.o: WICWIU_src/Utils_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/TensorMath_CUDA.o: WICWIU_src/TensorMath_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
 WICWIU_src/Optimizer/AdamOptimizer_CUDA.o: WICWIU_src/Optimizer/AdamOptimizer_CUDA.cu
@@ -94,14 +108,43 @@ WICWIU_src/Operator/L2Normalize.o: WICWIU_src/Operator/L2Normalize.cu
 WICWIU_src/Operator/Passer.o: WICWIU_src/Operator/Passer.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
-
 WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.o: WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
 WICWIU_src/Operator/Embedding_CUDA.o: WICWIU_src/Operator/Embedding_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
-WICWIU_src/Module/Decoder_CUDA.o: WICWIU_src/Module/Decoder_CUDA.cu
+WICWIU_src/Module/RNNDecoder_CUDA.o: WICWIU_src/Module/RNNDecoder_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/Transpose_CUDA.o: WICWIU_src/Operator/Transpose_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/LayerNormalize_CUDA.o: WICWIU_src/Operator/LayerNormalize_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/Softmax1D_CUDA.o: WICWIU_src/Operator/Softmax1D_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/AttentionPaddingMask_CUDA.o: WICWIU_src/Operator/AttentionPaddingMask_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/MaskedFill_CUDA.o: WICWIU_src/Operator/MaskedFill_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/BroadMatMul_CUDA.o: WICWIU_src/Operator/BroadMatMul_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/LossFunction/SmoothedKLDivLoss_CUDA.o: WICWIU_src/LossFunction/SmoothedKLDivLoss_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/ConcatSimilarity_CUDA.o: WICWIU_src/Operator/ConcatSimilarity_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Module/Bahdanau_CUDA.o: WICWIU_src/Module/Bahdanau_CUDA.cu
+	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
+
+WICWIU_src/Operator/Flip_CUDA.o: WICWIU_src/Operator/Flip_CUDA.cu
 	$(NVCC) $(CFLAGS) $(DFLAGS) $(ENABLE_CUDNN) $(INCLUDE_PATH) -c $< -o $@
 
 $(WICWIU_LIB): $(WICWIU_OBJS) $(WICWIU_CUDA_OBJS)
