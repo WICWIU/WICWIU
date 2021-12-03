@@ -95,4 +95,80 @@ template<typename DTYPE> int ConcatenateChannelWise<DTYPE>::BackPropagateOnGPU(i
     return TRUE;
 }
 
+// template class ConcatenateColumnWise<int>;
+template class ConcatenateColumnWise<float>;
+// template class ConcatenateColumnWise<double>;
+
+//ColumnWise
+template<typename DTYPE> int ConcatenateColumnWise<DTYPE>::ForwardPropagateOnGPU(int pTime) {
+    int noBlock = 3, threadsPerBlock = 128;
+
+    Tensor<DTYPE> *result = this->GetResult();
+    Tensor<DTYPE> *input  = NULL;
+
+    int timesize    = result->GetTimeSize();
+    int batchsize   = result->GetBatchSize();
+    int channelsize = result->GetChannelSize();
+    int rowsize     = result->GetRowSize();
+    int colsize     = result->GetColSize();
+
+    Shape *resultTenShape = result->GetShape();
+
+    int sizeOfPlane     = rowsize * colsize;
+    int sizeOfResultImg = channelsize * sizeOfPlane;
+    int sizeOfInputImg  = 0;
+
+    DTYPE *result_gpu = result->GetGPUData(pTime);
+    DTYPE *input_gpu  = NULL;
+
+    int preSize          = 0;
+
+    for (int opnum = 0; opnum < m_noOperator; opnum++) {
+        input            = this->GetInput()[opnum]->GetResult();
+        input_gpu        = input->GetGPUData(pTime);
+        preSize          = m_aAccumulate[opnum];
+        sizeOfInputImg   = input->GetColSize();
+
+        GetKernelParameters(sizeOfInputImg, &noBlock, &threadsPerBlock);
+
+        ConcatenateChannelWise_ForwardPropagate_kernel << < 64, 128 >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, result_gpu, input_gpu, preSize);
+    }
+
+    return TRUE;
+}
+
+template<typename DTYPE> int ConcatenateColumnWise<DTYPE>::BackPropagateOnGPU(int pTime) {
+    Tensor<DTYPE> *this_delta  = this->GetDelta();
+    Tensor<DTYPE> *input_delta = NULL;
+
+    int timesize    = this_delta->GetTimeSize();
+    int batchsize   = this_delta->GetBatchSize();
+    int channelsize = this_delta->GetChannelSize();
+    int rowsize     = this_delta->GetRowSize();
+    int colsize     = this_delta->GetColSize();
+
+    Shape *resultTenShape = this_delta->GetShape();
+
+    int sizeOfPlane     = rowsize * colsize;
+    int sizeOfResultImg = channelsize * sizeOfPlane;
+    int sizeOfInputImg  = 0;
+
+    DTYPE *delta_gpu       = this_delta->GetGPUData(pTime);
+    DTYPE *input_delta_gpu = NULL;
+
+    int preSize          = 0;
+    int inputChannelSize = 0;
+
+    for (int opnum = 0; opnum < m_noOperator; opnum++) {
+        input_delta      = this->GetInput()[opnum]->GetDelta();
+        input_delta_gpu  = input_delta->GetGPUData(pTime);
+        inputChannelSize = input_delta->GetChannelSize();
+        preSize          = m_aAccumulate[opnum];
+        sizeOfInputImg   = input_delta->GetColSize();
+
+        ConcatenateChannelWise_BackPropagate_kernel << < 64, 128 >> > (sizeOfResultImg, sizeOfInputImg, timesize, batchsize, delta_gpu, input_delta_gpu, preSize);
+    }
+
+    return TRUE;
+}
 #endif  // ifdef __CUDNN__
