@@ -11,3 +11,5 @@
 #include "LossFunction/BEGANDiscriminatorLoss.hpp"
 
 #include "LossFunction/TripletLoss.hpp"
+
+#include "LossFunction/SmoothedKLDivLoss.hpp"
