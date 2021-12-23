@@ -7,8 +7,12 @@
 #include "Tanh.hpp"
 #include "Tensorholder.hpp"
 
-#define TIME     0
-#define BATCH    1
+#define TIMEIDX     0
+#define BATCHIDX    1
+
+/*!
+@class GRU GRU class
+*/
 
 template<typename DTYPE> class GRU : public Operator<DTYPE>{
 private:
@@ -116,14 +120,39 @@ private:
 #endif  // __CUDNN__
 
 public:
-  GRU(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *pWeightICH, Operator<DTYPE> *pWeightHCH, Operator<DTYPE> *gBias, Operator<DTYPE> *chBias, Operator<DTYPE>* pInitHidden = NULL)
-       : Operator<DTYPE>(7, pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias) {
-      #if __DEBUG__
-      std::cout << "GRU::GRU(Operator<DTYPE> *)" << '\n';
-      #endif  // __DEBUG__
-      this->Alloc(pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias, pInitHidden);
-  }
+    /**
+    * @brief GRU의 생성자
+    * @details 파라미터로 받은 pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias, pInitHidden로 Alloc한다.
+    * @param pInput GRU의 input Operator
+    * @param pWeightIG Input to Gate에 해당하는 matmtul의 weight
+    * @param pWeightHG hidden to gate에 해당하는 matmul의 weight
+    * @param pWeightICH input to Candidate hidden에 해당하는 matmul의 weight
+    * @param pWeightHCH hidden to Candidate hidden에 해당하는 matmul의 weight
+    * @param gBias gate의 bias
+    * @param chBias Candidate hidden의 bias
+    * @param pInitHidden  GRU의 초기 hidden 값
+    */
+    GRU(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *pWeightICH, Operator<DTYPE> *pWeightHCH, Operator<DTYPE> *gBias, Operator<DTYPE> *chBias, Operator<DTYPE>* pInitHidden = NULL)
+        : Operator<DTYPE>(7, pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias) {
+        #if __DEBUG__
+        std::cout << "GRU::GRU(Operator<DTYPE> *)" << '\n';
+        #endif  // __DEBUG__
+        this->Alloc(pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias, pInitHidden);
+    }
 
+    /**
+     * @brief Construct a new GRU object
+     * @details 파라미터로 받은 pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias, pInitHidden로 Alloc한다.
+     * @param pInput GRU의 input Operator
+     * @param pWeightIG Input to Gate에 해당하는 matmtul의 weight
+     * @param pWeightHG hidden to gate에 해당하는 matmul의 weight
+     * @param pWeightICH input to Candidate hidden에 해당하는 matmul의 weight
+     * @param pWeightHCH hidden to Candidate hidden에 해당하는 matmul의 weight
+     * @param gBias gate의 bias
+     * @param chBias Candidate hidden의 bias
+     * @param pName  사용자가 부여한 Operator 이름
+     * @param pInitHidden GRU의 초기 hidden 값
+     */
     GRU(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *pWeightICH, Operator<DTYPE> *pWeightHCH, Operator<DTYPE> *gBias, Operator<DTYPE> *chBias, std::string pName, Operator<DTYPE>* pInitHidden = NULL)
          : Operator<DTYPE>(7, pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias, pInitHidden) {
         #if __DEBUG__
@@ -140,13 +169,26 @@ public:
         Delete();
     }
 
+    /**
+     * @brief 파라미터로 받은  pInput, pWeightIG, pWeightHG, pWeightICH, pWeightHCH, gBias, chBias, pInitHidden으로 맴버 변수들을 초기화 한다.
+     * @details GRU연산에 필요한 MatMul, add, Sigmod, Minus, Tanh, Hadamard operator를 맴버 변수로 생성한다.
+     * @param pInput GRU의 input Operator
+     * @param pWeightIG Input to Gate에 해당하는 matmtul의 weight
+     * @param pWeightHG hidden to gate에 해당하는 matmul의 weight
+     * @param pWeightICH input to Candidate hidden에 해당하는 matmul의 weight
+     * @param pWeightHCH hidden to Candidate hidden에 해당하는 matmul의 weight
+     * @param gBias gate의 bias
+     * @param chBias Candidate hidden의 bias
+     * @param pInitHidden  GRU의 초기 hidden 값
+     * @return int 
+     */
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *pWeightICH, Operator<DTYPE> *pWeightHCH, Operator<DTYPE> *gBias, Operator<DTYPE> *chBias, Operator<DTYPE>* pInitHidden) {
 
         Shape *InputShape    = pInput->GetResult()->GetShape();
         Shape *WeightIGShape = pWeightIG->GetResult()->GetShape();
 
-        int hidTimeSize  = (*InputShape)[TIME];
-        int hidBatchSize = (*InputShape)[BATCH];
+        int hidTimeSize  = (*InputShape)[TIMEIDX];
+        int hidBatchSize = (*InputShape)[BATCHIDX];
         int hidColSize   = (*WeightIGShape)[3]/2;
 
         //Onetensor
@@ -198,8 +240,8 @@ public:
 
         Shape *ResultShape = m_aHidden->GetResult()->GetShape();
 
-        int timeSize  = (*ResultShape)[TIME];
-        int batchSize = (*ResultShape)[BATCH];
+        int timeSize  = (*ResultShape)[TIMEIDX];
+        int batchSize = (*ResultShape)[BATCHIDX];
         int colSize   = (*ResultShape)[4];
 
         this->SetResult(Tensor<DTYPE>::Zeros(timeSize, batchSize, 1, 1, colSize));
@@ -210,6 +252,12 @@ public:
 
 
 #if __CUDNN__
+        /**
+        * @brief cudnn을 사용하기 전 관련 맴버변수들을 초기화 한다.
+        * @details TensorDesriptor들을 생성하고, TensorDesriptor들의 데이터가 batch, channel, row, col 순서로 배치되도록 지정한다.
+        * @details GRU연산에 필요한 알고리즘을 정의하고, 연산에 필요한 메모리공간을 할당 받는다.
+        * @param idOfDevice 사용할 GPU의 id
+        */
       void InitializeAttributeForGPU(unsigned int idOfDevice) {
 
         Operator<DTYPE> *pInput    = this->GetInput()[0];
@@ -220,8 +268,8 @@ public:
 
         int colsizeOfInput = (*InputShape)[4];
 
-        int hidTimeSize    = (*InputShape)[TIME];
-        int hidBatchSize   = (*InputShape)[BATCH];
+        int hidTimeSize    = (*InputShape)[TIMEIDX];
+        int hidBatchSize   = (*InputShape)[BATCHIDX];
         int hidChannelSize = (*InputShape)[2];
         int hidColSize     = (*WeightHGShape)[3];
 
@@ -383,6 +431,13 @@ public:
 #endif  // if __CUDNN__
 void Delete() {}
 
+    /**
+     * @brief GRU의 ForwardPropagate 메소드
+     * @details GRU 연산 중 Input to gate & candidate hidden, hidden to gate & candidate hidden, activation function인 tanh 연산을 수행한다.
+     * @details tempHidden이라는 Operator를 사용하여 t-1 에서 t로 가는 hidden 2 hidden 연산을 수행한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+     * @return int 
+     */
     int  ForwardPropagate(int pTime = 0) {
 
         if(pTime==0 && m_pInitHidden != NULL){
@@ -478,6 +533,13 @@ void Delete() {}
     }
 
 
+    /**
+     * @brief GRU의 BackPropagate 메소드
+     * @details GRU 연산의 미분값을 계산하여 input_delta, WeightIG_delta, WeightHG_delta, pWeightICH_delta, WeightHCH_delta, gbias_delta, chBias_delta, InitHidden_delta에 각각 더해 넣는다.
+     * @details tempHidden이라는 Operator를 사용하여 t+1 에서 t로 가는 hidden 2 hidden에 해당하는 Gradient 전달하여준다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+     * @return int 
+     */
     int BackPropagate(int pTime = 0) {
 
         Tensor<DTYPE> *_grad = m_aHidden->GetGradient();
@@ -575,6 +637,12 @@ void Delete() {}
     }
 
 #if __CUDNN__
+     /**
+     * @brief GPU에서 동작하는 ForwardPropagate 메소드
+     * @details cudnn이 제공하는 GRU ForwardPropagate 메소드를 실행한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값.
+     * @return int 
+     */
     int ForwardPropagateOnGPU(int pTime = 0) {
 
         Tensor<DTYPE> *input    = this->GetInput()[0]->GetResult();
@@ -634,7 +702,13 @@ void Delete() {}
         return TRUE;
     }
 
-
+    /**
+     * @brief GPU에서 동작하는 BackwardPropagate 메소드.
+     * @details cudnn이 제공하는 GRU BackwardPropagate 메소드를 실행한다.
+     * @details 계산한 Gradient는 input_gradient, weight_gradient에 저장한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값.
+     * @return int 
+     */
     int BackPropagateOnGPU(int pTime = 0) {
 
         Tensor<DTYPE> *input             = this->GetInput()[0]->GetResult();
@@ -733,6 +807,11 @@ void Delete() {}
     }
 #endif  // if __CUDNN__
 
+    /**
+     * @brief 맴버변수로 갖고있는 Operator들의 Result값을 Reset시킨다.
+     * 
+     * @return int 
+     */
     int ResetResult() {
 
         //matmul, bias
@@ -776,6 +855,11 @@ void Delete() {}
         return TRUE;
     }
 
+    /**
+     * @brief 맴버변수로 갖고있는 Operator들의 Gradient값을 Reset시킨다.
+     * 
+     * @return int 
+     */
     int ResetGradient() {
 
         //matmul, bias

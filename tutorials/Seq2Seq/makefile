@@ -18,7 +18,7 @@ endif
 CC = g++
 ifdef ENABLE_CUDNN
 	LINKER = nvcc
-	LFLAGS = -lcudart -lcudnn -lpthread
+	LFLAGS = -lcudart -lcudnn -lcublas -lpthread
 else
 	LINKER = g++
 	LFLAGS = -lpthread -pthread
@@ -42,7 +42,13 @@ ifdef	ENABLE_CUDNN
 		../../WICWIU_src/Optimizer/RMSPropOptimizer_CUDA.cu \
 		../../WICWIU_src/LossFunction/SoftmaxCrossEntropy_CUDA.cu \
 		../../WICWIU_src/Operator/Embedding_CUDA.cu \
-		../../WICWIU_src/Module/Decoder_CUDA.cu
+		../../WICWIU_src/Module/RNNDecoder_CUDA.cu \
+		../../WICWIU_src/Operator/Transpose_CUDA.cu \
+		../../WICWIU_src/Operator/ConcatSimilarity_CUDA.cu \
+		../../WICWIU_src/Operator/MaskedFill_CUDA.cu \
+		../../WICWIU_src/Operator/BroadMatMul_CUDA.cu \
+		../../WICWIU_src/Module/Bahdanau_CUDA.cu \
+		../../WICWIU_src/Operator/Flip_CUDA.cu
 
 	WICWIU_CUDA_OBJS = ${WICWIU_CUDA_SRCS:.cu=.o}
 endif

@@ -12,45 +12,34 @@ template<typename DTYPE> std::ostream & operator<<(std::ostream& pOS, Tensor<DTY
 
     Shape *shape = pTensor->GetShape();
 
-    pOS.precision(4);
-
-    pOS << "[ \n";
-
-    for (int ti = 0; ti < timesize; ti++) {
-        pOS << "[ \n";
-
-        for (int ba = 0; ba < batchsize; ba++) {
-            pOS << "[ \n";
-
-            for (int ch = 0; ch < channelsize; ch++) {
-                pOS << "[ ";
-
-                for (int ro = 0; ro < rowsize; ro++) {
-                    pOS << "\t[ ";
-
-                    for (int co = 0; co < colsize; co++) {
-                        if (co != colsize - 1) {
-                            pOS << "\t\t" << (*pTensor)[Index5D(shape, ti, ba, ch, ro, co)] << ", ";
-                        }
-                        else {
-                            pOS << "\t\t" << (*pTensor)[Index5D(shape, ti, ba, ch, ro, co)];
-                        }
+    pOS << "[";
+    for(int ti = 0 ; ti < timesize ; ti++) {
+        pOS << "[";
+        for(int ba = 0 ; ba < batchsize ; ba++) {
+            pOS << "[";
+            for(int ch = 0 ; ch < channelsize ; ch++) {
+                pOS << "[";
+                for(int ro = 0 ; ro < rowsize ; ro++) {
+                    pOS << "[";
+                    for(int co = 0 ; co <colsize ; co++) {
+                        char n[20];
+                        sprintf(n, "%-10.6f", (*pTensor)[Index5D(shape, ti, ba, ch, ro, co)]);
+                        pOS << n;
+                        if(co != colsize-1) pOS << ", ";
+                        else pOS << "]";
                     }
-
-                    if (ro != rowsize - 1) {
-                        pOS << " \t\t]\n";
-                    }
-                    else {
-                        pOS << " \t\t]";
-                    }
+                    if(ro != rowsize-1) pOS << ",\n    ";
                 }
-                pOS << " ]\n";
+                if(ch != channelsize-1) pOS << "],\n\n   ";
+                else pOS << "]";
             }
-            pOS << "]\n";
+            if(ba != batchsize-1) pOS << "],\n\n\n  ";
+            else pOS << "]";
         }
-        pOS << "]\n";
+        if(ti != timesize-1) pOS << "],\n\n\n\n ";
+        else pOS << "]";
     }
-    pOS << "]\n";
+    pOS<< "]";
 
     return pOS;
 }

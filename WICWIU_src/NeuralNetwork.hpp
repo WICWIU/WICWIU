@@ -23,6 +23,8 @@ private:
 #ifdef __CUDNN__
     cudnnHandle_t m_cudnnHandle;
     ///< cudnn handler
+    cublasHandle_t m_cublasHandle;
+    ///< cublas handler
 #endif  // if __CUDNN__
 
 private:
@@ -39,10 +41,10 @@ public:
     virtual ~NeuralNetwork();
 
     LossFunction<DTYPE>* SetLossFunction(LossFunction<DTYPE> *pLossFunction);
-    Optimizer<DTYPE>*   SetOptimizer(Optimizer<DTYPE> *pOptimizer);
+    Optimizer<DTYPE>*    SetOptimizer(Optimizer<DTYPE> *pOptimizer);
 
-    Operator<DTYPE>*    GetResultOperator();
-    Tensor<DTYPE>*      GetResult();
+    Operator<DTYPE>*     GetResultOperator();
+    Tensor<DTYPE>*       GetResult();
 
     LossFunction<DTYPE>* GetLossFunction();
 
@@ -62,6 +64,7 @@ public:
     int                  TestOnGPU();
 
     float                GetAccuracy(int numOfClass = 10, Tensor<DTYPE> *Lengths =NULL);
+    float                GetAccuracyWithoutPadding(int numOfClass, int paddingToken);
     int                  GetMaxIndex(Tensor<DTYPE> *data, int ba, int ti, int numOfClass);
     float                GetTop5Accuracy(int numOfClass);
     void                 GetTop5Index(Tensor<DTYPE> *data, int *top5Index, int ba, int ti, int numOfClass);
@@ -84,16 +87,18 @@ public:
     int                  BPTT_Test(int timesize);
     int                  BPTT_TestOnCPU(int timesize);
     int                  BPTT_TestOnGPU(int timesize);
-    int                  seq2seqBPTT(int EncTimeSize, int DecTimeSize);
-    int                  seq2seqBPTTOnGPU(int EncTimeSize, int DecTimeSize);
+    virtual int          seq2seqBPTT(int EncTimeSize, int DecTimeSize);
+    virtual int          seq2seqBPTTOnGPU(int EncTimeSize, int DecTimeSize);
 
     int                  GenerateSentence(int maxTimeSize, std::map<int, std::string>* Index2Vocab, int startIndex, int vocabSize);
-    int                  SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab);
-    int                  SentenceTranslateOnGPU(std::map<int, std::string>* index2vocab);
+    virtual std::string  SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab, std::string filename);
+    virtual std::string  SentenceTranslateOnGPU(std::map<int, std::string>* index2vocab, std::string filename);
 
+    virtual Tensor<DTYPE> *MakeInference(Tensor<DTYPE> *pInput, Tensor<DTYPE> *pLabel);
+    
 #ifdef __CUDNN__
     void SetDeviceGPU(unsigned int idOfDevice);
-    void SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    void SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice);
     int  SetDeviceID(unsigned int idOfDevice);
 #endif  // __CUDNN__
 };
@@ -145,6 +150,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::Delete() {
 template<typename DTYPE> int NeuralNetwork<DTYPE>::AllocOnGPU() {
     // checkCudaErrors(cudaSetDevice(2));
     checkCUDNN(cudnnCreate(&m_cudnnHandle));
+    checkCublasErrors(cublasCreate(&m_cublasHandle));
 }
 
 /*!
@@ -155,6 +161,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::DeleteOnGPU() {
     //// checkCudaErrors(cudaDeviceSynchronize());
     //// checkCudaErrors(cudaDeviceSynchronize());
     if (m_cudnnHandle) checkCUDNN(cudnnDestroy(m_cudnnHandle));
+    if (m_cublasHandle) checkCublasErrors(cublasDestroy(m_cublasHandle));
 }
 
 #endif  // if __CUDNN__
@@ -182,6 +189,7 @@ template<typename DTYPE> NeuralNetwork<DTYPE>::NeuralNetwork() : Module<DTYPE>()
 
 #ifdef __CUDNN__
     m_cudnnHandle = NULL;
+    m_cublasHandle = NULL;
 #endif  // if __CUDNN__
 
     Alloc();
@@ -422,6 +430,60 @@ template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracy(int numOfClass,
     return (float)((accuracy / timesize) / batchsize);
 }
 
+
+template<typename DTYPE> float NeuralNetwork<DTYPE>::GetAccuracyWithoutPadding(int numOfClass, int paddingToken) {
+
+    Operator<DTYPE> *result = GetResultOperator();
+    Operator<DTYPE> *label  = m_aLossFunction->GetLabel();
+
+    int batchsize = label->GetResult()->GetBatchSize();
+    int timesize  = label->GetResult()->GetTimeSize();
+    int channelsize = label->GetResult()->GetChannelSize();
+
+    Tensor<DTYPE> *pred = result->GetResult();
+    Tensor<DTYPE> *ans  = label->GetResult();
+
+    Tensor<DTYPE> *pred_argmax = pred->Argmax(4);
+    Tensor<DTYPE> *ans_argmax = ans->Argmax(4);
+
+    float accuracy = 0.f;
+
+    int pred_index = 0;
+    int ans_index  = 0;
+
+    int paddingCount = 0;
+
+    for (int ba = 0; ba < batchsize; ba++) {
+        for (int ti = 0; ti < timesize; ti++) {
+            paddingCount = 0;
+
+            for(int ch = 0; ch < channelsize; ch++){
+                int idx = Index5D(pred_argmax->GetShape(), ti, ba, ch, 0, 0);
+                pred_index = (*pred_argmax)[idx];
+                ans_index = (*ans_argmax)[idx];
+                if(pred_index == paddingToken && ans_index == paddingToken)
+                    paddingCount ++;
+            }
+
+            for(int ch = 0; ch < channelsize; ch++){
+                int idx = Index5D(pred_argmax->GetShape(), ti, ba, ch, 0, 0);
+                pred_index = (*pred_argmax)[idx];
+                ans_index = (*ans_argmax)[idx];
+                if(pred_index == paddingToken && ans_index == paddingToken)
+                    continue;
+                else if(pred_index == ans_index) {
+                    accuracy += 1.f / (float)(channelsize-paddingCount);
+                }
+            }
+        }
+    }
+
+    delete pred_argmax;
+    delete ans_argmax;
+
+    return (float)((accuracy / timesize) / batchsize);
+}
+
 /*!
  * @brief Tensor의 LongArray의 Element들 중 가장 큰 값의 인덱스를 계산해 반환하는 메소드
  * @param data 탐색하고자 하는 Tensor
@@ -635,8 +697,7 @@ template<typename DTYPE> Operator<DTYPE> *NeuralNetwork<DTYPE>::SearchOperator(s
     return NULL;
 }
 
-template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize)
-{
+template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, int noSample, float *pSamples[], int outDim, float *pFeatures[], int batchSize) {
 #ifdef  __DEBUG__
     for(int i = 0; i < MIN(1, noSample); i++){
         printf("Sample[%d]:\n", i);
@@ -683,7 +744,7 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::InputToFeature(int inDim, in
 
         Tensor<float> *result = this->GetResult();
 
-        for(int idx = 0; idx < curBatch; idx++){
+        for(int idx = 0; idx < curBatch; idx++) {
             // assume pFeatures[i] are already allocated
             // pFeatures[batchIdx * batchSize + idx] = new float[outDim];
             // if(pFeatures[batchIdx * batchSize + idx] == NULL){
@@ -783,19 +844,19 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::seq2seqBPTT(int EncTimeSize, 
     for(int i =0; i<EncTimeSize; i++)
         (*ExcutableOperator)[0]->ForwardPropagate(i);
 
-    //Decoder & lossfunction forward
+    //RNNDecoder & lossfunction forward
     for(int i=0; i<DecTimeSize; i++){
       (*ExcutableOperator)[1]->ForwardPropagate(i);
       m_aLossFunction->ForwardPropagate(i);
     }
 
-    //Decoder & loss function backward
+    //RNNDecoder & loss function backward
     for(int j=DecTimeSize-1; j>=0; j--){
       m_aLossFunction->BackPropagate(j);
       (*ExcutableOperator)[1]->BackPropagate(j);
     }
 
-    //Encoder backward
+    //RNNEncoder backward
     for(int j=EncTimeSize-1; j>=0; j--){
       (*ExcutableOperator)[0]->BackPropagate(j);
     }
@@ -818,19 +879,19 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::seq2seqBPTTOnGPU(int EncTimeS
     for(int i =0; i<EncTimeSize; i++)
         (*ExcutableOperator)[0]->ForwardPropagateOnGPU(i);
 
-    //Decoder & lossfunction forward
+    //RNNDecoder & lossfunction forward
     for(int i=0; i<DecTimeSize; i++){
       (*ExcutableOperator)[1]->ForwardPropagateOnGPU(i);
       m_aLossFunction->ForwardPropagateOnGPU(i);
     }
 
-    //Decoder & loss function backward
+    //RNNDecoder & loss function backward
     for(int j=DecTimeSize-1; j>=0; j--){
       m_aLossFunction->BackPropagateOnGPU(j);
       (*ExcutableOperator)[1]->BackPropagateOnGPU(j);
     }
 
-    //Encoder backward
+    //RNNEncoder backward
     for(int j=EncTimeSize-1; j>=0; j--){
       (*ExcutableOperator)[0]->BackPropagateOnGPU(j);
     }
@@ -850,8 +911,6 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::BPTTOnGPU(int timesize) {
       this->ResetGradient();
       this->ResetLossFunctionResult();
       this->ResetLossFunctionGradient();
-
-      // std::cout<<"BPTTOnGPU 호출"<<'\n';
 
       Container<Operator<DTYPE> *> *ExcutableOperator = this->GetExcutableOperatorContainer();
       int numOfExcutableOperator = this->GetNumOfExcutableOperator();
@@ -951,7 +1010,10 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::GenerateSentence(int maxTimeS
     return TRUE;
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab){
+template<typename DTYPE> std::string NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::map<int, std::string>* index2vocab, std::string filename){
+
+    this->ResetResult();
+    this->ResetLossFunctionResult();
 
     Tensor<DTYPE> *pred = this->GetResult();
 
@@ -1001,8 +1063,15 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnCPU(std::m
 
 }
 
-template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnGPU(std::map<int, std::string>* index2vocab){
+template<typename DTYPE> std::string NeuralNetwork<DTYPE>::SentenceTranslateOnGPU(std::map<int, std::string>* index2vocab, std::string filename){
 #ifdef __CUDNN__
+
+    std::ofstream fout(filename, std::ios::app);
+
+    this->ResetResult();
+    this->ResetLossFunctionResult();
+
+    std::string result_str = "";
 
     //Result
     Tensor<DTYPE> *pred = this->GetResult();
@@ -1019,11 +1088,20 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnGPU(std::m
     int numOfExcutableOperator = this->GetNumOfExcutableOperator();
     Container<Operator<DTYPE> *> *ExcutableOperator = this->GetExcutableOperatorContainer();
 
+    Tensor<DTYPE> *DecoderLabel = this->GetInput()[2]->GetResult();
+    for(int ti = 0; ti < DecoderTimeSize; ti++){
+
+        int label_index = GetMaxIndex(DecoderLabel, 0, ti, DecoderLabel->GetColSize());
+        fout<<index2vocab->at(label_index)<<" ";
+    }
+    fout<<'\n';
+
     //encoder forward
     for(int ti = 0; ti < EncoderTimeSize; ti++)
         (*ExcutableOperator)[0]->ForwardPropagateOnGPU(ti);
 
     (*DecoderInput)[0] = 1;
+
 
     for(int ti = 0; ti < DecoderTimeSize; ti++){
 
@@ -1031,9 +1109,9 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnGPU(std::m
         (*ExcutableOperator)[1]->ForwardPropagateOnGPU(ti);
 
         int pred_index = GetMaxIndex(pred, 0, ti, pred->GetColSize());
+        result_str = result_str + ' ' + index2vocab->at(pred_index);
 
-        std::cout<<pred_index<<" : ";
-        std::cout<<index2vocab->at(pred_index)<<'\n';
+        std::string str = index2vocab->at(pred_index);
 
         if( pred_index == 2)
           break;
@@ -1043,12 +1121,18 @@ template<typename DTYPE> int NeuralNetwork<DTYPE>::SentenceTranslateOnGPU(std::m
         }
 
     }
+
+    fout.close();
     this->ResetResult();
 #else  // __CUDNN__
     std::cout << "There is no GPU option!" << '\n';
     exit(-1);
 #endif  // __CUDNN__
-    return TRUE;
+    return result_str;
+}
+
+template<typename DTYPE> Tensor<DTYPE> *NeuralNetwork<DTYPE>::MakeInference(Tensor<DTYPE> *pInput, Tensor<DTYPE> *pLabel) {
+    return NULL;
 }
 
 #ifdef __CUDNN__
@@ -1066,14 +1150,14 @@ template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPU(unsigned int id
         checkCudaErrors(cudaSetDevice(idOfDevice));
         m_Device = GPU;
         this->AllocOnGPU();
-        this->SetDeviceGPUOnModule(m_cudnnHandle, idOfDevice);
-        this->SetDeviceGPUOnNeuralNetwork(m_cudnnHandle, idOfDevice);
+        this->SetDeviceGPUOnModule(m_cudnnHandle, m_cublasHandle, idOfDevice);
+        this->SetDeviceGPUOnNeuralNetwork(m_cudnnHandle, m_cublasHandle, idOfDevice);
     }
 }
 
-template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
-    if(m_aLossFunction != NULL) m_aLossFunction->SetDeviceGPU(m_cudnnHandle, idOfDevice);
-    if(m_aOptimizer != NULL) m_aOptimizer->SetDeviceGPU(m_cudnnHandle, idOfDevice);
+template<typename DTYPE> void NeuralNetwork<DTYPE>::SetDeviceGPUOnNeuralNetwork(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice) {
+    if(m_aLossFunction != NULL) m_aLossFunction->SetDeviceGPU(m_cudnnHandle, m_cublasHandle, idOfDevice);
+    if(m_aOptimizer != NULL) m_aOptimizer->SetDeviceGPU(m_cudnnHandle, m_cublasHandle, idOfDevice);
 }
 
 /*!

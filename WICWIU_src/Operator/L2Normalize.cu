@@ -73,7 +73,7 @@ template<typename DTYPE> int L2Normalize<DTYPE>::ForwardPropagateOnGPU(int pTime
     DTYPE *input_gpu  = NULL;
 
     int inputChannelSize = 0;
-    int idOfDevice = result->GetIdOfDevice();
+    int idOfDevice = result->GetDeviceID();
 
     float test= 0.f;
 
@@ -248,7 +248,7 @@ template<typename DTYPE> int L2Normalize<DTYPE>::BackPropagateOnGPU(int pTime) {
     DTYPE *thisDeltaGPU      = this_delta->GetGPUData();
     DTYPE *input_delta_gpu = inputDelta->GetGPUData();
 
-    int idOfDevice = result->GetIdOfDevice();
+    int idOfDevice = result->GetDeviceID();
 
     DTYPE* norm2ListGPUData;
 

@@ -284,7 +284,6 @@ public:
 #endif  // __CUDNN__
 };
 
-
 /*!
 @class AddColWise Tensor의 값 중 Colunm에만 값을 더하는 class
 */
@@ -312,6 +311,10 @@ private:
     ///<  GPU내의 Tensor값들을 가르키기 위한 descriptor.
     DTYPE *m_pDevInput, *m_pDevBias, *m_pDevOutput, *m_pDevInputDelta, *m_pDevBiasDelta, *m_pDevDelta;
     ///<  cudnn 연산에서 사용 할 데이터를 가리키는 맴버 변수.
+
+    cudnnReduceTensorDescriptor_t reduceTensorDesc;
+    DTYPE *m_pDevIndices, *m_pDevWorkspace;
+    size_t m_pDevIndicesSizeInBytes, m_pDevWorkspaceSizeInBytes;
 
     DTYPE m_alpha;
     ///<  연산 간 두 Operand의 가중치를 표현하기 위한 변수. ex) z = α*x + β*y
@@ -403,22 +406,42 @@ public:
         checkCUDNN(cudnnCreateTensorDescriptor(&deltaDesc));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(inputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              m_batchsize, m_colsize, 1, 1));
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(biasTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              1, m_colsize, 1, 1));
+                                              1, 1, 1, m_colsize));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(outputTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              m_batchsize, m_colsize, 1, 1));
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(inputDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              m_batchsize, m_colsize, 1, 1));
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(biasDeltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              1, m_colsize, 1, 1));
+                                              1, 1, 1, m_colsize));
 
         checkCUDNN(cudnnSetTensor4dDescriptor(deltaDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                                              m_batchsize, m_colsize, 1, 1));
+                                              m_batchsize, m_channelsize, m_rowsize, m_colsize));
+
+        if (m_batchsize == 1 && m_channelsize == 1 && m_rowsize == 1) {
+            reduceTensorDesc = NULL;
+            m_pDevIndices = NULL;
+            m_pDevWorkspace = NULL;
+            m_pDevIndicesSizeInBytes = 0;
+            m_pDevWorkspaceSizeInBytes = 0;
+        }
+        else {
+            checkCUDNN(cudnnCreateReduceTensorDescriptor(&reduceTensorDesc));
+            checkCUDNN(cudnnSetReduceTensorDescriptor(reduceTensorDesc, CUDNN_REDUCE_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_PROPAGATE_NAN, CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES));
+
+            checkCUDNN(cudnnGetReductionIndicesSize(this->GetCudnnHandle(), reduceTensorDesc, deltaDesc, biasDeltaDesc, &m_pDevIndicesSizeInBytes));
+            checkCUDNN(cudnnGetReductionWorkspaceSize(this->GetCudnnHandle(), reduceTensorDesc, deltaDesc, biasDeltaDesc, &m_pDevWorkspaceSizeInBytes));
+
+            checkCudaErrors(cudaMalloc(&m_pDevIndices, m_pDevIndicesSizeInBytes));
+            checkCudaErrors(cudaMalloc(&m_pDevWorkspace, m_pDevWorkspaceSizeInBytes));
+        }
+
+
 
         // checkCudaErrors(cudaDeviceSynchronize());
     }
@@ -568,10 +591,18 @@ public:
                                   &m_alpha, deltaDesc, m_pDevDelta,
                                   &m_alpha, inputDeltaDesc, m_pDevInputDelta));
 
-        checkCUDNN(cudnnConvolutionBackwardBias(this->GetCudnnHandle(),
-                                                &m_alpha, deltaDesc, m_pDevDelta,
-                                                &m_alpha, biasDeltaDesc, m_pDevBiasDelta))
-
+        if (m_batchsize == 1 && m_channelsize == 1 && m_rowsize == 1) {
+            checkCUDNN(cudnnAddTensor(this->GetCudnnHandle(),
+                                  &m_alpha, deltaDesc, m_pDevDelta,
+                                  &m_beta, biasDeltaDesc, m_pDevBiasDelta));
+        }
+        else {
+            checkCUDNN(cudnnReduceTensor(this->GetCudnnHandle(), reduceTensorDesc,
+                                m_pDevIndices, m_pDevIndicesSizeInBytes,
+                                m_pDevWorkspace, m_pDevWorkspaceSizeInBytes,
+                                &m_alpha, deltaDesc, m_pDevDelta,
+                                &m_beta, biasDeltaDesc, m_pDevBiasDelta));
+        }
 
         return TRUE;
     }

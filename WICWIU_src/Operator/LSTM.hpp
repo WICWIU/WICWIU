@@ -10,6 +10,9 @@
 #define TIME     0
 #define BATCH    1
 
+/*!
+@class LSTM LSTM class
+*/
 template<typename DTYPE> class LSTM : public Operator<DTYPE>{
 private:
 
@@ -118,14 +121,33 @@ private:
 
 
 public:
-  LSTM(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *lstmBias, Operator<DTYPE>* pInitHidden = NULL)
-       : Operator<DTYPE>(4, pInput, pWeightIG, pWeightHG, lstmBias) {
-      #if __DEBUG__
-      std::cout << "LSTM::LSTM(Operator<DTYPE> *)" << '\n';
-      #endif  // __DEBUG__
-      this->Alloc(pInput, pWeightIG, pWeightHG, lstmBias, pInitHidden);
-  }
+        /**
+        * @brief LSTM의 생성자
+        * @details 파라미터로 받은  pInput, pWeightIG, pWeightHG, lstmBias, pInitHidden로 Alloc한다.
+        * @param pInput LSTM의 input Operator
+        * @param pWeightIG input to gate에 해당하는 matmul의 weight
+        * @param pWeightHG hidden to gate에 해당하는 matmul의 weight
+        * @param lstmBias LSTM의 bias
+        * @param pInitHidden LSTM의 init hidden
+        */
+    LSTM(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *lstmBias, Operator<DTYPE>* pInitHidden = NULL)
+        : Operator<DTYPE>(4, pInput, pWeightIG, pWeightHG, lstmBias) {
+        #if __DEBUG__
+        std::cout << "LSTM::LSTM(Operator<DTYPE> *)" << '\n';
+        #endif  // __DEBUG__
+        this->Alloc(pInput, pWeightIG, pWeightHG, lstmBias, pInitHidden);
+    }
 
+    /**
+    * @brief LSTM의 생성자
+    * @details 파라미터로 받은  pInput, pWeightIG, pWeightHG, lstmBias, pInitHidden로 Alloc한다.
+    * @param pInput LSTM의 input Operator
+    * @param pWeightIG input to gate에 해당하는 matmul의 weight
+    * @param pWeightHG hidden to gate에 해당하는 matmul의 weight
+    * @param lstmBias LSTM의 bias
+    * @param pName 사용자가 부여한 Operator 이름 
+    * @param pInitHidden LSTM의 init hidden
+    */
     LSTM(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *lstmBias, std::string pName, Operator<DTYPE>* pInitHidden = NULL)
          : Operator<DTYPE>(4, pInput, pWeightIG, pWeightHG, lstmBias) {
         #if __DEBUG__
@@ -142,6 +164,16 @@ public:
         Delete();
     }
 
+    /**
+     * @brief 파라미터로 받은  pInput, pWeightIG, pWeightHG, lstmBias, pInitHidden으로 맴버 변수들을 초기화 한다.
+     * @details LSTM연산에 필요한 MatMul, add, Sigmod, Tanh, Hadamard operator를 맴버 변수로 생성한다.
+     * @param pInput LSTM의 input Operator
+     * @param pWeightIG input to gate에 해당하는 matmul의 weight
+     * @param pWeightHG hidden to gate에 해당하는 matmul의 weight
+     * @param lstmBias LSTM의 bias
+     * @param pInitHidden LSTM의 init hidden 
+     * @return int 
+     */
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIG, Operator<DTYPE> *pWeightHG, Operator<DTYPE> *lstmBias, Operator<DTYPE>* pInitHidden) {
 
 
@@ -210,6 +242,12 @@ public:
     }
 
     #if __CUDNN__
+         /**
+         * @brief cudnn을 사용하기 전 관련 맴버변수들을 초기화 한다.
+         * @details TensorDesriptor들을 생성하고, TensorDesriptor들의 데이터가 batch, channel, row, col 순서로 배치되도록 지정한다.
+         * @details LSTM연산에 필요한 알고리즘을 정의하고, 연산에 필요한 메모리공간을 할당 받는다.
+         * @param idOfDevice 사용할 GPU의 id
+         */
           void InitializeAttributeForGPU(unsigned int idOfDevice) {
 
             Operator<DTYPE> *pInput    = this->GetInput()[0];
@@ -385,6 +423,13 @@ public:
 
     void Delete() {}
 
+    /**
+     * @brief LSTM의 ForwardPropagate 메소드
+     * @details LSTM 연산 중 Input to hidden, hidden to hidden, activation function인 tanh 연산을 수행한다.
+     * @details tempHidden이라는 Operator를 사용하여 t-1 에서 t로 가는 hidden 2 hidden 연산을 수행한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+     * @return int 
+     */
     int  ForwardPropagate(int pTime = 0) {
 
         if(pTime==0 && m_pInitHidden != NULL){
@@ -504,6 +549,13 @@ public:
     }
 
 
+    /**
+     * @brief LSTM의 BackPropagate 메소드
+     * @details LSTM 연산의 미분값을 계산하여 input_delta, WeightIG_delta, WeightHG_delta, LSTMBias_delta, InitHidden_delta에 각각 더해 넣는다.
+     * @details tempHidden이라는 Operator를 사용하여 t+1 에서 t로 가는 hidden 2 hidden에 해당하는 Gradient 전달하여준다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+     * @return int 
+     */
     int BackPropagate(int pTime = 0) {
 
         Tensor<DTYPE> *_grad = m_aHidden->GetGradient();
@@ -626,6 +678,12 @@ public:
     }
 
 #if __CUDNN__
+    /**
+     * @brief GPU에서 동작하는 ForwardPropagate 메소드
+     * @details cudnn이 제공하는 LSTM ForwardPropagate 메소드를 실행한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값.
+     * @return int 
+     */
     int ForwardPropagateOnGPU(int pTime = 0) {
 
         Tensor<DTYPE> *input    = this->GetInput()[0]->GetResult();
@@ -685,7 +743,13 @@ public:
         return TRUE;
     }
 
-
+    /**
+     * @brief GPU에서 동작하는 BackwardPropagate 메소드.
+     * @details cudnn이 제공하는 LSTM BackwardPropagate 메소드를 실행한다.
+     * @details 계산한 Gradient는 input_gradient, weight_gradient에 저장한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값.
+     * @return int 
+     */
     int BackPropagateOnGPU(int pTime = 0) {
 
         Tensor<DTYPE> *input             = this->GetInput()[0]->GetResult();
@@ -785,6 +849,11 @@ public:
 #endif  // if __CUDNN__
 
 
+    /**
+     * @brief 맴버변수로 갖고있는 Operator들의 Result값을 Reset시킨다.
+     * 
+     * @return int 
+     */
     int ResetResult() {
         //time
         m_aTempHidden->ResetResult();
@@ -804,7 +873,7 @@ public:
         m_aInputGateInput->ResetResult();
         m_aInputGateSigmoid->ResetResult();
 
-        //???
+        //
         m_aCellGateInput->ResetResult();
         m_aCellGateTanh->ResetResult();
 
@@ -831,6 +900,11 @@ public:
         return TRUE;
     }
 
+    /**
+     * @brief 맴버변수로 갖고있는 Operator들의 Gradient값을 Reset시킨다.
+     * 
+     * @return int 
+     */
     int ResetGradient() {
         //time
         m_aTempHidden->ResetGradient();

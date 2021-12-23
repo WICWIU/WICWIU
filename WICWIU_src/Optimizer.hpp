@@ -20,7 +20,8 @@ private:
     int m_idOfDevice;
 
 #ifdef __CUDNN__
-    cudnnHandle_t m_pCudnnHandle;
+    cudnnHandle_t  m_pCudnnHandle;
+    cublasHandle_t m_pCublasHandle;
 #endif  // if __CUDNN__
 
 public:
@@ -50,14 +51,16 @@ public:
     int                           ResetParameterGradient();
 
 #ifdef __CUDNN__
-    void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice);
+    void                          SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice);
     virtual void                  InitializeAttributeForGPU(unsigned int idOfDevice) = 0;
     virtual void                  SetCudnnHandle(cudnnHandle_t& pCudnnHandle);
+    virtual void                  SetCublasHandle(cublasHandle_t& pCublasHandle);
     virtual int                   UpdateParameterOnGPU();
     virtual int                   UpdateParameterOnGPU(Operator<DTYPE> *pTrainableTensor) = 0;
 
-    cudnnHandle_t& GetCudnnHandle();
-    int            GetDeviceID();
+    cudnnHandle_t&  GetCudnnHandle();
+    cublasHandle_t& GetCublasHandle();
+    int             GetDeviceID();
 
 #endif  // if __CUDNN__
 };
@@ -193,9 +196,10 @@ template<typename DTYPE> int Optimizer<DTYPE>::UpdateParameter() {
 
 #ifdef __CUDNN__
 
-template<typename DTYPE> void Optimizer<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, unsigned int idOfDevice) {
+template<typename DTYPE> void Optimizer<DTYPE>::SetDeviceGPU(cudnnHandle_t& pCudnnHandle, cublasHandle_t& pCublasHandle, unsigned int idOfDevice) {
     checkCudaErrors(cudaSetDevice(idOfDevice));
     SetCudnnHandle(pCudnnHandle);
+    SetCublasHandle(pCublasHandle);
     m_idOfDevice = idOfDevice;
     InitializeAttributeForGPU(idOfDevice);
 }
@@ -204,12 +208,20 @@ template<typename DTYPE> void Optimizer<DTYPE>::SetCudnnHandle(cudnnHandle_t& pC
     m_pCudnnHandle = pCudnnHandle;
 }
 
+template<typename DTYPE> void Optimizer<DTYPE>::SetCublasHandle(cublasHandle_t& pCublasHandle) {
+    m_pCublasHandle = pCublasHandle;
+}
+
 template<typename DTYPE> int Optimizer<DTYPE>::GetDeviceID() {
     return m_idOfDevice;
 }
 
 template<typename DTYPE> cudnnHandle_t& Optimizer<DTYPE>::GetCudnnHandle() {
     return m_pCudnnHandle;
+}
+
+template<typename DTYPE> cublasHandle_t& Optimizer<DTYPE>::GetCublasHandle() {
+    return m_pCublasHandle;
 }
 
 /*!

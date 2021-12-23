@@ -418,10 +418,8 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
         Shape *tempShape = temp->GetShape();
 
         for (int ti = 0; ti < timesize; ti++){
-            for(int co=0; co < colsize; co++){
-              //(*result)[i * capacity + j] = (*temp)[j];
-
-              (*result)[Index5D(resultShape, ti, i, 0, 0, co)] = (*temp)[Index5D(tempShape, ti, 0, 0, 0, co)];
+            for(int co = 0; co < colsize; co++){
+                (*result)[Index5D(resultShape, ti, i, 0, 0, co)] = (*temp)[Index5D(tempShape, ti, 0, 0, 0, co)];
             }
         }
 
@@ -437,55 +435,6 @@ template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queu
     return result;
 }
 
-//내가 사용하던거
-/*
-template<typename DTYPE> Tensor<DTYPE> *DataLoader<DTYPE>::Concatenate(std::queue<Tensor<DTYPE> *>& setOfData) {
-    // concatenate all preprocessed data into one tensor
-    Tensor<DTYPE> *temp   = NULL;
-    int capacity          = 1;
-    int timesize          = 1;
-    Tensor<DTYPE> *result = NULL;
-    // We need to consider Timesize
-
-    temp     = setOfData.front();
-    capacity = temp->GetCapacity();
-    timesize = temp->GetTimeSize();
-    int colsize = capacity/timesize;          //timesize가 결국은 1 이여서 문제가 없을거 같음....
-    //result   = Tensor<DTYPE>::Zeros(1, m_batchSize, 1, 1, capacity);
-    result   = Tensor<DTYPE>::Zeros(timesize, m_batchSize, 1, 1, colsize);
-
-    Shape *resultShape = result->GetShape();
-
-    // std::cout << result->GetShape() << '\n';
-    // std::cout << setOfData.size() << '\n';
-
-    for (int i = 0; i < m_batchSize; i++) {
-        temp = setOfData.front();
-        setOfData.pop();
-
-        Shape *tempShape = temp->GetShape();
-
-        for (int ti = 0; ti < timesize; ti++){
-            for(int co=0; co < colsize; co++){
-              //(*result)[i * capacity + j] = (*temp)[j];
-
-              (*result)[Index5D(resultShape, ti, i, 0, 0, co)] = (*temp)[Index5D(tempShape, ti, 0, 0, 0, co)];
-            }
-        }
-
-        delete temp;
-        temp = NULL;
-    }
-
-    // std::cout << result << '\n';
-
-
-    // concatenate all data;
-    // and pop data on queue;
-
-    return result;
-}
-*/
 template<typename DTYPE> void DataLoader<DTYPE>::Push2GlobalBuffer(std::vector<Tensor<DTYPE> *> *preprocessedData) {
     sem_wait(&m_globalEmpty);
 

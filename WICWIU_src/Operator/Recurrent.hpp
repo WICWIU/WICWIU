@@ -10,6 +10,9 @@
 #define TIME     0
 #define BATCH    1
 
+/*!
+@class Recurrent Recurrent class
+*/
 template<typename DTYPE> class Recurrent : public Operator<DTYPE>{
 private:
     Operator<DTYPE> *m_aInput2Hidden;
@@ -93,6 +96,15 @@ private:
 
 
 public:
+    /**
+     * @brief Recurrent의 생성자
+     * @details 파라미터로 받은 pInput, pWeightIH, pWeightIH, pBias, pInitHidden로 Alloc한다.
+     * @param pInput RNN의 input Operator
+     * @param pWeightIH Input에서 hidden으로 가는 Matmul의 weight
+     * @param pWeightHH hidden에서 hidden으로 가는 matmul의 weight
+     * @param pBias     RNN의 bias
+     * @param pInitHidden RNN의 init hidden
+     */
     Recurrent(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pBias, Operator<DTYPE>* pInitHidden = NULL) : Operator<DTYPE>(4, pInput, pWeightIH, pWeightHH, pBias) {
         #if __DEBUG__
         std::cout << "Recurrent::Recurrent(Operator<DTYPE> *)" << '\n';
@@ -100,6 +112,16 @@ public:
         this->Alloc(pInput, pWeightIH, pWeightHH, pBias, pInitHidden);
     }
 
+    /**
+     * @brief Recurrent의 생성자
+     * @details 파라미터로 받은 pInput, pWeightIH, pWeightIH, pBias, pInitHidden로 Alloc한다.
+     * @param pInput RNN의 input Operator
+     * @param pWeightIH Input에서 hidden으로 가는 Matmul의 weight
+     * @param pWeightHH hidden에서 hidden으로 가는 matmul의 weight
+     * @param pBias  RNN의 bias
+     * @param pName 사용자가 부여한 Operator이름.
+     * @param pInitHidden RNN의 init hidden
+     */
     Recurrent(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pBias, std::string pName, Operator<DTYPE>* pInitHidden = NULL) : Operator<DTYPE>(4, pInput, pWeightIH, pWeightHH, pBias, pName) {
         #if __DEBUG__
         std::cout << "Recurrent::Recurrent(Operator<DTYPE> *)" << '\n';
@@ -107,6 +129,10 @@ public:
         this->Alloc(pInput, pWeightIH, pWeightHH, pBias, pInitHidden);
     }
 
+    /**
+     * @brief Destroy the Recurrent object
+     * 
+     */
     ~Recurrent() {
         #if __DEBUG__
         std::cout << "Recurrent::~Recurrent()" << '\n';
@@ -115,6 +141,16 @@ public:
         Delete();
     }
 
+    /**
+     * @brief 파라미터로 받은 pInput, pWeightIH, pWeightIH, pBias, pInitHidden으로 맴버 변수들을 초기화 한다.
+     * @details RNN연산에 필요한 MatMul, add, tanh operator를 맴버 변수로 생성한다.
+     * @param pInput RNN의 input Operator
+     * @param pWeightIH Input에서 hidden으로 가는 Matmul의 weight
+     * @param pWeightHH hidden에서 hidden으로 가는 matmul의 weight
+     * @param pBias  RNN의 bias
+     * @param pInitHidden RNN의 init hidden
+     * @return int 
+     */
     int Alloc(Operator<DTYPE> *pInput, Operator<DTYPE> *pWeightIH, Operator<DTYPE> *pWeightHH, Operator<DTYPE> *pBias, Operator<DTYPE>* pInitHidden) {
 
         Shape *InputShape    = pInput->GetResult()->GetShape();
@@ -153,6 +189,12 @@ public:
     }
 
 #if __CUDNN__
+      /**
+       * @brief cudnn을 사용하기 전 관련 맴버변수들을 초기화 한다.
+       * @details TensorDesriptor들을 생성하고, TensorDesriptor들의 데이터가 batch, channel, row, col 순서로 배치되도록 지정한다.
+       * @details RNN연산에 필요한 알고리즘을 정의하고, 연산에 필요한 메모리공간을 할당 받는다.
+       * @param idOfDevice 사용할 GPU의 id
+       */
       void InitializeAttributeForGPU(unsigned int idOfDevice) {
 
         Operator<DTYPE> *pInput    = this->GetInput()[0];
@@ -323,10 +365,15 @@ public:
 
 #endif  // if __CUDNN__
 
-    //이거 해줘야되나?
     void Delete() {}
 
-
+    /**
+     * @brief RNN의 ForwardPropagate 메소드
+     * @details RNN 연산 중 Input to hidden, hidden to hidden, activation function인 tanh 연산을 수행한다.
+     * @details tempHidden이라는 Operator를 사용하여 t-1 에서 t로 가는 hidden 2 hidden 연산을 수행한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+     * @return int 
+     */
     int  ForwardPropagate(int pTime = 0) {
 
         if(pTime==0 && m_aInitHidden != NULL){
@@ -388,6 +435,13 @@ public:
         return TRUE;
     }
 
+    /**
+     * @brief Recurrent의 BackPropagate 메소드
+     * @details RNN 연산의 미분값을 계산하여 input_delta, WeightIH_delta, WeightHH_delta, Bias_delta, InitHidden_delta에 각각 더해 넣는다.
+     * @details tempHidden이라는 Operator를 사용하여 t+1 에서 t로 가는 hidden 2 hidden에 해당하는 Gradient 전달하여준다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값. default는 0을 사용.
+     * @return int 
+     */
     int BackPropagate(int pTime = 0) {
 
         Tensor<DTYPE> *_grad = m_aApplyActivation->GetGradient();
@@ -451,6 +505,12 @@ public:
 
 
 #if __CUDNN__
+    /**
+     * @brief GPU에서 동작하는 ForwardPropagate 메소드
+     * @details cudnn이 제공하는 RNN ForwardPropagate 메소드를 실행한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값.
+     * @return int 
+     */
     int ForwardPropagateOnGPU(int pTime = 0) {
 
         Tensor<DTYPE> *input    = this->GetInput()[0]->GetResult();
@@ -513,7 +573,13 @@ public:
         return TRUE;
     }
 
-
+    /**
+     * @brief GPU에서 동작하는 BackwardPropagate 메소드.
+     * @details cudnn이 제공하는 RNN BackwardPropagate 메소드를 실행한다.
+     * @details 계산한 Gradient는 input_gradient, weightHH_gradient에 저장한다.
+     * @param pTime 연산 할 Tensor가 위치한 Time값.
+     * @return int 
+     */
     int BackPropagateOnGPU(int pTime = 0) {
 
         Tensor<DTYPE> *input             = this->GetInput()[0]->GetResult();
@@ -525,9 +591,9 @@ public:
 
 
         weights     = weightHH->GetGPUData(0);
-        gweights = weightHH_gradient->GetGPUData(0);
+        gweights    = weightHH_gradient->GetGPUData(0);
 
-        int timeSize        = input->GetTimeSize();
+        int timeSize  = input->GetTimeSize();
 
 
         if(pTime != 0)
@@ -562,21 +628,6 @@ public:
 
         }
 
-        //weight 하나로 펴서 넣어주기!
-
-        // std::cout<<"weight capacity : "<<weightHH->GetCapacity()<<'\n';
-
-        // int weight_row = weightHH->GetRowSize();
-        // int weight_col = weightHH->GetColSize();
-        //
-        // for(int i=0; i<weight_row; i++){
-        //
-        //     checkCudaErrors(cudaMemcpy(&weights[weight_col*i], wicwiuY, (weight_col * sizeof(DTYPE)), cudaMemcpyDeviceToDevice));
-        //
-        // }
-
-
-        //276pg
         checkCUDNN(cudnnRNNBackwardData(this->GetCudnnHandle(), rnn_desc, timeSize,
                                         y_desc, y,
                                         dy_desc, dy,
@@ -591,7 +642,6 @@ public:
                                         workspace, workspace_size,
                                         reserved_space, reserved_size));
 
-        //dx값 원래 WICWIU로 복사해주기!
         m_CapacityPerTime = input->GetCapacity() / timeSize;
 
         for(int i=0; i<timeSize; i++){
@@ -610,9 +660,6 @@ public:
         }
 
 
-        /////////////////////////////////////////////////////////////////////////////
-
-        //x값 복사해주기!
         m_CapacityPerTime = input->GetCapacity() / timeSize;
 
         for(int i=0; i<timeSize; i++){
@@ -621,7 +668,6 @@ public:
             checkCudaErrors(cudaMemcpy(&x[m_CapacityPerTime*i], wicwiuX, (m_CapacityPerTime * sizeof(DTYPE)), cudaMemcpyDeviceToDevice));
         }
 
-        //286pg
         checkCUDNN(cudnnRNNBackwardWeights(this->GetCudnnHandle(), rnn_desc, timeSize,
                                            x_desc, x,
                                            hx_desc, hx,
@@ -630,19 +676,16 @@ public:
                                            dw_desc, gweights,
                                            reserved_space, reserved_size));
 
-        //dw값 이거는 time별로 있는게 아니라 모든 time에 대해서 동일하니깐 상관없지 않을까???
-
-         // std::cout<<"weight_HH gradient"<<'\n';
-         // std::cout<<weightHH_gradient->GetShape()<<'\n';
-         // std::cout<<weightHH_gradient<<'\n';
 
         return TRUE;
     }
 #endif  // if __CUDNN__
 
-
-
-    // GPU에 대한 Reset 처리는 operator.hpp에 되어있음
+    /**
+     * @brief 맴버변수로 갖고있는 Operator들의 Result값을 Reset시킨다.
+     * 
+     * @return int 
+     */
     int ResetResult() {
         m_aInput2Hidden->ResetResult();
         m_aHidden2Hidden->ResetResult();
@@ -662,6 +705,11 @@ public:
 
     }
 
+    /**
+     * @brief 맴버변수로 갖고있는 Operator들의 Gradient값을 Reset시킨다.
+     * 
+     * @return int 
+     */
     int ResetGradient() {
         m_aInput2Hidden->ResetGradient();
         m_aHidden2Hidden->ResetGradient();
