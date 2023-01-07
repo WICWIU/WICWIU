@@ -10,16 +10,6 @@
 
 * WICWIU는 Apache2.0 라이선스를 적용해 연구 목적 및 상용 목적으로 제약 없이 활용 가능합니다.
 
-## [WICWIU Github Pages](https://wicwiu.github.io)
-
-**[WICWIU Github Pages](https://wicwiu.github.io) 가 새로 개설되었습니다!** [이곳](https://wicwiu.github.io)을 클릭하여 방문해주세요.
-
-- 기존 [**WICWIU**](https://github.com/WICWIU/WICWIU) 의 문서 `doc/` 와 `Documentation/` 가 모두 포팅되어 웹브라우저로 편하게 볼 수 있습니다. [**WICWIU**](https://github.com/WICWIU/WICWIU) 의 **API** 도 모두 포팅이 되었습니다.
-
-- **[WICWIU Github Pages](https://wicwiu.github.io)** 에는 [**WICWIU**](https://github.com/WICWIU/WICWIU) 개발 가이드([**WICWIU**](https://github.com/WICWIU/WICWIU) 로 신경망 구성, [**WICWIU**](https://github.com/WICWIU/WICWIU) 로 딥러닝하기, [**WICWIU**](https://github.com/WICWIU/WICWIU) 코드 같이 분석해보기) 가 있습니다.
-
-- **[WICWIU Github Pages](https://wicwiu.github.io)** 에는 [**WICWIU**](https://github.com/WICWIU/WICWIU) 개발에 필요한 **Git, Github** 으로 협업하기, **GPU Acceleration(CUDA 코딩하기)**, **Makefile** 이해하기, **딥러닝에 필요한 CLI(gotop, tmux, zsh)** 알아보기 등등 좋은 정보들이 지속적으로 업로드되고 있습니다.
-
 ## WICWIU는 다음과 같은 내용을 지향하고 있습니다.
 
 * 다양한 신경망 계층 예시
